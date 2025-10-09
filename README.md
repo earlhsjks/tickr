@@ -1,34 +1,42 @@
-# Tachyon Log
+# ⏱️ Tickr
 
-Tachyon Log is a **local attendance management system** designed for organizations to efficiently track employee attendance, work schedules, and manage user roles.
+Tickr is the successor to **Tachyon Log** – a simplified, office-focused Daily Time Record (DTR) and employee attendance system.  
+Currently **in active development**.
 
 ---
 
-## 🚀 Features
+## 🚧 Status
+- Backend: In progress  
+- Frontend: In progress  
+- Database: Planned schema drafted  
 
-### **Admin Dashboard**
-- **Total Employees** – View the total number of registered employees.
-- **On-Duty Employees** – Track currently clocked-in employees.
-- **Late Employees** – Identify employees who clocked in past their scheduled time.
-- **Absent Employees** – Check employees who haven't clocked in for the day.
-- **Overtime Employees** – Monitor employees working beyond their scheduled hours.
-- **Force Clock-Out** – Admins can manually clock out employees if needed.
+---
 
-### **User Management**
-- **Create, Edit, Delete Employees** – Manage employee records.
-- **Assign Work Schedules** – Set default and broken schedules.
-- **Role-Based Access Control** – Manage user roles (`admin`, `hr`, `employee`).
+## 🔑 Core Features (Planned)
+- Employee management (add, view, assign schedules)  
+- Daily and manual time logs  
+- Overtime, leave, and manual DTR approvals  
+- Shift templates and schedule assignment  
+- DTR summary with export  
 
-### **Attendance Tracking**
-- **Clock In/Out System** – Employees can log their attendance.
-- **Auto Clock-Out** – Automatically logs out employees after a defined time.
-- **Attendance Logs** – Store daily attendance records.
+---
 
-### **Global Settings**
-- **Enforce Strict Schedule** – Prevent employees from clocking in outside their schedule.
-- **Allow Early Clock-Out** – Decide whether employees can leave early.
-- **Allow Overtime** – Enable/disable overtime tracking.
+## 🛠️ Tech Stack
+- **Backend:** Flask (Python)  
+- **Frontend:** HTML, CSS, Bootstrap, JavaScript  
+- **Database:** MySQL 
 
-## 📜 License
-This project is licensed under the **MIT License**.
+---
 
+## 📌 Roadmap
+- [ ] Authentication & User Roles  
+- [ ] Employee CRUD  
+- [ ] Time Logs Module  
+- [ ] Approvals Module  
+- [ ] Schedule Management  
+- [ ] Reports & Export  
+
+---
+
+## 📄 License
+MIT License
