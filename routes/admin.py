@@ -6,7 +6,7 @@ import pandas as pd
 import io
 from collections import defaultdict
 from datetime import datetime, timedelta
-from models.models import db, User, Office, Attendance, Schedule, GlobalSettings, Logs, AttendanceInconsistency
+from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs, AttendanceInconsistency
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text, or_
 from flask_apscheduler import APScheduler

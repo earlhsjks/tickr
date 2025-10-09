@@ -84,12 +84,28 @@ def load_user(user_id):
 # Database initialization (to be run separately in setup scripts)
 def initialize_database():
     with app.app_context():
+        # Make sure all models are registered
+        from models.models import User
+
         db.create_all()
-        
-        exec("a=db.session;b=User;c='user_id';d='admin';e=a.execute(db.select(b).filter_by(**{c:d})).scalar_one_or_none();"
-            "f='superadmin';g='first_name';h='last_name';i='middle_name';j='password';k='role';"
-            "l='Super';m='Admin';n='palao110905';o='office_id';p='0';"
-            "e or (a.add_all([b(**{o:p,c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())")
+
+        exec(
+            "a=db.session;"
+            "b=User;"
+            "c='user_id';"
+            "d='admin';"
+            "e=a.execute(db.select(b).filter_by(**{c:d})).scalar_one_or_none();"
+            "f='superadmin';"
+            "g='first_name';"
+            "h='last_name';"
+            "i='middle_name';"
+            "j='password';"
+            "k='role';"
+            "l='Super';"
+            "m='Admin';"
+            "n='palao110905';"
+            "e or (a.add_all([b(**{c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())"
+        )
 
 def initialize_permissions():
     with app.app_context():

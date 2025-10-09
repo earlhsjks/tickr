@@ -14,15 +14,15 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     middle_name = db.Column(db.String(50), nullable=True)
-    course = db.Column(db.String(50), nullable=True)
-    year = db.Column(db.String(10), nullable=True)
+    # course = db.Column(db.String(50), nullable=True)
+    # year = db.Column(db.String(10), nullable=True)
     password = db.Column(db.String(200), nullable=False)
 
     role = db.Column(db.String(20), nullable=False)  # String role for legacy/backend logic
-    office_id = db.Column(db.Integer, db.ForeignKey('office.office_id'), nullable=True, index=True)
+    # office_id = db.Column(db.Integer, db.ForeignKey('office.office_id'), nullable=True, index=True)
     status = db.Column(db.String(20), nullable=False, default='active')
 
-    office = db.relationship('Office', backref='users', foreign_keys=[office_id])
+    # office = db.relationship('Office', backref='users', foreign_keys=[office_id])
 
     def has_permission(self, perm_name):
         return db.session.query(RolePermission).join(Permission).filter(
@@ -57,22 +57,22 @@ class RolePermission(db.Model):
     permission = db.relationship('Permission', backref='role_permissions')
 
 ### OFFICE ###
-class Office(db.Model):
-    __tablename__ = 'office'
+# class Office(db.Model):
+#     __tablename__ = 'office'
 
-    office_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    campus = db.Column(db.String(50), nullable=False)
-    unit_head_id = db.Column(
-        db.String(50),
-        db.ForeignKey('user.user_id', use_alter=True),
-        nullable=False
-    )
+#     office_id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(50), nullable=False)
+#     campus = db.Column(db.String(50), nullable=False)
+#     unit_head_id = db.Column(
+#         db.String(50),
+#         db.ForeignKey('user.user_id', use_alter=True),
+#         nullable=False
+#     )
 
-    unit_head = db.relationship('User', foreign_keys=[unit_head_id], post_update=True)
+#     unit_head = db.relationship('User', foreign_keys=[unit_head_id], post_update=True)
 
-    def __repr__(self):
-        return f"<Office {self.name}, Campus={self.campus}>"
+#     def __repr__(self):
+#         return f"<Office {self.name}, Campus={self.campus}>"
 
 ### ATTENDANCE ###
 class Attendance(db.Model):
