@@ -1,0 +1,1248 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% set breadcrumb1 = "Dashboard" %}
+{% set breadcrumb2 = "" %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="page-title">
+                        <h1 class="mb-1">Shift Templates</h1>
+                        <p class="mb-0 text-muted">Manage predefined time-in/time-out patterns for efficient scheduling</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="page-actions d-flex justify-content-md-end gap-3 mt-3 mt-md-0">
+                        <div class="search-container flex-grow-1 flex-md-grow-0">
+                            <input type="text" class="form-control" placeholder="Search templates..." id="templateSearch">
+                        </div>
+                        <button class="btn btn-success add-template-btn">
+                            <i class="fas fa-plus me-2"></i>Add Template
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section mb-4">
+            <div class="row g-3">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Total Templates</span>
+                            <div class="stat-icon total-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">12</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Active Templates</span>
+                            <div class="stat-icon present-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">10</div>
+                        <div class="stat-change positive">Currently in use</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Employees Using</span>
+                            <div class="stat-icon late-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">186</div>
+                        <div class="stat-change positive">75% of workforce</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Most Popular</span>
+                            <div class="stat-icon pending-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">8AM-5PM</div>
+                        <div class="stat-change neutral">Standard shift</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="content-card mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <select class="form-select" id="shiftTypeFilter">
+                            <option value="">All Shift Types</option>
+                            <option value="standard">Standard</option>
+                            <option value="flexible">Flexible</option>
+                            <option value="night">Night Shift</option>
+                            <option value="rotating">Rotating</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="departmentFilter">
+                            <option value="">All Departments</option>
+                            <option value="all">All Departments</option>
+                            <option value="engineering">Engineering</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="sales">Sales</option>
+                            <option value="hr">HR</option>
+                            <option value="finance">Finance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" id="clearFilters">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shift Templates Table -->
+        <div class="content-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Shift Templates</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="refreshTemplates">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Template Name</th>
+                                <th>Shift Type</th>
+                                <th>Time Schedule</th>
+                                <th>Total Hours</th>
+                                <th>Departments</th>
+                                <th>Employees Using</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="templatesTableBody">
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input template-checkbox">
+                                </td>
+                                <td>
+                                    <div class="template-info">
+                                        <div class="template-name">Standard Day Shift</div>
+                                        <div class="template-code">TMPL-001</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="shift-type-badge standard">Standard</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00 AM - 5:00 PM</div>
+                                        <small class="text-muted">1 hour lunch break</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">8.0 hrs</div>
+                                        <small class="text-success">Standard</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="departments-list">
+                                        <span class="department-badge engineering">Engineering</span>
+                                        <span class="department-badge hr">HR</span>
+                                        <span class="text-muted">+3 more</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="usage-info">
+                                        <div class="usage-count">89</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">Active</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Template">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign to Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" title="Duplicate Template">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input template-checkbox">
+                                </td>
+                                <td>
+                                    <div class="template-info">
+                                        <div class="template-name">Flexible Hours</div>
+                                        <div class="template-code">TMPL-002</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="shift-type-badge flexible">Flexible</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">9:00 AM - 6:00 PM</div>
+                                        <small class="text-muted">Flexible start time</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">8.0 hrs</div>
+                                        <small class="text-info">Flexible</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="departments-list">
+                                        <span class="department-badge marketing">Marketing</span>
+                                        <span class="department-badge sales">Sales</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="usage-info">
+                                        <div class="usage-count">42</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">Active</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Template">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign to Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" title="Duplicate Template">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input template-checkbox">
+                                </td>
+                                <td>
+                                    <div class="template-info">
+                                        <div class="template-name">Night Shift</div>
+                                        <div class="template-code">TMPL-003</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="shift-type-badge night">Night Shift</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">10:00 PM - 6:00 AM</div>
+                                        <small class="text-muted">Graveyard shift</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">8.0 hrs</div>
+                                        <small class="text-warning">Night</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="departments-list">
+                                        <span class="department-badge engineering">Engineering</span>
+                                        <span class="text-muted">IT Support</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="usage-info">
+                                        <div class="usage-count">28</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">Active</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Template">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign to Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" title="Duplicate Template">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input template-checkbox">
+                                </td>
+                                <td>
+                                    <div class="template-info">
+                                        <div class="template-name">Afternoon Shift</div>
+                                        <div class="template-code">TMPL-004</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="shift-type-badge standard">Standard</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">2:00 PM - 10:00 PM</div>
+                                        <small class="text-muted">Afternoon coverage</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">7.0 hrs</div>
+                                        <small class="text-success">Standard</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="departments-list">
+                                        <span class="department-badge sales">Sales</span>
+                                        <span class="text-muted">Customer Service</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="usage-info">
+                                        <div class="usage-count">15</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">Active</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Template">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign to Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" title="Duplicate Template">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input template-checkbox">
+                                </td>
+                                <td>
+                                    <div class="template-info">
+                                        <div class="template-name">Part-Time Morning</div>
+                                        <div class="template-code">TMPL-005</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="shift-type-badge flexible">Flexible</span>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00 AM - 12:00 PM</div>
+                                        <small class="text-muted">Part-time schedule</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">4.0 hrs</div>
+                                        <small class="text-info">Part-time</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="departments-list">
+                                        <span class="department-badge hr">HR</span>
+                                        <span class="text-muted">Admin</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="usage-info">
+                                        <div class="usage-count">12</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge inactive">Inactive</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Template">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign to Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" title="Duplicate Template">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="showing-info">
+                    Showing 1-5 of 12 shift templates
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                        <li class="page-item active">
+                            <span class="page-link">1</span>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">2</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">3</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Template Modal -->
+    <div class="modal fade" id="addTemplateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Shift Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTemplateForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="addTemplateName" class="form-label">Template Name</label>
+                                <input type="text" class="form-control" id="addTemplateName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addTemplateCode" class="form-label">Template Code</label>
+                                <input type="text" class="form-control" id="addTemplateCode" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addShiftType" class="form-label">Shift Type</label>
+                                <select class="form-select" id="addShiftType" required>
+                                    <option value="">Select Shift Type</option>
+                                    <option value="standard">Standard</option>
+                                    <option value="flexible">Flexible</option>
+                                    <option value="night">Night Shift</option>
+                                    <option value="rotating">Rotating</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addStatus" class="form-label">Status</label>
+                                <select class="form-select" id="addStatus" required>
+                                    <option value="">Select Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addTimeIn" class="form-label">Time In</label>
+                                <input type="time" class="form-control" id="addTimeIn" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addTimeOut" class="form-label">Time Out</label>
+                                <input type="time" class="form-control" id="addTimeOut" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addBreakDuration" class="form-label">Break Duration (minutes)</label>
+                                <input type="number" class="form-control" id="addBreakDuration" min="0" value="60">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addGracePeriod" class="form-label">Grace Period (minutes)</label>
+                                <input type="number" class="form-control" id="addGracePeriod" min="0" value="15">
+                            </div>
+                            <div class="col-12">
+                                <label for="addDepartments" class="form-label">Applicable Departments</label>
+                                <select class="form-select" id="addDepartments" multiple>
+                                    <option value="all">All Departments</option>
+                                    <option value="engineering">Engineering</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="hr">HR</option>
+                                    <option value="finance">Finance</option>
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple departments</small>
+                            </div>
+                            <div class="col-12">
+                                <label for="addDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="addDescription" rows="3" placeholder="Brief description of this shift template..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="addOvertimeEligible">
+                                    <label class="form-check-label" for="addOvertimeEligible">
+                                        Eligible for overtime pay
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="saveNewTemplate">Add Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Template Modal -->
+    <div class="modal fade" id="editTemplateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Shift Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTemplateForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editTemplateName" class="form-label">Template Name</label>
+                                <input type="text" class="form-control" id="editTemplateName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTemplateCode" class="form-label">Template Code</label>
+                                <input type="text" class="form-control" id="editTemplateCode" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editShiftType" class="form-label">Shift Type</label>
+                                <select class="form-select" id="editShiftType" required>
+                                    <option value="standard">Standard</option>
+                                    <option value="flexible">Flexible</option>
+                                    <option value="night">Night Shift</option>
+                                    <option value="rotating">Rotating</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editStatus" class="form-label">Status</label>
+                                <select class="form-select" id="editStatus" required>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTimeIn" class="form-label">Time In</label>
+                                <input type="time" class="form-control" id="editTimeIn" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTimeOut" class="form-label">Time Out</label>
+                                <input type="time" class="form-control" id="editTimeOut" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editBreakDuration" class="form-label">Break Duration (minutes)</label>
+                                <input type="number" class="form-control" id="editBreakDuration" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editGracePeriod" class="form-label">Grace Period (minutes)</label>
+                                <input type="number" class="form-control" id="editGracePeriod" min="0">
+                            </div>
+                            <div class="col-12">
+                                <label for="editDepartments" class="form-label">Applicable Departments</label>
+                                <select class="form-select" id="editDepartments" multiple>
+                                    <option value="all">All Departments</option>
+                                    <option value="engineering">Engineering</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="sales">Sales</option>
+                                    <option value="hr">HR</option>
+                                    <option value="finance">Finance</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="editDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="editDescription" rows="3"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="editOvertimeEligible">
+                                    <label class="form-check-label" for="editOvertimeEligible">
+                                        Eligible for overtime pay
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveTemplateChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Employees Modal -->
+    <div class="modal fade" id="assignEmployeesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Template to Employees</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Template: <span id="assignTemplateTitle">Standard Day Shift</span></label>
+                        <div class="text-muted">Schedule: <span id="assignTemplateSchedule">8:00 AM - 5:00 PM</span></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <input type="text" class="form-control" placeholder="Search employees..." id="employeeTemplateSearch">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Available Employees</h6>
+                            <div class="employee-list border rounded p-2" style="height: 300px; overflow-y: auto;">
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">Alex Lee</div>
+                                        <small class="text-muted">Finance - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success assign-template-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">Robert Brown</div>
+                                        <small class="text-muted">Sales - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success assign-template-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2">
+                                    <div>
+                                        <div class="fw-medium">Lisa Wong</div>
+                                        <small class="text-muted">Marketing - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success assign-template-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Assigned Employees</h6>
+                            <div class="employee-list border rounded p-2" style="height: 300px; overflow-y: auto;">
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">John Smith</div>
+                                        <small class="text-muted">Engineering - Manager</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger unassign-template-btn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">Maria Johnson</div>
+                                        <small class="text-muted">Marketing - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger unassign-template-btn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2">
+                                    <div>
+                                        <div class="fw-medium">Sarah Davis</div>
+                                        <small class="text-muted">HR - Admin</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger unassign-template-btn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveTemplateAssignments">Save Assignments</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteTemplateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 48px;"></i>
+                        <h6>Are you sure you want to delete this shift template?</h6>
+                        <p class="text-muted mb-0">This action cannot be undone. All employees using this template will need to be reassigned.</p>
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <div class="fw-bold" id="deleteTemplateName">Template Name</div>
+                            <div class="text-muted" id="deleteTemplateDetails">Schedule and usage details</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteTemplate">Delete Template</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize shift templates functionality
+        function initShiftTemplates() {
+            setupSearch();
+            setupFilters();
+            setupTableInteractions();
+            setupModals();
+            addInteractiveEffects();
+        }
+
+        // Search functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('templateSearch');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim().toLowerCase();
+                filterTemplates();
+                
+                // Visual feedback
+                if (searchTerm.length > 0) {
+                    this.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        this.style.borderColor = '#d1d5db';
+                    }, 1000);
+                }
+            });
+        }
+
+        // Filter functionality
+        function setupFilters() {
+            const filters = ['shiftTypeFilter', 'statusFilter', 'departmentFilter'];
+            
+            filters.forEach(filterId => {
+                const filter = document.getElementById(filterId);
+                filter.addEventListener('change', filterTemplates);
+            });
+            
+            // Clear filters
+            document.getElementById('clearFilters').addEventListener('click', function() {
+                filters.forEach(filterId => {
+                    document.getElementById(filterId).value = '';
+                });
+                document.getElementById('templateSearch').value = '';
+                filterTemplates();
+                
+                // Visual feedback
+                this.textContent = 'Cleared!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-times me-2"></i>Clear Filters';
+                }, 1000);
+            });
+        }
+
+        // Filter templates based on search and filter criteria
+        function filterTemplates() {
+            const searchTerm = document.getElementById('templateSearch').value.toLowerCase();
+            const shiftTypeFilter = document.getElementById('shiftTypeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const departmentFilter = document.getElementById('departmentFilter').value;
+            
+            const rows = document.querySelectorAll('#templatesTableBody tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const templateName = row.querySelector('.template-name').textContent.toLowerCase();
+                const templateCode = row.querySelector('.template-code').textContent.toLowerCase();
+                const shiftType = row.querySelector('.shift-type-badge').textContent.toLowerCase();
+                const status = row.querySelector('.status-badge').textContent.toLowerCase();
+                const departments = Array.from(row.querySelectorAll('.department-badge')).map(badge => badge.textContent.toLowerCase());
+                
+                const matchesSearch = templateName.includes(searchTerm) || templateCode.includes(searchTerm);
+                const matchesShiftType = !shiftTypeFilter || shiftType === shiftTypeFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesDepartment = !departmentFilter || departmentFilter === 'all' || departments.includes(departmentFilter);
+                
+                if (matchesSearch && matchesShiftType && matchesStatus && matchesDepartment) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update showing info
+            const showingInfo = document.querySelector('.showing-info');
+            showingInfo.textContent = `Showing 1-${visibleCount} of 12 shift templates`;
+        }
+
+        // Table interactions
+        function setupTableInteractions() {
+            // Select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const templateCheckboxes = document.querySelectorAll('.template-checkbox');
+            
+            selectAllCheckbox.addEventListener('change', function() {
+                templateCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActionVisibility();
+            });
+            
+            // Individual checkboxes
+            templateCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedBoxes = document.querySelectorAll('.template-checkbox:checked');
+                    selectAllCheckbox.checked = checkedBoxes.length === templateCheckboxes.length;
+                    selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < templateCheckboxes.length;
+                    updateBulkActionVisibility();
+                });
+            });
+            
+            // Action buttons
+            const actionButtons = document.querySelectorAll('.action-buttons .btn');
+            actionButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const action = this.title;
+                    const row = this.closest('tr');
+                    const templateName = row.querySelector('.template-name').textContent;
+                    
+                    console.log(`${action} action for template: ${templateName}`);
+                    
+                    // Visual feedback
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+            
+            // Export and refresh buttons
+            const exportBtn = document.querySelector('.btn-outline-primary');
+            const refreshBtn = document.getElementById('refreshTemplates');
+            
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
+                        this.disabled = false;
+                    }, 2000);
+                });
+            }
+            
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
+                        this.disabled = false;
+                    }, 1500);
+                });
+            }
+        }
+
+        // Setup modals
+        function setupModals() {
+            // Add Template button
+            const addTemplateBtn = document.querySelector('.add-template-btn');
+            addTemplateBtn.addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('addTemplateModal'));
+                modal.show();
+            });
+            
+            // Save new template
+            const saveNewTemplateBtn = document.getElementById('saveNewTemplate');
+            saveNewTemplateBtn.addEventListener('click', function() {
+                const form = document.getElementById('addTemplateForm');
+                if (form.checkValidity()) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = 'Add Template';
+                        this.disabled = false;
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addTemplateModal'));
+                        modal.hide();
+                        form.reset();
+                        console.log('New template added successfully');
+                    }, 1500);
+                } else {
+                    form.reportValidity();
+                }
+            });
+            
+            // Edit template buttons
+            const editButtons = document.querySelectorAll('.action-buttons .btn-outline-primary');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const templateName = row.querySelector('.template-name').textContent;
+                    const templateCode = row.querySelector('.template-code').textContent;
+                    
+                    // Populate edit form with current data
+                    document.getElementById('editTemplateName').value = templateName;
+                    document.getElementById('editTemplateCode').value = templateCode;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('editTemplateModal'));
+                    modal.show();
+                });
+            });
+            
+            // Save template changes
+            const saveTemplateChangesBtn = document.getElementById('saveTemplateChanges');
+            saveTemplateChangesBtn.addEventListener('click', function() {
+                const form = document.getElementById('editTemplateForm');
+                if (form.checkValidity()) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = 'Save Changes';
+                        this.disabled = false;
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editTemplateModal'));
+                        modal.hide();
+                        console.log('Template changes saved successfully');
+                    }, 1500);
+                } else {
+                    form.reportValidity();
+                }
+            });
+            
+            // Assign employees buttons
+            const assignButtons = document.querySelectorAll('.action-buttons .btn-outline-info');
+            assignButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const templateName = row.querySelector('.template-name').textContent;
+                    const schedule = row.querySelector('.time-display').textContent;
+                    
+                    document.getElementById('assignTemplateTitle').textContent = templateName;
+                    document.getElementById('assignTemplateSchedule').textContent = schedule;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('assignEmployeesModal'));
+                    modal.show();
+                });
+            });
+            
+            // Employee assignment functionality
+            setupEmployeeAssignment();
+            
+            // Duplicate template buttons
+            const duplicateButtons = document.querySelectorAll('.action-buttons .btn-outline-success');
+            duplicateButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const templateName = row.querySelector('.template-name').textContent;
+                    
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-copy"></i>';
+                        this.disabled = false;
+                        console.log(`Template "${templateName}" duplicated successfully`);
+                    }, 1000);
+                });
+            });
+            
+            // Delete template buttons
+            const deleteButtons = document.querySelectorAll('.action-buttons .btn-outline-danger');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const templateName = row.querySelector('.template-name').textContent;
+                    const schedule = row.querySelector('.time-display').textContent;
+                    const usage = row.querySelector('.usage-count').textContent;
+                    
+                    document.getElementById('deleteTemplateName').textContent = templateName;
+                    document.getElementById('deleteTemplateDetails').textContent = `${schedule} - Used by ${usage} employees`;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deleteTemplateModal'));
+                    modal.show();
+                });
+            });
+            
+            // Confirm delete template
+            const confirmDeleteBtn = document.getElementById('confirmDeleteTemplate');
+            confirmDeleteBtn.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = 'Delete Template';
+                    this.disabled = false;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteTemplateModal'));
+                    modal.hide();
+                    console.log('Template deleted successfully');
+                }, 1500);
+            });
+            
+            // Time calculation
+            setupTimeCalculation();
+        }
+
+        // Employee assignment functionality
+        function setupEmployeeAssignment() {
+            const assignButtons = document.querySelectorAll('.assign-template-btn');
+            const unassignButtons = document.querySelectorAll('.unassign-template-btn');
+            const saveAssignmentsBtn = document.getElementById('saveTemplateAssignments');
+            const employeeSearchInput = document.getElementById('employeeTemplateSearch');
+            
+            // Assign employee buttons
+            assignButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeItem = this.closest('.employee-item');
+                    const employeeName = employeeItem.querySelector('.fw-medium').textContent;
+                    console.log(`Assigning template to ${employeeName}`);
+                    
+                    // Visual feedback
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-arrow-right"></i>';
+                    }, 500);
+                });
+            });
+            
+            // Unassign employee buttons
+            unassignButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeItem = this.closest('.employee-item');
+                    const employeeName = employeeItem.querySelector('.fw-medium').textContent;
+                    console.log(`Unassigning template from ${employeeName}`);
+                    
+                    // Visual feedback
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-arrow-left"></i>';
+                    }, 500);
+                });
+            });
+            
+            // Save assignments
+            saveAssignmentsBtn.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = 'Save Assignments';
+                    this.disabled = false;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('assignEmployeesModal'));
+                    modal.hide();
+                    console.log('Template assignments saved successfully');
+                }, 1500);
+            });
+            
+            // Employee search in assignment modal
+            employeeSearchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const employeeItems = document.querySelectorAll('.employee-item');
+                
+                employeeItems.forEach(item => {
+                    const employeeName = item.querySelector('.fw-medium').textContent.toLowerCase();
+                    const employeeRole = item.querySelector('.text-muted').textContent.toLowerCase();
+                    
+                    if (employeeName.includes(searchTerm) || employeeRole.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Setup time calculation
+        function setupTimeCalculation() {
+            const timeInputs = ['addTimeIn', 'addTimeOut', 'editTimeIn', 'editTimeOut'];
+            
+            timeInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('change', function() {
+                        calculateTotalHours(this.closest('form'));
+                    });
+                }
+            });
+        }
+
+        // Calculate total hours
+        function calculateTotalHours(form) {
+            const timeInInput = form.querySelector('[id$="TimeIn"]');
+            const timeOutInput = form.querySelector('[id$="TimeOut"]');
+            const breakDurationInput = form.querySelector('[id$="BreakDuration"]');
+            
+            if (timeInInput && timeOutInput && timeInInput.value && timeOutInput.value) {
+                const timeIn = new Date(`2000-01-01 ${timeInInput.value}`);
+                const timeOut = new Date(`2000-01-01 ${timeOutInput.value}`);
+                
+                let diffMs = timeOut - timeIn;
+                if (diffMs < 0) {
+                    // Handle overnight shift
+                    diffMs += 24 * 60 * 60 * 1000;
+                }
+                
+                // Subtract break duration
+                const breakDuration = breakDurationInput ? parseInt(breakDurationInput.value) || 0 : 0;
+                diffMs -= breakDuration * 60 * 1000;
+                
+                const hours = diffMs / (1000 * 60 * 60);
+                console.log(`Calculated hours: ${hours.toFixed(2)} (including ${breakDuration} min break)`);
+            }
+        }
+
+        // Update bulk action visibility
+        function updateBulkActionVisibility() {
+            const checkedBoxes = document.querySelectorAll('.template-checkbox:checked');
+            console.log(`${checkedBoxes.length} templates selected`);
+        }
+
+        // Add interactive effects
+        function addInteractiveEffects() {
+            // Table row hover effects
+            const tableRows = document.querySelectorAll('#templatesTableBody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+            
+            // Badge hover effects
+            const badges = document.querySelectorAll('.shift-type-badge, .status-badge, .department-badge');
+            badges.forEach(badge => {
+                badge.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                });
+                
+                badge.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initShiftTemplates();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('templateSearch').focus();
+            }
+            
+            // Escape to clear search and filters
+            if (e.key === 'Escape') {
+                const searchInput = document.getElementById('templateSearch');
+                if (document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    filterTemplates();
+                    searchInput.blur();
+                }
+            }
+            
+            // Ctrl/Cmd + N to add new template
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                document.querySelector('.add-template-btn').click();
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="shift-templates.js"></script>
+{% endblock %}

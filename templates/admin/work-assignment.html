@@ -1,0 +1,1021 @@
+.{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% set breadcrumb1 = "User Management" %}
+{% set breadcrumb2 = "Work Assignment" %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="page-title">
+                        <h1 class="mb-1">Work Assignment</h1>
+                        <p class="mb-0 text-muted">Manage office locations and employee assignments</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="page-actions d-flex justify-content-md-end gap-3 mt-3 mt-md-0">
+                        <div class="search-container flex-grow-1 flex-md-grow-0">
+                            <input type="text" class="form-control" placeholder="Search offices..." id="officeSearch">
+                        </div>
+                        <button class="btn btn-success add-office-btn">
+                            <i class="fas fa-plus me-2"></i>Add Office
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section mb-4">
+            <div class="row g-3">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Total Offices</span>
+                            <div class="stat-icon total-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">12</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Active Offices</span>
+                            <div class="stat-icon present-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">10</div>
+                        <div class="stat-change positive">+1 this month</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Total Employees</span>
+                            <div class="stat-icon late-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">248</div>
+                        <div class="stat-change positive">+12 this month</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Unassigned</span>
+                            <div class="stat-icon pending-icon">
+                                <i class="fas fa-user-slash"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-change neutral">Same as last week</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="content-card mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <select class="form-select" id="statusFilter">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="maintenance">Under Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="locationFilter">
+                            <option value="">All Locations</option>
+                            <option value="metro-manila">Metro Manila</option>
+                            <option value="cebu">Cebu</option>
+                            <option value="davao">Davao</option>
+                            <option value="iloilo">Iloilo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="capacityFilter">
+                            <option value="">All Capacities</option>
+                            <option value="small">Small (1-20)</option>
+                            <option value="medium">Medium (21-50)</option>
+                            <option value="large">Large (51+)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100" id="clearFilters">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Offices Table -->
+        <div class="content-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Office Locations</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">
+                                    <input type="checkbox" class="form-check-input" id="selectAll">
+                                </th>
+                                <th>Office</th>
+                                <th>Location</th>
+                                <th>Capacity</th>
+                                <th>Assigned Employees</th>
+                                <th>Status</th>
+                                <th>Manager</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="officesTableBody">
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input office-checkbox">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="office-icon me-3">
+                                            <i class="fas fa-building text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="office-name">Main Office</div>
+                                            <div class="office-code">OFF-001</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="office-location">
+                                        <div>Makati City, Metro Manila</div>
+                                        <small class="text-muted">Ayala Avenue</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="capacity-info">
+                                        <div class="capacity-number">100</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="assignment-info">
+                                        <div class="assigned-count">85</div>
+                                        <div class="capacity-bar mt-1">
+                                            <div class="capacity-fill" style="width: 85%"></div>
+                                        </div>
+                                        <small class="text-muted">85% occupied</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">Active</span>
+                                </td>
+                                <td>
+                                    <div class="manager-info">
+                                        <div class="manager-name">Sarah Davis</div>
+                                        <small class="text-muted">Office Manager</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Office">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input office-checkbox">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="office-icon me-3">
+                                            <i class="fas fa-building text-success"></i>
+                                        </div>
+                                        <div>
+                                            <div class="office-name">Cebu Branch</div>
+                                            <div class="office-code">OFF-002</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="office-location">
+                                        <div>Cebu City, Cebu</div>
+                                        <small class="text-muted">IT Park</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="capacity-info">
+                                        <div class="capacity-number">50</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="assignment-info">
+                                        <div class="assigned-count">42</div>
+                                        <div class="capacity-bar mt-1">
+                                            <div class="capacity-fill" style="width: 84%"></div>
+                                        </div>
+                                        <small class="text-muted">84% occupied</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge active">Active</span>
+                                </td>
+                                <td>
+                                    <div class="manager-info">
+                                        <div class="manager-name">Maria Santos</div>
+                                        <small class="text-muted">Branch Manager</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Office">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input office-checkbox">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="office-icon me-3">
+                                            <i class="fas fa-building text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <div class="office-name">Davao Office</div>
+                                            <div class="office-code">OFF-003</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="office-location">
+                                        <div>Davao City, Davao</div>
+                                        <small class="text-muted">Business District</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="capacity-info">
+                                        <div class="capacity-number">30</div>
+                                        <small class="text-muted">employees</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="assignment-info">
+                                        <div class="assigned-count">0</div>
+                                        <div class="capacity-bar mt-1">
+                                            <div class="capacity-fill" style="width: 0%"></div>
+                                        </div>
+                                        <small class="text-muted">Under setup</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge maintenance">Under Maintenance</span>
+                                </td>
+                                <td>
+                                    <div class="manager-info">
+                                        <div class="manager-name">-</div>
+                                        <small class="text-muted">Not assigned</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Office">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" title="Assign Employees">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="showing-info">
+                    Showing 1-3 of 12 offices
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                        <li class="page-item active">
+                            <span class="page-link">1</span>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">2</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">3</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Office Modal -->
+    <div class="modal fade" id="addOfficeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Office</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addOfficeForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="addOfficeName" class="form-label">Office Name</label>
+                                <input type="text" class="form-control" id="addOfficeName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addOfficeCode" class="form-label">Office Code</label>
+                                <input type="text" class="form-control" id="addOfficeCode" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="addOfficeAddress" class="form-label">Address</label>
+                                <textarea class="form-control" id="addOfficeAddress" rows="2" required></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addOfficeCity" class="form-label">City</label>
+                                <input type="text" class="form-control" id="addOfficeCity" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addOfficeRegion" class="form-label">Region</label>
+                                <select class="form-select" id="addOfficeRegion" required>
+                                    <option value="">Select Region</option>
+                                    <option value="metro-manila">Metro Manila</option>
+                                    <option value="cebu">Cebu</option>
+                                    <option value="davao">Davao</option>
+                                    <option value="iloilo">Iloilo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addOfficeCapacity" class="form-label">Capacity</label>
+                                <input type="number" class="form-control" id="addOfficeCapacity" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addOfficeManager" class="form-label">Office Manager</label>
+                                <select class="form-select" id="addOfficeManager">
+                                    <option value="">Select Manager</option>
+                                    <option value="sarah-davis">Sarah Davis</option>
+                                    <option value="john-smith">John Smith</option>
+                                    <option value="maria-santos">Maria Santos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="saveNewOffice">Add Office</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Office Modal -->
+    <div class="modal fade" id="editOfficeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Office</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editOfficeForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editOfficeName" class="form-label">Office Name</label>
+                                <input type="text" class="form-control" id="editOfficeName" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editOfficeCode" class="form-label">Office Code</label>
+                                <input type="text" class="form-control" id="editOfficeCode" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="editOfficeAddress" class="form-label">Address</label>
+                                <textarea class="form-control" id="editOfficeAddress" rows="2" required></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editOfficeCity" class="form-label">City</label>
+                                <input type="text" class="form-control" id="editOfficeCity" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editOfficeRegion" class="form-label">Region</label>
+                                <select class="form-select" id="editOfficeRegion" required>
+                                    <option value="">Select Region</option>
+                                    <option value="metro-manila">Metro Manila</option>
+                                    <option value="cebu">Cebu</option>
+                                    <option value="davao">Davao</option>
+                                    <option value="iloilo">Iloilo</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editOfficeCapacity" class="form-label">Capacity</label>
+                                <input type="number" class="form-control" id="editOfficeCapacity" min="1" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editOfficeStatus" class="form-label">Status</label>
+                                <select class="form-select" id="editOfficeStatus" required>
+                                    <option value="">Select Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="maintenance">Under Maintenance</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="editOfficeManager" class="form-label">Office Manager</label>
+                                <select class="form-select" id="editOfficeManager">
+                                    <option value="">Select Manager</option>
+                                    <option value="sarah-davis">Sarah Davis</option>
+                                    <option value="john-smith">John Smith</option>
+                                    <option value="maria-santos">Maria Santos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveOfficeChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Employees Modal -->
+    <div class="modal fade" id="assignEmployeesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Employees to Office</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Office: <span id="assignOfficeTitle">Main Office</span></label>
+                        <div class="text-muted">Capacity: <span id="assignOfficeCapacity">100</span> | Currently Assigned: <span id="assignOfficeAssigned">85</span></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <input type="text" class="form-control" placeholder="Search employees..." id="employeeAssignSearch">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Available Employees</h6>
+                            <div class="employee-list border rounded p-2" style="height: 300px; overflow-y: auto;">
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">Alex Lee</div>
+                                        <small class="text-muted">Finance - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success assign-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">Robert Brown</div>
+                                        <small class="text-muted">Sales - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success assign-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2">
+                                    <div>
+                                        <div class="fw-medium">Lisa Wong</div>
+                                        <small class="text-muted">Marketing - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-success assign-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Assigned Employees</h6>
+                            <div class="employee-list border rounded p-2" style="height: 300px; overflow-y: auto;">
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">John Smith</div>
+                                        <small class="text-muted">Engineering - Manager</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger unassign-btn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <div class="fw-medium">Maria Johnson</div>
+                                        <small class="text-muted">Marketing - Employee</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger unassign-btn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                </div>
+                                <div class="employee-item d-flex justify-content-between align-items-center p-2">
+                                    <div>
+                                        <div class="fw-medium">Sarah Davis</div>
+                                        <small class="text-muted">HR - Admin</small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger unassign-btn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveAssignments">Save Assignments</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteOfficeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 48px;"></i>
+                        <h6>Are you sure you want to delete this office?</h6>
+                        <p class="text-muted mb-0">This action cannot be undone. All employee assignments will be removed.</p>
+                        <p class="fw-bold mt-2" id="deleteOfficeName">Office Name</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteOffice">Delete Office</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize office management functionality
+        function initOfficeManagement() {
+            setupSearch();
+            setupFilters();
+            setupTableInteractions();
+            setupModals();
+            addInteractiveEffects();
+        }
+
+        // Search functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('officeSearch');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim().toLowerCase();
+                filterOffices();
+                
+                // Visual feedback
+                if (searchTerm.length > 0) {
+                    this.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        this.style.borderColor = '#d1d5db';
+                    }, 1000);
+                }
+            });
+        }
+
+        // Filter functionality
+        function setupFilters() {
+            const filters = ['statusFilter', 'locationFilter', 'capacityFilter'];
+            
+            filters.forEach(filterId => {
+                const filter = document.getElementById(filterId);
+                filter.addEventListener('change', filterOffices);
+            });
+            
+            // Clear filters
+            document.getElementById('clearFilters').addEventListener('click', function() {
+                filters.forEach(filterId => {
+                    document.getElementById(filterId).value = '';
+                });
+                document.getElementById('officeSearch').value = '';
+                filterOffices();
+                
+                // Visual feedback
+                this.textContent = 'Cleared!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-times me-2"></i>Clear Filters';
+                }, 1000);
+            });
+        }
+
+        // Filter offices based on search and filter criteria
+        function filterOffices() {
+            const searchTerm = document.getElementById('officeSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value;
+            const capacityFilter = document.getElementById('capacityFilter').value;
+            
+            const rows = document.querySelectorAll('#officesTableBody tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const officeName = row.querySelector('.office-name').textContent.toLowerCase();
+                const officeLocation = row.querySelector('.office-location div').textContent.toLowerCase();
+                const status = row.querySelector('.status-badge').textContent.toLowerCase();
+                const capacity = parseInt(row.querySelector('.capacity-number').textContent);
+                
+                const matchesSearch = officeName.includes(searchTerm) || officeLocation.includes(searchTerm);
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesLocation = !locationFilter || officeLocation.includes(locationFilter.replace('-', ' '));
+                
+                let matchesCapacity = true;
+                if (capacityFilter) {
+                    switch (capacityFilter) {
+                        case 'small':
+                            matchesCapacity = capacity <= 20;
+                            break;
+                        case 'medium':
+                            matchesCapacity = capacity > 20 && capacity <= 50;
+                            break;
+                        case 'large':
+                            matchesCapacity = capacity > 50;
+                            break;
+                    }
+                }
+                
+                if (matchesSearch && matchesStatus && matchesLocation && matchesCapacity) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update showing info
+            const showingInfo = document.querySelector('.showing-info');
+            showingInfo.textContent = `Showing ${visibleCount} of 12 offices`;
+        }
+
+        // Table interactions
+        function setupTableInteractions() {
+            // Select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const officeCheckboxes = document.querySelectorAll('.office-checkbox');
+            
+            selectAllCheckbox.addEventListener('change', function() {
+                officeCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActionVisibility();
+            });
+            
+            // Individual checkboxes
+            officeCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const checkedBoxes = document.querySelectorAll('.office-checkbox:checked');
+                    selectAllCheckbox.checked = checkedBoxes.length === officeCheckboxes.length;
+                    selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < officeCheckboxes.length;
+                    updateBulkActionVisibility();
+                });
+            });
+            
+            // Action buttons
+            const actionButtons = document.querySelectorAll('.action-buttons .btn');
+            actionButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const action = this.title;
+                    const row = this.closest('tr');
+                    const officeName = row.querySelector('.office-name').textContent;
+                    
+                    console.log(`${action} action for office: ${officeName}`);
+                    
+                    // Visual feedback
+                    this.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        this.style.transform = '';
+                    }, 150);
+                });
+            });
+        }
+
+        // Setup modals
+        function setupModals() {
+            // Add Office button
+            const addOfficeBtn = document.querySelector('.add-office-btn');
+            addOfficeBtn.addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('addOfficeModal'));
+                modal.show();
+            });
+            
+            // Save new office
+            const saveNewOfficeBtn = document.getElementById('saveNewOffice');
+            saveNewOfficeBtn.addEventListener('click', function() {
+                const form = document.getElementById('addOfficeForm');
+                if (form.checkValidity()) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = 'Add Office';
+                        this.disabled = false;
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addOfficeModal'));
+                        modal.hide();
+                        form.reset();
+                        console.log('New office added successfully');
+                    }, 1500);
+                } else {
+                    form.reportValidity();
+                }
+            });
+            
+            // Edit office buttons
+            const editButtons = document.querySelectorAll('.action-buttons .btn-outline-primary');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const officeName = row.querySelector('.office-name').textContent;
+                    const officeCode = row.querySelector('.office-code').textContent;
+                    
+                    // Populate edit form with current data
+                    document.getElementById('editOfficeName').value = officeName;
+                    document.getElementById('editOfficeCode').value = officeCode;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('editOfficeModal'));
+                    modal.show();
+                });
+            });
+            
+            // Save office changes
+            const saveOfficeChangesBtn = document.getElementById('saveOfficeChanges');
+            saveOfficeChangesBtn.addEventListener('click', function() {
+                const form = document.getElementById('editOfficeForm');
+                if (form.checkValidity()) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = 'Save Changes';
+                        this.disabled = false;
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editOfficeModal'));
+                        modal.hide();
+                        console.log('Office changes saved successfully');
+                    }, 1500);
+                } else {
+                    form.reportValidity();
+                }
+            });
+            
+            // Assign employees buttons
+            const assignButtons = document.querySelectorAll('.action-buttons .btn-outline-info');
+            assignButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const officeName = row.querySelector('.office-name').textContent;
+                    const capacity = row.querySelector('.capacity-number').textContent;
+                    const assigned = row.querySelector('.assigned-count').textContent;
+                    
+                    document.getElementById('assignOfficeTitle').textContent = officeName;
+                    document.getElementById('assignOfficeCapacity').textContent = capacity;
+                    document.getElementById('assignOfficeAssigned').textContent = assigned;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('assignEmployeesModal'));
+                    modal.show();
+                });
+            });
+            
+            // Employee assignment functionality
+            setupEmployeeAssignment();
+            
+            // Delete office buttons
+            const deleteButtons = document.querySelectorAll('.action-buttons .btn-outline-danger');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const officeName = row.querySelector('.office-name').textContent;
+                    
+                    document.getElementById('deleteOfficeName').textContent = officeName;
+                    const modal = new bootstrap.Modal(document.getElementById('deleteOfficeModal'));
+                    modal.show();
+                });
+            });
+            
+            // Confirm delete office
+            const confirmDeleteBtn = document.getElementById('confirmDeleteOffice');
+            confirmDeleteBtn.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = 'Delete Office';
+                    this.disabled = false;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteOfficeModal'));
+                    modal.hide();
+                    console.log('Office deleted successfully');
+                }, 1500);
+            });
+        }
+
+        // Employee assignment functionality
+        function setupEmployeeAssignment() {
+            const assignButtons = document.querySelectorAll('.assign-btn');
+            const unassignButtons = document.querySelectorAll('.unassign-btn');
+            const saveAssignmentsBtn = document.getElementById('saveAssignments');
+            const employeeSearchInput = document.getElementById('employeeAssignSearch');
+            
+            // Assign employee buttons
+            assignButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeItem = this.closest('.employee-item');
+                    const employeeName = employeeItem.querySelector('.fw-medium').textContent;
+                    console.log(`Assigning ${employeeName} to office`);
+                    
+                    // Visual feedback
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-arrow-right"></i>';
+                    }, 500);
+                });
+            });
+            
+            // Unassign employee buttons
+            unassignButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeItem = this.closest('.employee-item');
+                    const employeeName = employeeItem.querySelector('.fw-medium').textContent;
+                    console.log(`Unassigning ${employeeName} from office`);
+                    
+                    // Visual feedback
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-arrow-left"></i>';
+                    }, 500);
+                });
+            });
+            
+            // Save assignments
+            saveAssignmentsBtn.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = 'Save Assignments';
+                    this.disabled = false;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('assignEmployeesModal'));
+                    modal.hide();
+                    console.log('Employee assignments saved successfully');
+                }, 1500);
+            });
+            
+            // Employee search in assignment modal
+            employeeSearchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const employeeItems = document.querySelectorAll('.employee-item');
+                
+                employeeItems.forEach(item => {
+                    const employeeName = item.querySelector('.fw-medium').textContent.toLowerCase();
+                    const employeeRole = item.querySelector('.text-muted').textContent.toLowerCase();
+                    
+                    if (employeeName.includes(searchTerm) || employeeRole.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // Update bulk action visibility
+        function updateBulkActionVisibility() {
+            const checkedBoxes = document.querySelectorAll('.office-checkbox:checked');
+            console.log(`${checkedBoxes.length} offices selected`);
+        }
+
+        // Add interactive effects
+        function addInteractiveEffects() {
+            // Table row hover effects
+            const tableRows = document.querySelectorAll('#officesTableBody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+            
+            // Export and refresh buttons
+            const exportBtn = document.querySelector('.btn-outline-primary');
+            const refreshBtn = document.querySelector('.btn-outline-secondary');
+            
+            if (exportBtn) {
+                exportBtn.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
+                        this.disabled = false;
+                    }, 2000);
+                });
+            }
+            
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
+                        this.disabled = false;
+                    }, 1500);
+                });
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initOfficeManagement();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('officeSearch').focus();
+            }
+            
+            // Escape to clear search and filters
+            if (e.key === 'Escape') {
+                const searchInput = document.getElementById('officeSearch');
+                if (document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    filterOffices();
+                    searchInput.blur();
+                }
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="work-assignment.js"></script>
+{% endblock %}

@@ -1,0 +1,277 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Dashboard - Tachyon Log{% endblock %}
+
+{% set breadcrumb1 = "Dashboard" %}
+{% set breadcrumb2 = "" %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="page-title">
+                        <h1 class="mb-1">Hello, {{ user.first_name }}</h1>
+                        <p id="current-date" class="mb-0 text-muted">{{ current_time }}</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="page-actions d-flex justify-content-md-end gap-3 mt-3 mt-md-0">
+                        <div class="search-container flex-grow-1 flex-md-grow-0">
+                            <input type="text" class="form-control" placeholder="Search employees..." id="employeeSearch">
+                        </div>
+                        <button class="btn btn-primary export-btn">Export Report</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section mb-4">
+            <div class="row g-3">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Total Employees</span>
+                            <div class="stat-icon total-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">
+                            {% if total_employees %}
+                                {{ total_employees }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Present Today</span>
+                            <div class="stat-icon present-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">
+                            {% if on_duty_list_today %}
+                                {{ on_duty_list_today }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                        <!-- <div class="stat-change positive">+5 from yesterday</div> -->
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Late Arrivals</span>
+                            <div class="stat-icon late-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">
+                            {% if late_employees %}
+                                {{ late_employees }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                        <!-- <div class="stat-change negative">+3 from yesterday</div> -->
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Pending Approvals</span>
+                            <div class="stat-icon pending-icon">
+                                <i class="fas fa-hourglass-half"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">0</div>
+                        <!-- <div class="stat-change neutral">Same as yesterday</div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-section">
+            <div class="row g-4">
+                <!-- Recent Activity -->
+                <div class="col-xl-6 col-lg-12">
+                    <div class="content-card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h2 class="mb-0">Recent Activity</h2>
+                            <button class="btn btn-link btn-sm view-all p-0">View All</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-list">
+                                <div class="activity-item d-flex align-items-center">
+                                    {% for activity in recent_activities %}
+                                        <div class="activity-avatar me-3">{{ user.first_name[0] }}{{ user.last_name[0] }}</div>
+                                        <div class="activity-details flex-grow-1">
+                                            <div class="activity-name">{{ activity.name }}</div>
+                                            <div class="activity-action">{{ activity.action }}</div>
+                                            <div class="activity-time">{{ activity.time }}</div>
+                                        </div>
+                                        <div class="activity-status {{ activity.status_class }}">{{ activity.status }}</div>
+                                    {% endfor %}
+                                    <!-- <div class="activity-avatar me-3">JS</div>
+                                    <div class="activity-details flex-grow-1">
+                                        <div class="activity-name">John Smith</div>
+                                        <div class="activity-action">Checked in at 8:45 AM</div>
+                                        <div class="activity-time">2 minutes ago</div>
+                                    </div>
+                                    <div class="activity-status on-time">On Time</div> -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Department Overview -->
+                <div class="col-xl-6 col-lg-12">
+                    <div class="content-card h-100">
+                        <div class="card-header">
+                            <h2 class="mb-0">Department Overview</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="department-list">
+                                <div class="department-item d-flex justify-content-between align-items-center">
+                                    {% for office in offices %}
+                                        <div class="department-info">
+                                            <div class="department-name">{{ office.name }}</div>
+                                            <div class="department-stats">{{ office.employee_count }} employees</div>
+                                        </div>
+                                        <div class="department-metrics d-flex align-items-center">
+                                            <div class="metric me-3 text-end">
+                                                <span class="metric-label d-block">Present</span>
+                                                <span class="metric-value">{{ office.present_count }}</span>
+                                            </div>
+                                            <div class="attendance-bar">
+                                                <div class="attendance-fill" style="width: {{ office.percentage_count}}"></div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-xl-6 col-lg-6">
+                    <div class="content-card h-100">
+                        <div class="card-header">
+                            <h2 class="mb-0">Quick Actions</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <button class="btn action-button primary w-100 d-flex flex-column align-items-center">
+                                        <div class="action-icon mb-2">
+                                            <i class="fas fa-edit"></i>
+                                        </div>
+                                        <span>Manual Entry</span>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn action-button secondary w-100 d-flex flex-column align-items-center">
+                                        <div class="action-icon mb-2">
+                                            <i class="fas fa-check-double"></i>
+                                        </div>
+                                        <span>Approve Requests</span>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn action-button secondary w-100 d-flex flex-column align-items-center">
+                                        <div class="action-icon mb-2">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                        <span>Generate Report</span>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn action-button secondary w-100 d-flex flex-column align-items-center">
+                                        <div class="action-icon mb-2">
+                                            <i class="fas fa-cog"></i>
+                                        </div>
+                                        <span>Settings</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Summary -->
+                <div class="col-xl-6 col-lg-6">
+                    <div class="content-card h-100">
+                        <div class="card-header">
+                            <h2 class="mb-0">Today's Summary</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="summary-metrics">
+
+                                <!-- Average Hours Worked -->
+                                <div class="summary-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="summary-label">Average Hours Worked</div>
+                                        <div class="summary-value">{{ average_hours_worked }}</div>
+                                    </div>
+                                    <div class="summary-trend {% if average_hours_worked > 8 %}positive{% else %}negative{% endif %}">
+                                        {% if average_hours_worked > 4 %}
+                                            +{{ average_hours_worked - 4 }} hrs
+                                        {% else %}
+                                            {{ average_hours_worked - 4 }} hrs
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Overtime Hours -->
+                                <div class="summary-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="summary-label">Overtime Hours</div>
+                                        <div class="summary-value">{{ overtime_hours }}</div>
+                                    </div>
+                                    <div class="summary-trend {% if overtime_hours > 0 %}positive{% else %}negative{% endif %}">
+                                        {% if overtime_hours > 0 %}
+                                            +{{ overtime_hours }} hrs
+                                        {% else %}
+                                            {{ overtime_hours }} hrs
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- 4-Hour Compliance -->
+                                <div class="summary-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="summary-label">4-Hour Compliance</div>
+                                        <div class="summary-value">{{ compliance_hours }}%</div>
+                                    </div>
+                                    <div class="summary-trend {% if compliance_hours > 75 %}positive{% else %}negative{% endif %}">
+                                        {% if compliance_hours > 75 %}
+                                            +{{ compliance_hours - 75 }}%
+                                        {% else %}
+                                            {{ compliance_hours - 75 }}%
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -1,0 +1,968 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% set breadcrumb1 = "Time Logs" %}
+{% set breadcrumb2 = "Manual Logs" %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="page-title">
+                        <h1 class="mb-1">Manual Logs</h1>
+                        <p class="mb-0 text-muted">Add or edit attendance logs manually for corrections and special cases</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="page-actions d-flex justify-content-md-end gap-3 mt-3 mt-md-0">
+                        <div class="search-container flex-grow-1 flex-md-grow-0">
+                            <input type="text" class="form-control" placeholder="Search employees..." id="manualLogsSearch">
+                        </div>
+                        <button class="btn btn-success add-manual-log-btn">
+                            <i class="fas fa-plus me-2"></i>Add Manual Log
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats-section mb-4">
+            <div class="row g-3">
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Manual Entries Today</span>
+                            <div class="stat-icon total-icon">
+                                <i class="fas fa-edit"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">23</div>
+                        <div class="stat-change positive">+8 from yesterday</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Pending Approvals</span>
+                            <div class="stat-icon pending-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">7</div>
+                        <div class="stat-change negative">+2 from yesterday</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">Corrections Made</span>
+                            <div class="stat-icon late-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">15</div>
+                        <div class="stat-change positive">+3 from yesterday</div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-lg-6 col-md-6">
+                    <div class="stat-card h-100">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="stat-title">This Week Total</span>
+                            <div class="stat-icon present-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value">89</div>
+                        <div class="stat-change neutral">Same as last week</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="content-card mb-4">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-3">
+                        <label class="form-label">Date Range</label>
+                        <input type="date" class="form-control" id="dateFilter" value="2025-01-15">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Department</label>
+                        <select class="form-select" id="departmentFilter">
+                            <option value="">All Departments</option>
+                            <option value="engineering">Engineering</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="sales">Sales</option>
+                            <option value="hr">HR</option>
+                            <option value="finance">Finance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Log Type</label>
+                        <select class="form-select" id="logTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="manual-entry">Manual Entry</option>
+                            <option value="correction">Correction</option>
+                            <option value="missed-punch">Missed Punch</option>
+                            <option value="overtime">Overtime</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-outline-secondary w-100" id="clearFilters">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Manual Logs Table -->
+        <div class="content-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">Manual Log Entries</h2>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="refreshLogs">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Employee</th>
+                                <th>Department</th>
+                                <th>Date</th>
+                                <th>Log Type</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Total Hours</th>
+                                <th>Added By</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manualLogsTableBody">
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">JS</div>
+                                        <div>
+                                            <div class="user-name">John Smith</div>
+                                            <div class="user-email">john.smith@company.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="department-badge engineering">Engineering</span>
+                                </td>
+                                <td>
+                                    <div class="date-display">
+                                        <div class="fw-medium">Jan 15, 2025</div>
+                                        <small class="text-muted">Today</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="log-type-badge correction">Correction</span>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">8:30 AM</div>
+                                        <small class="text-muted">Modified</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">5:45 PM</div>
+                                        <small class="text-muted">Modified</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">8.25 hrs</div>
+                                        <small class="text-success">Complete</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="added-by">
+                                        <div class="fw-medium">Sarah Davis</div>
+                                        <small class="text-muted">HR Admin</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge approved">Approved</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Log">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">MJ</div>
+                                        <div>
+                                            <div class="user-name">Maria Johnson</div>
+                                            <div class="user-email">maria.johnson@company.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="department-badge marketing">Marketing</span>
+                                </td>
+                                <td>
+                                    <div class="date-display">
+                                        <div class="fw-medium">Jan 14, 2025</div>
+                                        <small class="text-muted">Yesterday</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="log-type-badge missed-punch">Missed Punch</span>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">9:00 AM</div>
+                                        <small class="text-muted">Added</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">6:00 PM</div>
+                                        <small class="text-muted">Added</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">8.00 hrs</div>
+                                        <small class="text-success">Complete</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="added-by">
+                                        <div class="fw-medium">John Smith</div>
+                                        <small class="text-muted">Manager</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge pending">Pending</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Log">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">RB</div>
+                                        <div>
+                                            <div class="user-name">Robert Brown</div>
+                                            <div class="user-email">robert.brown@company.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="department-badge sales">Sales</span>
+                                </td>
+                                <td>
+                                    <div class="date-display">
+                                        <div class="fw-medium">Jan 13, 2025</div>
+                                        <small class="text-muted">2 days ago</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="log-type-badge overtime">Overtime</span>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">8:00 AM</div>
+                                        <small class="text-muted">Regular</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">10:30 PM</div>
+                                        <small class="text-muted">Extended</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">13.50 hrs</div>
+                                        <small class="text-info">Overtime</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="added-by">
+                                        <div class="fw-medium">Sarah Davis</div>
+                                        <small class="text-muted">HR Admin</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge approved">Approved</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Log">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">AL</div>
+                                        <div>
+                                            <div class="user-name">Alex Lee</div>
+                                            <div class="user-email">alex.lee@company.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="department-badge finance">Finance</span>
+                                </td>
+                                <td>
+                                    <div class="date-display">
+                                        <div class="fw-medium">Jan 12, 2025</div>
+                                        <small class="text-muted">3 days ago</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="log-type-badge manual-entry">Manual Entry</span>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">8:45 AM</div>
+                                        <small class="text-muted">Added</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="time-log">
+                                        <div class="time-display">5:30 PM</div>
+                                        <small class="text-muted">Added</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="total-hours">
+                                        <div class="hours-display">7.75 hrs</div>
+                                        <small class="text-success">Complete</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="added-by">
+                                        <div class="fw-medium">Maria Santos</div>
+                                        <small class="text-muted">Supervisor</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge rejected">Rejected</span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Log">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center">
+                <div class="showing-info">
+                    Showing 1-4 of 89 manual log entries
+                </div>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                        <li class="page-item active">
+                            <span class="page-link">1</span>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">2</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">3</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Manual Log Modal -->
+    <div class="modal fade" id="addManualLogModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Manual Log Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addManualLogForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="addEmployee" class="form-label">Employee</label>
+                                <select class="form-select" id="addEmployee" required>
+                                    <option value="">Select Employee</option>
+                                    <option value="john-smith">John Smith - Engineering</option>
+                                    <option value="maria-johnson">Maria Johnson - Marketing</option>
+                                    <option value="robert-brown">Robert Brown - Sales</option>
+                                    <option value="sarah-davis">Sarah Davis - HR</option>
+                                    <option value="alex-lee">Alex Lee - Finance</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addLogDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="addLogDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addLogType" class="form-label">Log Type</label>
+                                <select class="form-select" id="addLogType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="manual-entry">Manual Entry</option>
+                                    <option value="correction">Correction</option>
+                                    <option value="missed-punch">Missed Punch</option>
+                                    <option value="overtime">Overtime</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addReason" class="form-label">Reason</label>
+                                <select class="form-select" id="addReason" required>
+                                    <option value="">Select Reason</option>
+                                    <option value="forgot-to-punch">Forgot to Punch</option>
+                                    <option value="system-error">System Error</option>
+                                    <option value="approved-overtime">Approved Overtime</option>
+                                    <option value="field-work">Field Work</option>
+                                    <option value="meeting-offsite">Meeting Offsite</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addTimeIn" class="form-label">Time In</label>
+                                <input type="time" class="form-control" id="addTimeIn" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addTimeOut" class="form-label">Time Out</label>
+                                <input type="time" class="form-control" id="addTimeOut" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addBreakStart" class="form-label">Break Start (Optional)</label>
+                                <input type="time" class="form-control" id="addBreakStart">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addBreakEnd" class="form-label">Break End (Optional)</label>
+                                <input type="time" class="form-control" id="addBreakEnd">
+                            </div>
+                            <div class="col-12">
+                                <label for="addNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="addNotes" rows="3" placeholder="Additional notes or explanation for this manual entry..."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="addRequiresApproval">
+                                    <label class="form-check-label" for="addRequiresApproval">
+                                        Requires supervisor approval
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="saveManualLog">Add Manual Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Manual Log Modal -->
+    <div class="modal fade" id="editManualLogModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Manual Log Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editManualLogForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editEmployee" class="form-label">Employee</label>
+                                <input type="text" class="form-control" id="editEmployee" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editLogDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="editLogDate" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editLogType" class="form-label">Log Type</label>
+                                <select class="form-select" id="editLogType" required>
+                                    <option value="manual-entry">Manual Entry</option>
+                                    <option value="correction">Correction</option>
+                                    <option value="missed-punch">Missed Punch</option>
+                                    <option value="overtime">Overtime</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editStatus" class="form-label">Status</label>
+                                <select class="form-select" id="editStatus" required>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTimeIn" class="form-label">Time In</label>
+                                <input type="time" class="form-control" id="editTimeIn" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editTimeOut" class="form-label">Time Out</label>
+                                <input type="time" class="form-control" id="editTimeOut" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editBreakStart" class="form-label">Break Start (Optional)</label>
+                                <input type="time" class="form-control" id="editBreakStart">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editBreakEnd" class="form-label">Break End (Optional)</label>
+                                <input type="time" class="form-control" id="editBreakEnd">
+                            </div>
+                            <div class="col-12">
+                                <label for="editNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="editNotes" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveManualLogChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteManualLogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Delete</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 48px;"></i>
+                        <h6>Are you sure you want to delete this manual log entry?</h6>
+                        <p class="text-muted mb-0">This action cannot be undone.</p>
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <div class="fw-bold" id="deleteLogEmployee">Employee Name</div>
+                            <div class="text-muted" id="deleteLogDetails">Date and time details</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteManualLog">Delete Entry</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize manual logs functionality
+        function initManualLogs() {
+            setupSearch();
+            setupFilters();
+            setupTableInteractions();
+            setupModals();
+            addInteractiveEffects();
+        }
+
+        // Search functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('manualLogsSearch');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.trim().toLowerCase();
+                filterLogs();
+                
+                // Visual feedback
+                if (searchTerm.length > 0) {
+                    this.style.borderColor = '#10b981';
+                    setTimeout(() => {
+                        this.style.borderColor = '#d1d5db';
+                    }, 1000);
+                }
+            });
+        }
+
+        // Filter functionality
+        function setupFilters() {
+            const filters = ['dateFilter', 'departmentFilter', 'logTypeFilter'];
+            
+            filters.forEach(filterId => {
+                const filter = document.getElementById(filterId);
+                filter.addEventListener('change', filterLogs);
+            });
+            
+            // Clear filters
+            document.getElementById('clearFilters').addEventListener('click', function() {
+                filters.forEach(filterId => {
+                    if (filterId !== 'dateFilter') {
+                        document.getElementById(filterId).value = '';
+                    }
+                });
+                document.getElementById('manualLogsSearch').value = '';
+                filterLogs();
+                
+                // Visual feedback
+                this.textContent = 'Cleared!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-times me-2"></i>Clear Filters';
+                }, 1000);
+            });
+        }
+
+        // Filter logs based on search and filter criteria
+        function filterLogs() {
+            const searchTerm = document.getElementById('manualLogsSearch').value.toLowerCase();
+            const dateFilter = document.getElementById('dateFilter').value;
+            const departmentFilter = document.getElementById('departmentFilter').value;
+            const logTypeFilter = document.getElementById('logTypeFilter').value;
+            
+            const rows = document.querySelectorAll('#manualLogsTableBody tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const employeeName = row.querySelector('.user-name').textContent.toLowerCase();
+                const employeeEmail = row.querySelector('.user-email').textContent.toLowerCase();
+                const department = row.querySelector('.department-badge').textContent.toLowerCase();
+                const logType = row.querySelector('.log-type-badge').textContent.toLowerCase().replace(' ', '-');
+                
+                const matchesSearch = employeeName.includes(searchTerm) || employeeEmail.includes(searchTerm);
+                const matchesDepartment = !departmentFilter || department === departmentFilter;
+                const matchesLogType = !logTypeFilter || logType === logTypeFilter;
+                
+                if (matchesSearch && matchesDepartment && matchesLogType) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update showing info
+            const showingInfo = document.querySelector('.showing-info');
+            showingInfo.textContent = `Showing 1-${visibleCount} of 89 manual log entries`;
+        }
+
+        // Table interactions
+        function setupTableInteractions() {
+            // Edit buttons
+            const editButtons = document.querySelectorAll('.action-buttons .btn-outline-primary');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const employeeName = row.querySelector('.user-name').textContent;
+                    
+                    // Populate edit modal with current data
+                    populateEditModal(row);
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('editManualLogModal'));
+                    modal.show();
+                    
+                    console.log(`Editing manual log for: ${employeeName}`);
+                });
+            });
+            
+            // Delete buttons
+            const deleteButtons = document.querySelectorAll('.action-buttons .btn-outline-danger');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const employeeName = row.querySelector('.user-name').textContent;
+                    const dateDisplay = row.querySelector('.date-display .fw-medium').textContent;
+                    const logType = row.querySelector('.log-type-badge').textContent;
+                    
+                    document.getElementById('deleteLogEmployee').textContent = employeeName;
+                    document.getElementById('deleteLogDetails').textContent = `${dateDisplay} - ${logType}`;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deleteManualLogModal'));
+                    modal.show();
+                    
+                    console.log(`Delete confirmation for: ${employeeName}`);
+                });
+            });
+            
+            // Export and refresh buttons
+            const exportBtn = document.querySelector('.btn-outline-primary');
+            const refreshBtn = document.getElementById('refreshLogs');
+            
+            if (exportBtn && exportBtn.textContent.includes('Export')) {
+                exportBtn.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
+                        this.disabled = false;
+                        console.log('Manual logs exported');
+                    }, 2000);
+                });
+            }
+            
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
+                        this.disabled = false;
+                        console.log('Manual logs refreshed');
+                    }, 1500);
+                });
+            }
+        }
+
+        // Setup modals
+        function setupModals() {
+            // Add Manual Log button
+            const addManualLogBtn = document.querySelector('.add-manual-log-btn');
+            addManualLogBtn.addEventListener('click', function() {
+                // Set default date to today
+                document.getElementById('addLogDate').value = new Date().toISOString().split('T')[0];
+                
+                const modal = new bootstrap.Modal(document.getElementById('addManualLogModal'));
+                modal.show();
+            });
+            
+            // Save new manual log
+            const saveManualLogBtn = document.getElementById('saveManualLog');
+            saveManualLogBtn.addEventListener('click', function() {
+                const form = document.getElementById('addManualLogForm');
+                if (form.checkValidity()) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = 'Add Manual Log';
+                        this.disabled = false;
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addManualLogModal'));
+                        modal.hide();
+                        form.reset();
+                        console.log('New manual log added successfully');
+                    }, 1500);
+                } else {
+                    form.reportValidity();
+                }
+            });
+            
+            // Save manual log changes
+            const saveManualLogChangesBtn = document.getElementById('saveManualLogChanges');
+            saveManualLogChangesBtn.addEventListener('click', function() {
+                const form = document.getElementById('editManualLogForm');
+                if (form.checkValidity()) {
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                    this.disabled = true;
+                    
+                    setTimeout(() => {
+                        this.innerHTML = 'Save Changes';
+                        this.disabled = false;
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editManualLogModal'));
+                        modal.hide();
+                        console.log('Manual log changes saved successfully');
+                    }, 1500);
+                } else {
+                    form.reportValidity();
+                }
+            });
+            
+            // Confirm delete manual log
+            const confirmDeleteBtn = document.getElementById('confirmDeleteManualLog');
+            confirmDeleteBtn.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+                this.disabled = true;
+                
+                setTimeout(() => {
+                    this.innerHTML = 'Delete Entry';
+                    this.disabled = false;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteManualLogModal'));
+                    modal.hide();
+                    console.log('Manual log deleted successfully');
+                }, 1500);
+            });
+            
+            // Time calculation
+            setupTimeCalculation();
+        }
+
+        // Setup time calculation
+        function setupTimeCalculation() {
+            const timeInputs = ['addTimeIn', 'addTimeOut', 'editTimeIn', 'editTimeOut'];
+            
+            timeInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('change', function() {
+                        calculateTotalHours(this.closest('form'));
+                    });
+                }
+            });
+        }
+
+        // Calculate total hours
+        function calculateTotalHours(form) {
+            const timeInInput = form.querySelector('[id$="TimeIn"]');
+            const timeOutInput = form.querySelector('[id$="TimeOut"]');
+            
+            if (timeInInput && timeOutInput && timeInInput.value && timeOutInput.value) {
+                const timeIn = new Date(`2000-01-01 ${timeInInput.value}`);
+                const timeOut = new Date(`2000-01-01 ${timeOutInput.value}`);
+                
+                let diffMs = timeOut - timeIn;
+                if (diffMs < 0) {
+                    // Handle overnight shift
+                    diffMs += 24 * 60 * 60 * 1000;
+                }
+                
+                const hours = diffMs / (1000 * 60 * 60);
+                console.log(`Calculated hours: ${hours.toFixed(2)}`);
+            }
+        }
+
+        // Populate edit modal
+        function populateEditModal(row) {
+            const employeeName = row.querySelector('.user-name').textContent;
+            const logType = row.querySelector('.log-type-badge').textContent.toLowerCase().replace(' ', '-');
+            const status = row.querySelector('.status-badge').textContent.toLowerCase();
+            const timeIn = row.querySelector('.time-log .time-display').textContent;
+            
+            document.getElementById('editEmployee').value = employeeName;
+            document.getElementById('editLogType').value = logType;
+            document.getElementById('editStatus').value = status;
+            
+            // Convert time format (8:30 AM -> 08:30)
+            const time24 = convertTo24Hour(timeIn);
+            document.getElementById('editTimeIn').value = time24;
+        }
+
+        // Convert 12-hour to 24-hour format
+        function convertTo24Hour(time12h) {
+            const [time, modifier] = time12h.split(' ');
+            let [hours, minutes] = time.split(':');
+            
+            if (hours === '12') {
+                hours = '00';
+            }
+            
+            if (modifier === 'PM') {
+                hours = parseInt(hours, 10) + 12;
+            }
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        }
+
+        // Add interactive effects
+        function addInteractiveEffects() {
+            // Table row hover effects
+            const tableRows = document.querySelectorAll('#manualLogsTableBody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+            
+            // Status badge hover effects
+            const statusBadges = document.querySelectorAll('.status-badge, .log-type-badge');
+            statusBadges.forEach(badge => {
+                badge.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05)';
+                });
+                
+                badge.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initManualLogs();
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('manualLogsSearch').focus();
+            }
+            
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                const searchInput = document.getElementById('manualLogsSearch');
+                if (document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    filterLogs();
+                    searchInput.blur();
+                }
+            }
+            
+            // Ctrl/Cmd + N to add new manual log
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                document.querySelector('.add-manual-log-btn').click();
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="manual-logs.js"></script>
+{% endblock %}
