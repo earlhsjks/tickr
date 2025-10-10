@@ -6,7 +6,7 @@ import pandas as pd
 import io
 from collections import defaultdict
 from datetime import datetime, timedelta
-from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs, AttendanceInconsistency
+from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text, or_
 from flask_apscheduler import APScheduler
@@ -28,61 +28,29 @@ def parse_time(time_str):
     except ValueError:
         return None  # Handle incorrect formats safely
 
-def log_entry(admin_id, action, details=None):
-    log_entry = Logs(
-        admin_id=admin_id,
-        action=action,
-        details=details,
-        timestamp=datetime.now()
+def systemLogEntry(userId, action, details=None):
+    entry = Logs(
+        userId = userId,
+        action = action,
+        details = details,
+        timestamp = datetime.now()
     )
 
-    db.session.add(log_entry)
+    db.session.add(entry)
     db.session.commit()
 
+""" 
+FUNTION FOR LOG LOGGING (example)
+systemLogEntry(
+    admin_id=current_user.user_id,
+    action=f"Force Clocked Out {user_id}",
+    details=f"Clock-out set to {attendance.clock_out.strftime('%Y-%m-%d %H:%M:%S')}"
+)
+ """
 class Config:
     SCHEDULER_API_ENABLED = True
 
 scheduler = APScheduler()
-
-def increment_user_year_job():
-    today = datetime.now()
-    if today.month == 7 and today.day == 1:
-        users = User.query.all()
-        for user in users:
-            if user.year:
-                try:
-                    user.year = str(int(user.year) + 1)
-                except ValueError:
-                    continue
-        db.session.commit()
-
-def auto_inactivate_users_job():
-    threshold = datetime.now() - timedelta(days=90)
-    inactive_users = User.query.filter(
-        or_(User.last_login == None, User.last_login < threshold),
-        User.status == 'active'
-    ).all()
-    for user in inactive_users:
-        user.status = 'inactive'
-    db.session.commit()
-
-def auto_delete_gia_users_job():
-    threshold = datetime.now() - timedelta(days=90)
-    gia_users = User.query.filter(
-        User.role == 'gia',
-        or_(User.last_login == None, User.last_login < threshold)
-    ).all()
-    for user in gia_users:
-        db.session.delete(user)
-    db.session.commit()
-
-def register_jobs(app):
-    scheduler.init_app(app)
-    scheduler.start()
-
-    scheduler.add_job(id='increment_year', func=increment_user_year_job, trigger='cron', month=7, day=1, hour=0)
-    scheduler.add_job(id='auto_inactivate', func=auto_inactivate_users_job, trigger='cron', hour=1)
-    scheduler.add_job(id='auto_delete_gia', func=auto_delete_gia_users_job, trigger='cron', hour=2)
 
 # Admin Login
 @admin_bp.route('/login', methods=['GET', 'POST'])
@@ -93,7 +61,7 @@ def login():
 
         user = User.query.filter(
             User.user_id == user_id,
-            User.role.in_(["superadmin", "admin", "head", "staff"])
+            User.role.in_(["superadmin", "admin"])
         ).first()
 
         if user and check_password_hash(user.password, password):
@@ -121,97 +89,9 @@ def admin_dashboard():
     
     # Exclude superadmin from statistics
     total_employees = User.query.filter(User.role != "superadmin").count()
-    offices = Office.query.all()
 
     # Today's Date
     today = datetime.now().date()
-
-    # Fetch on-duty employees (clocked in today, not clocked out)
-    on_duty_today_list = (
-        db.session.query(
-            User.user_id,
-            User.first_name,
-            User.last_name,
-            Attendance.clock_in
-        )
-        .join(Attendance, Attendance.user_id == User.user_id)
-        .filter(
-            Attendance.clock_out.is_(None),
-            db.func.date(Attendance.clock_in) == today  # Only today
-        )
-        .all()
-    )
-
-    # Fetch employees who forgot to clock out (previous days)
-    forgot_to_clock_out_list = (
-        db.session.query(
-            User.user_id,
-            User.first_name,
-            User.last_name,
-            Attendance.clock_in
-        )
-        .join(Attendance, Attendance.user_id == User.user_id)
-        .filter(
-            Attendance.clock_out.is_(None),
-            db.func.date(Attendance.clock_in) < today  # Before today
-        )
-        .all()
-    )
-
-    # Fetch attendance inconsistencies
-    late_employees = (
-        AttendanceInconsistency.query.filter_by(issue_type="Late", date=today).count()
-    )
-    early_out_employees = (
-        AttendanceInconsistency.query.filter_by(issue_type="Early Out", date=today).count()
-    )
-    overtime_employees = (
-        AttendanceInconsistency.query.filter_by(issue_type="Overtime", date=today).count()
-    )
-
-    # Employees who are absent based on schedule
-    absent_employees = AttendanceInconsistency.query.filter_by(issue_type="Absent", date=today).count()
-
-    # Fetch attendance inconsistencies and map them by user_id and date
-    inconsistencies = {}
-    inconsistency_records = AttendanceInconsistency.query.all()
-
-    for record in inconsistency_records:
-        date_str = record.date.strftime('%Y-%m-%d')  # Ensure proper format
-        if record.user_id not in inconsistencies:
-            inconsistencies[record.user_id] = {}
-        if date_str not in inconsistencies[record.user_id]:
-            inconsistencies[record.user_id][date_str] = []
-        inconsistencies[record.user_id][date_str].append(record.issue_type)
-
-    # Fetch number of present on specific for each office
-    for office in offices:
-        office.attendance_percentage = 0
-        office.present_count = (
-            db.session.query(Attendance)
-            .join(User, User.user_id == Attendance.user_id)
-            .filter(
-                User.office_id == office.id,
-                Attendance.clock_out.isnot(None),  # Only count those who clocked out
-                db.func.date(Attendance.clock_in) == today  # Only today's records
-            )
-            .count()
-        )
-
-    # Calculate attendance percentage for each office
-    for office in offices:
-        if total_employees > 0:
-            office.attendance_percentage = (office.present_count / total_employees) * 100
-        else:
-            office.attendance_percentage = 0
-
-    # Total  employees per office
-    for office in offices:
-        office.employee_count = (
-            db.session.query(User)
-            .filter(User.office_id == office.id, User.role != "superadmin" and User.status != "head" and User.status != "staff")
-            .count()
-        )
 
     # Dashboard Summary
     average_hours_worked = (
@@ -244,74 +124,13 @@ def admin_dashboard():
         'admin/dashboard.html',
         user=current_user,
         total_employees=total_employees,
-        late_employees=late_employees,
-        early_out_employees=early_out_employees,
-        overtime_employees=overtime_employees,
-        absent_employees=absent_employees,
-        offices=offices,
         average_hours_worked=average_hours_worked,
         overtime_hours=overtime_hours,
         compliance_hours=compliance_hours,
-        on_duty_today_list=on_duty_today_list,
-        forgot_to_clock_out_list=forgot_to_clock_out_list,
         current_time = datetime.now().strftime("%A, %B %d, %Y"),
-        inconsistencies=inconsistencies
     )
 
-@admin_bp.route('/force-clock-out/<string:user_id>', methods=['POST'])
-@login_required
-def force_clock_out(user_id):
-    """Allows admins to forcibly clock out an employee, ensuring schedule end time is logged if applicable."""
-    
-    # Only superadmin or admin can use this
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized access!", "danger")
-        return render_template('auth/admin.html')
-
-    # Get the latest active attendance record
-    attendance = Attendance.query.filter(
-        Attendance.user_id == user_id,
-        Attendance.clock_out.is_(None)  # Only employees still on duty
-    ).order_by(Attendance.clock_in.desc()).first()
-
-    if not attendance:
-        flash("Employee is not currently on duty!", "danger")
-        return redirect(url_for("admin.dashboard"))
-
-    # Get the employee's schedule for today
-    today_day = datetime.today().strftime("%A")
-    schedule = Schedule.query.filter_by(user_id=user_id, day=today_day).first()
-
-    # Default clock-out time is now
-    actual_clock_out = datetime.now()
-
-    if schedule:
-        schedule_end = datetime.combine(actual_clock_out.date(), schedule.end_time)
-
-        # If admin forces clock-out **after** scheduled end time → log schedule end instead
-        if actual_clock_out >= schedule_end:
-            attendance.clock_out = schedule_end
-        else:
-            attendance.clock_out = actual_clock_out  # Normal clock-out
-    else:
-        # No schedule found → log the actual clock-out time
-        attendance.clock_out = actual_clock_out
-
-    db.session.commit()
-
-    # Log the action
-    log_entry = Logs(
-        admin_id=current_user.user_id,
-        action=f"Force Clocked Out {user_id}",
-        details=f"Clock-out set to {attendance.clock_out.strftime('%Y-%m-%d %H:%M:%S')}"
-    )
-    db.session.add(log_entry)
-    db.session.commit()
-
-    flash("Employee successfully clocked out!", "success")
-    return redirect(url_for("admin.admin_dashboard"))  # Redirect back to dashboard
-
-# Admin Attendance
+# Attendance 
 @admin_bp.route('/attendance-records', methods=['GET', 'POST'])
 @login_required
 def admin_attendance():
@@ -378,7 +197,6 @@ def users():
         return render_template('auth/admin.html')
 
     users = User.query.filter(User.role != "superadmin").all()
-    offices = Office.query.all()
     
     # find recent login for each user
     # for user in users:
@@ -386,17 +204,11 @@ def users():
     #     user.last_login = recent_log.timestamp if recent_log else "Never"
         
     # Get the role head office names
-    for user in users:
-        if user.role == 'head':
-            office = Office.query.filter_by(unit_head_id=user.user_id).first()
-            user.office_name = office.name if office else "Not Assigned"
-        else:
-            user.office_name = "Not Applicable"
-    
+
     return render_template('admin/users.html',
                            users=users,
                            current_user=current_user,
-                           offices=offices)
+    )
 
 # GET USER DETAILS AND JSONIFY
 @admin_bp.route('/user/<string:user_id>')

@@ -10,69 +10,24 @@ db = SQLAlchemy()
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
 
-    user_id = db.Column(db.String(50), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(50), unique=True, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
-    middle_name = db.Column(db.String(50), nullable=True)
-    # course = db.Column(db.String(50), nullable=True)
-    # year = db.Column(db.String(10), nullable=True)
+    middle_name = db.Column(db.String(50))
     password = db.Column(db.String(200), nullable=False)
-
-    role = db.Column(db.String(20), nullable=False)  # String role for legacy/backend logic
-    # office_id = db.Column(db.Integer, db.ForeignKey('office.office_id'), nullable=True, index=True)
+    role = db.Column(db.String(20), nullable=False, default='employee')  # admin | employee
     status = db.Column(db.String(20), nullable=False, default='active')
 
-    # office = db.relationship('Office', backref='users', foreign_keys=[office_id])
-
-    def has_permission(self, perm_name):
-        return db.session.query(RolePermission).join(Permission).filter(
-            RolePermission.role_id == self.role_id,
-            Permission.name == perm_name
-        ).first() is not None
-
     def set_password(self, password):
-        self.password = generate_password_hash(password) if password else self.password
+        if password:
+            self.password = generate_password_hash(password)
 
     def get_id(self):
         return str(self.user_id)
 
     def __repr__(self):
-        return f"<User {self.user_id}, Role={self.role}>"
-
-### PERMISSIONS ###
-class Permission(db.Model):
-    __tablename__ = 'permissions'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
-
-class RolePermission(db.Model):
-    __tablename__ = 'role_permissions'
-
-    id = db.Column(db.Integer, primary_key=True)
-    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), nullable=False)
-    permission_id = db.Column(db.Integer, db.ForeignKey('permissions.id'), nullable=False)
-
-    role = db.relationship('Role', backref='permissions')
-    permission = db.relationship('Permission', backref='role_permissions')
-
-### OFFICE ###
-# class Office(db.Model):
-#     __tablename__ = 'office'
-
-#     office_id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(50), nullable=False)
-#     campus = db.Column(db.String(50), nullable=False)
-#     unit_head_id = db.Column(
-#         db.String(50),
-#         db.ForeignKey('user.user_id', use_alter=True),
-#         nullable=False
-#     )
-
-#     unit_head = db.relationship('User', foreign_keys=[unit_head_id], post_update=True)
-
-#     def __repr__(self):
-#         return f"<Office {self.name}, Campus={self.campus}>"
+        return f"<User {self.user_id} ({self.role})>"
 
 ### ATTENDANCE ###
 class Attendance(db.Model):
@@ -81,37 +36,36 @@ class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE"), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False, index=True)
-    clock_in = db.Column(db.Time, nullable=False)
+    clock_in = db.Column(db.Time)
     clock_out = db.Column(db.Time)
-    remarks = db.Column(db.Text, nullable=True)  # fixed typo here
+    has_issue = db.Column(db.Boolean, default=False)
 
     user = db.relationship('User', backref='attendance_records')
-
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'date', name='unique_attendance_per_user'),
-    )
 
     def __repr__(self):
         return f"<Attendance {self.user_id} on {self.date}>"
 
-### SCHEDULE ###
+### SCHEDULES ###
 class Schedule(db.Model):
     __tablename__ = 'schedule'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(50), db.ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False, index=True)
-    day = db.Column(db.String(10), nullable=False)
+    day = db.Column(db.String(10), nullable=False)  # Mon, Tue, etc.
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    is_broken = db.Column(db.Boolean, default=False)
-    second_start_time = db.Column(db.Time)
-    second_end_time = db.Column(db.Time)
+    is_split_shift = db.Column(db.Boolean, default=False)
+    split_start_time = db.Column(db.Time)
+    split_end_time = db.Column(db.Time)
 
     user = db.relationship('User', backref='schedules')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'day', name='unique_schedule_per_user_day'),
     )
+
+    def __repr__(self):
+        return f"<Schedule {self.user_id} {self.day}>"
 
 ### GLOBAL SETTINGS ###
 class GlobalSettings(db.Model):
@@ -120,44 +74,32 @@ class GlobalSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True, default=1)
     enable_strict_schedule = db.Column(db.Boolean, default=False)
     auto_clock_out_hours = db.Column(db.Integer, default=10)
-    early_out_allowed = db.Column(db.Boolean, default=True)
-    overtime_allowed = db.Column(db.Boolean, default=False)
-    default_schedule_start = db.Column(db.Time, default=time(7, 30))
-    default_schedule_end = db.Column(db.Time, default=time(20, 30))
-    allowed_early_in = db.Column(db.Integer, default=0)
-
-    @property
-    def default_schedule(self):
-        return type('DefaultSchedule', (object,), {
-            'start_time': self.default_schedule_start,
-            'end_time': self.default_schedule_end
-        })()
+    allow_early_out = db.Column(db.Boolean, default=True)
+    allow_overtime = db.Column(db.Boolean, default=False)
+    default_start = db.Column(db.Time, default=time(8, 0))
+    default_end = db.Column(db.Time, default=time(17, 0))
+    allowed_early_in_mins = db.Column(db.Integer, default=5)
 
     @staticmethod
     def get():
         return db.session.get(GlobalSettings, 1)
 
-### ATTENDANCE INCONSISTENCIES ###
-class AttendanceInconsistency(db.Model):
-    __tablename__ = 'attendance_inconsistencies'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False, index=True)
-    date = db.Column(db.Date, nullable=False)
-    issue_type = db.Column(db.String(50), nullable=False)
-    details = db.Column(db.Text)
-
-    user = db.relationship("User", backref="inconsistencies")
+    @property
+    def default_schedule(self):
+        return type('DefaultSchedule', (object,), {
+            'start_time': self.default_start,
+            'end_time': self.default_end
+        })()
 
     def __repr__(self):
-        return f"<Inconsistency {self.issue_type} for {self.user_id} on {self.date}>"
+        return f"<GlobalSettings strict={self.enable_strict_schedule}>"
 
-### LOGS ###
+### SYSTEM LOGS ###
 class Logs(db.Model):
-    __tablename__ = 'dtr_logs'
+    __tablename__ = 'system_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="SET NULL"), nullable=True, index=True)
     action = db.Column(db.String(255), nullable=False)
     timestamp = db.Column(db.DateTime, server_default=func.now(), nullable=False)
     details = db.Column(db.Text)
@@ -165,4 +107,4 @@ class Logs(db.Model):
     user = db.relationship('User', backref='logs', lazy=True)
 
     def __repr__(self):
-        return f"<Log action='{self.action}' by user_id='{self.user_id}' at {self.timestamp}>"
+        return f"<Log {self.action} by {self.user_id} at {self.timestamp}>"

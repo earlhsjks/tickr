@@ -6,8 +6,8 @@
 {% set breadcrumb2 = "" %}
 
 {% block content %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <div class="main-container">
@@ -137,81 +137,6 @@
                     </div>
                 </div>
 
-                <!-- Department Overview -->
-                <div class="col-xl-6 col-lg-12">
-                    <div class="content-card h-100">
-                        <div class="card-header">
-                            <h2 class="mb-0">Department Overview</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="department-list">
-                                <div class="department-item d-flex justify-content-between align-items-center">
-                                    {% for office in offices %}
-                                        <div class="department-info">
-                                            <div class="department-name">{{ office.name }}</div>
-                                            <div class="department-stats">{{ office.employee_count }} employees</div>
-                                        </div>
-                                        <div class="department-metrics d-flex align-items-center">
-                                            <div class="metric me-3 text-end">
-                                                <span class="metric-label d-block">Present</span>
-                                                <span class="metric-value">{{ office.present_count }}</span>
-                                            </div>
-                                            <div class="attendance-bar">
-                                                <div class="attendance-fill" style="width: {{ office.percentage_count}}"></div>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="col-xl-6 col-lg-6">
-                    <div class="content-card h-100">
-                        <div class="card-header">
-                            <h2 class="mb-0">Quick Actions</h2>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <button class="btn action-button primary w-100 d-flex flex-column align-items-center">
-                                        <div class="action-icon mb-2">
-                                            <i class="fas fa-edit"></i>
-                                        </div>
-                                        <span>Manual Entry</span>
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button class="btn action-button secondary w-100 d-flex flex-column align-items-center">
-                                        <div class="action-icon mb-2">
-                                            <i class="fas fa-check-double"></i>
-                                        </div>
-                                        <span>Approve Requests</span>
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button class="btn action-button secondary w-100 d-flex flex-column align-items-center">
-                                        <div class="action-icon mb-2">
-                                            <i class="fas fa-chart-bar"></i>
-                                        </div>
-                                        <span>Generate Report</span>
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button class="btn action-button secondary w-100 d-flex flex-column align-items-center">
-                                        <div class="action-icon mb-2">
-                                            <i class="fas fa-cog"></i>
-                                        </div>
-                                        <span>Settings</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Today's Summary -->
                 <div class="col-xl-6 col-lg-6">
                     <div class="content-card h-100">
@@ -273,5 +198,5 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 {% endblock %}

@@ -41,7 +41,7 @@
             <form action="{{ url_for('main.login_employee') }}" method="POST">
                 <div class="input-group mb-3">
                     <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
-                    <input type="text" name="user_id" id="user_id" class="form-control" placeholder="School ID" required autocomplete="off" inputmode="numeric">
+                    <input type="text" name="userId" id="userId" class="form-control" placeholder="School ID" autofocus required autocomplete="off" inputmode="numeric">
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Login</button>
             </form>

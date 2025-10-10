@@ -7,8 +7,8 @@
 {% set breadcrumb2 = "GIA Schedule" %}
 
 {% block content %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <div class="main-container">
@@ -57,178 +57,93 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4">Employee</th>
-                                <th>Department</th>
-                                <th>Mon & Wed</th>
-                                <th>Tue & Thu</th>
-                                <th>Fri</th>
-                                <th>Sat</th>
-                                <th>Sun</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th>Saturday</th>
+                                <th>Sunday</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="scheduleTableBody">
+                        <tbody id="usersTableBody">
+                            {% for user in users %}
                             <tr>
                                 <td class="ps-4">
+                                    <input type="checkbox" class="form-check-input user-checkbox" />
+                                </td>
+                                <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3">JS</div>
-                                        <div>
-                                            <div class="user-name">John Smith</div>
-                                            <div class="user-email">Engineering Manager</div>
+                                        <div class="user-avatar me-3">
+                                            {% if user.avatar %}
+                                                <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" alt="User Avatar"
+                                                    class="rounded-circle" width="40" height="40" />
+                                            {% else %}
+                                                <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
+                                                    style="width: 40px; height: 40px">
+                                                    <span class="initials">{{ user.first_name[0] }}{{ user.last_name[0] }}</span>
+                                                </div>
+                                            {% endif %}
                                         </div>
-                    </div>
-                                </td>
-                                <td>
-                                    <span class="department-badge engineering">Engineering</span>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
+                                        <div>
+                                            <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
+                                            <div class="user-email">{{ user.user_id }}</div>
+                                        </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
+
+                                {% for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+                                    <td>
+                                        {% if schedule_map[user.user_id].get(day) %}
+                                            {% set sched = schedule_map[user.user_id][day] %}
+                                            <div class="schedule-time">
+                                                <div class="time-display">
+                                                    {% if sched.rest_day %}
+                                                        Off
+                                                    {% else %}
+                                                            {{ sched.start_time.strftime("%I:%M %p") }} - {{ sched.end_time.strftime("%I:%M %p") }}
+                                                    {% endif %}
+                                                </div>
+                                                <small class="text-muted">
+                                                    {% if sched.rest_day %}
+                                                        Rest day
+                                                    {% elif sched.start_time and sched.end_time %}
+                                                        {% set start_minutes = sched.start_time.hour * 60 + sched.start_time.minute %}
+                                                        {% set end_minutes = sched.end_time.hour * 60 + sched.end_time.minute %}
+                                                        {% if end_minutes < start_minutes %}
+                                                            {% set end_minutes = end_minutes + 24 * 60 %}
+                                                        {% endif %}
+                                                        {% set diff_minutes = end_minutes - start_minutes %}
+                                                        {% set hours = diff_minutes // 60 %}
+                                                        {% set minutes = diff_minutes % 60 %}
+                                                        {{ hours }} hours{% if minutes > 0 %} {{ minutes }}m{% endif %}
+                                                    {% else %}
+                                                        No schedule
+                                                    {% endif %}
+                                                </small>
+                                            </div>
+                                        {% else %}
+                                            <div class="schedule-time">
+                                                <div class="time-display">N/A</div>
+                                                <small class="text-muted">No schedule</small>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+
                                 <td>
                                     <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary" title="Edit Schedule">
+                                        <button class="btn btn-sm btn-outline-primary" data-user-id="{{ user.user_id }}" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                        <button class="btn btn-sm btn-outline-danger" data-user-id="{{ user.user_id }}" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3">MJ</div>
-                                        <div>
-                                            <div class="user-name">Maria Johnson</div>
-                                            <div class="user-email">Marketing Specialist</div>
-                                        </div>
-                    </div>
-                                </td>
-                                <td>
-                                    <span class="department-badge marketing">Marketing</span>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">9:00-6:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">9:00-6:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">9:00-6:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary" title="Edit Schedule">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3">SD</div>
-                                        <div>
-                                            <div class="user-name">Sarah Davis</div>
-                                            <div class="user-email">HR Manager</div>
-                                        </div>
-                    </div>
-                                </td>
-                                <td>
-                                    <span class="department-badge hr">HR</span>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:30-5:30</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:30-5:30</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:30-5:30</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary" title="Edit Schedule">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -248,14 +163,8 @@
                             <!-- Employee Selection -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
-                                    <label class="form-label fw-bold">Employee</label>
-                                    <select class="form-select" id="employeeSelect">
-                                        <option>John Smith - Engineering</option>
-                                        <option>Maria Johnson - Marketing</option>
-                                        <option>Robert Brown - Sales</option>
-                                        <option>Sarah Davis - HR</option>
-                                        <option>Alex Lee - Finance</option>
-                                    </select>
+                                    <h5 class="text-left mb-3">Employee</h5>
+                                    <h6 class="text-left mb-3" id="editUserName"></h6>
                                 </div>
                             </div>
 
@@ -266,8 +175,8 @@
                                     <div class="col-md-6 col-lg-4">
                                         <label class="form-label">Monday</label>
                                         <div class="d-flex gap-2">
-                                            <input type="time" class="form-control" id="mondayIn" value="08:00">
-                                            <input type="time" class="form-control" id="mondayOut" value="17:00">
+                                            <input type="time" class="form-control" id="mondayIn">
+                                            <input type="time" class="form-control" id="mondayOut">
                                         </div>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="checkbox" id="mondayOff">
@@ -277,8 +186,8 @@
                                     <div class="col-md-6 col-lg-4">
                                         <label class="form-label">Tuesday</label>
                                         <div class="d-flex gap-2">
-                                            <input type="time" class="form-control" id="tuesdayIn" value="08:00">
-                                            <input type="time" class="form-control" id="tuesdayOut" value="17:00">
+                                            <input type="time" class="form-control" id="tuesdayIn">
+                                            <input type="time" class="form-control" id="tuesdayOut">
                                         </div>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="checkbox" id="tuesdayOff">
@@ -288,8 +197,8 @@
                                     <div class="col-md-6 col-lg-4">
                                         <label class="form-label">Wednesday</label>
                                         <div class="d-flex gap-2">
-                                            <input type="time" class="form-control" id="wednesdayIn" value="08:00">
-                                            <input type="time" class="form-control" id="wednesdayOut" value="17:00">
+                                            <input type="time" class="form-control" id="wednesdayIn">
+                                            <input type="time" class="form-control" id="wednesdayOut">
                                         </div>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="checkbox" id="wednesdayOff">
@@ -299,8 +208,8 @@
                                     <div class="col-md-6 col-lg-4">
                                         <label class="form-label">Thursday</label>
                                         <div class="d-flex gap-2">
-                                            <input type="time" class="form-control" id="thursdayIn" value="08:00">
-                                            <input type="time" class="form-control" id="thursdayOut" value="17:00">
+                                            <input type="time" class="form-control" id="thursdayIn">
+                                            <input type="time" class="form-control" id="thursdayOut">
                                         </div>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="checkbox" id="thursdayOff">
@@ -310,8 +219,8 @@
                                     <div class="col-md-6 col-lg-4">
                                         <label class="form-label">Friday</label>
                                         <div class="d-flex gap-2">
-                                            <input type="time" class="form-control" id="fridayIn" value="08:00">
-                                            <input type="time" class="form-control" id="fridayOut" value="17:00">
+                                            <input type="time" class="form-control" id="fridayIn">
+                                            <input type="time" class="form-control" id="fridayOut">
                                         </div>
                                         <div class="form-check mt-2">
                                             <input class="form-check-input" type="checkbox" id="fridayOff">
@@ -325,7 +234,7 @@
                                             <input type="time" class="form-control" id="saturdayOut">
                                         </div>
                                         <div class="form-check mt-2">
-                                            <input class="form-check-input" type="checkbox" id="saturdayOff" checked>
+                                            <input class="form-check-input" type="checkbox" id="saturdayOff">
                                             <label class="form-check-label" for="saturdayOff">Rest Day</label>
                                         </div>
                                     </div>
@@ -336,7 +245,7 @@
                                             <input type="time" class="form-control" id="sundayOut">
                                         </div>
                                         <div class="form-check mt-2">
-                                            <input class="form-check-input" type="checkbox" id="sundayOff" checked>
+                                            <input class="form-check-input" type="checkbox" id="sundayOff">
                                             <label class="form-check-label" for="sundayOff">Rest Day</label>
                                         </div>
                                     </div>
@@ -387,14 +296,7 @@
                             <option value="sunday">Sunday</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">First Shift</label>
-                        <div class="d-flex gap-2">
-                            <input type="time" class="form-control" placeholder="Start">
-                            <input type="time" class="form-control" placeholder="End">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
+                    <div class="col-md-8">
                         <label class="form-label">Second Shift</label>
                         <div class="d-flex gap-2">
                             <input type="time" class="form-control" placeholder="Start">
@@ -407,142 +309,146 @@
     </div>
 
     <script>
-        // Initialize schedule management functionality
         function initScheduleManagement() {
             setupSearch();
             setupBrokenTimeButtons();
             setupScheduleActions();
-            setupModal();
             addInteractiveEffects();
         }
 
-        // Search functionality
+        function safeSetValue(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        }
+
+        function safeSetChecked(id, checked) {
+            const el = document.getElementById(id);
+            if (el) el.checked = checked;
+        }
+
         function setupSearch() {
             const searchInput = document.getElementById('scheduleSearch');
-            
+            if (!searchInput) return;
             searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.trim().toLowerCase();
                 filterSchedules();
-                
-                // Visual feedback
-                if (searchTerm.length > 0) {
+                if (this.value.trim().length > 0) {
                     this.style.borderColor = '#10b981';
-                    setTimeout(() => {
-                        this.style.borderColor = '#d1d5db';
-                    }, 1000);
+                    setTimeout(() => this.style.borderColor = '#d1d5db', 1000);
                 }
             });
         }
 
-        // Broken time button functionality
         function setupBrokenTimeButtons() {
-            const brokenTimeButtons = document.querySelectorAll('.broken-time-btn');
-            
-            brokenTimeButtons.forEach(button => {
+            document.querySelectorAll('.broken-time-btn').forEach(button => {
                 button.addEventListener('click', function() {
-                    const isBroken = this.getAttribute('data-broken') === 'true';
-                    
+                    const isBroken = this.dataset.broken === 'true';
+                    const row = this.closest('tr');
+                    const name = row?.querySelector('.user-name')?.textContent || 'Unknown';
+                    this.dataset.broken = (!isBroken).toString();
                     if (isBroken) {
-                        // Switch to normal time
-                        this.setAttribute('data-broken', 'false');
                         this.className = 'btn btn-sm btn-outline-warning broken-time-btn';
                         this.innerHTML = '<i class="fas fa-play me-1"></i>Normal Time';
-                        
-                        // Get employee name for feedback
-                        const row = this.closest('tr');
-                        const employeeName = row.querySelector('.user-name').textContent;
-                        console.log(`${employeeName} switched to normal time`);
-                        
+                        console.log(`${name} switched to normal time`);
                     } else {
-                        // Switch to broken time
-                        this.setAttribute('data-broken', 'true');
                         this.className = 'btn btn-sm btn-warning broken-time-btn active';
                         this.innerHTML = '<i class="fas fa-pause me-1"></i>Broken Time';
-                        
-                        // Get employee name for feedback
-                        const row = this.closest('tr');
-                        const employeeName = row.querySelector('.user-name').textContent;
-                        console.log(`${employeeName} switched to broken time`);
+                        console.log(`${name} switched to broken time`);
                     }
-                    
-                    // Visual feedback
                     this.style.transform = 'scale(0.95)';
-                    setTimeout(() => {
-                        this.style.transform = '';
-                    }, 150);
+                    setTimeout(() => this.style.transform = '', 150);
                 });
             });
         }
 
-        // Schedule action buttons
         function setupScheduleActions() {
-            // Clear all schedules button
-            const clearSchedulesBtn = document.querySelector('.clear-schedules-btn');
-            clearSchedulesBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to clear all schedules? This action cannot be undone.')) {
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clearing...';
-                    this.disabled = true;
-                    
-                    setTimeout(() => {
-                        this.innerHTML = '<i class="fas fa-broom me-2"></i>Clear All Schedules';
-                        this.disabled = false;
-                        console.log('All schedules cleared');
-                    }, 2000);
-                }
-            });
-            
-            // Add schedule button
-            const addScheduleBtn = document.querySelector('.add-schedule-btn');
-            addScheduleBtn.addEventListener('click', function() {
-                const modal = new bootstrap.Modal(document.getElementById('scheduleEditModal'));
-                modal.show();
-                console.log('Add schedule modal opened');
-            });
-            
-            // Edit schedule buttons
-            const editButtons = document.querySelectorAll('.action-buttons .btn-outline-primary');
-            editButtons.forEach(button => {
+            const clearBtn = document.querySelector('.clear-schedules-btn');
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    if (confirm('Clear all schedules?')) {
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clearing...';
+                        this.disabled = true;
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-broom me-2"></i>Clear All Schedules';
+                            this.disabled = false;
+                            console.log('All schedules cleared');
+                        }, 2000);
+                    }
+                });
+            }
+
+            const addBtn = document.querySelector('.add-schedule-btn');
+            if (addBtn) {
+                addBtn.addEventListener('click', () => {
+                    new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
+                    console.log('Add schedule modal opened');
+                });
+            }
+
+            document.querySelectorAll('.action-buttons .btn-outline-primary').forEach(button => {
                 button.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
                     const row = this.closest('tr');
-                    const employeeName = row.querySelector('.user-name').textContent;
-                    
-                    const modal = new bootstrap.Modal(document.getElementById('scheduleEditModal'));
-                    modal.show();
-                    
-                    console.log(`Edit schedule for: ${employeeName}`);
+                    const name = row?.querySelector('.user-name')?.textContent || 'Unknown';
+                    console.log(`Fetching schedule for: ${name} (ID: ${userId})`);
+
+                    fetch(`/api/v1/get-schedule/${userId}`)
+                        .then(res => {
+                            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+                            return res.json();
+                        })
+                        .then(user => {
+                            // Basic info safely
+                            safeSetValue('editUserName', user.full_name);
+                            safeSetValue('editUserId', user.user_id);
+                            safeSetValue('editFirstName', user.first_name);
+                            safeSetValue('editLastName', user.last_name);
+                            safeSetValue('editMiddleInitial', user.middle_name || '');
+                            safeSetValue('editRole', user.role_id);
+                            safeSetValue('editStatus', user.status);
+                            safeSetValue('editCourse', user.course || '');
+                            safeSetValue('editYear', user.year || '');
+
+                            // Schedule mapping
+                            const scheduleMap = {};
+                            user.schedules.forEach(item => scheduleMap[item.day.toLowerCase()] = item);
+                            const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+                            days.forEach(day => {
+                                const sched = scheduleMap[day] || {};
+                                safeSetValue(`${day}In`, sched.start_time || '');
+                                safeSetValue(`${day}Out`, sched.end_time || '');
+                                safeSetChecked(`${day}Off`, sched.rest_day === true);
+                                safeSetValue(`${day}SecondIn`, sched.is_broken ? (sched.second_start_time || '') : '');
+                                safeSetValue(`${day}SecondOut`, sched.is_broken ? (sched.second_end_time || '') : '');
+                                safeSetChecked(`${day}Broken`, !!sched.is_broken);
+                            });
+
+                            new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
+                            if (document.getElementById('editRole')) toggleCourseYearFields(document.getElementById('editRole'));
+                        })
+                        .catch(err => {
+                            console.error("Failed to load user:", err.message);
+                            alert("User not found or something went wrong.");
+                        });
                 });
             });
-            
-            // Convert schedule buttons
-            // Delete buttons
-            const deleteButtons = document.querySelectorAll('.btn-outline-danger');
-            deleteButtons.forEach(button => {
-                if (button.title === 'Delete') {
-                    button.addEventListener('click', function() {
-                        const row = this.closest('tr');
-                        const employeeName = row.querySelector('.user-name').textContent;
-                        
-                        if (confirm(`Are you sure you want to delete the schedule for ${employeeName}?`)) {
-                            console.log(`Schedule deleted for: ${employeeName}`);
-                            
-                            // Visual feedback
-                            row.style.opacity = '0.5';
-                            setTimeout(() => {
-                                row.remove();
-                            }, 500);
-                        }
-                    });
-                }
+
+            document.querySelectorAll('.btn-outline-danger[title="Delete"]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    const name = row?.querySelector('.user-name')?.textContent || 'Unknown';
+                    if (confirm(`Delete schedule for ${name}?`)) {
+                        console.log(`Schedule deleted for: ${name}`);
+                        row.style.opacity = '0.5';
+                        setTimeout(() => row.remove(), 500);
+                    }
+                });
             });
-            
-            // Export and refresh buttons
-            const exportButtons = document.querySelectorAll('.btn-outline-primary');
-            exportButtons.forEach(button => {
+
+            document.querySelectorAll('.btn-outline-primary').forEach(button => {
                 if (button.textContent.includes('Export')) {
                     button.addEventListener('click', function() {
                         this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
                         this.disabled = true;
-                        
                         setTimeout(() => {
                             this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
                             this.disabled = false;
@@ -550,149 +456,57 @@
                     });
                 }
             });
-            
-            const refreshButtons = document.querySelectorAll('.btn-outline-secondary');
-            refreshButtons.forEach(button => {
+
+            document.querySelectorAll('.btn-outline-secondary').forEach(button => {
                 if (button.textContent.includes('Refresh')) {
                     button.addEventListener('click', function() {
                         this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
                         this.disabled = true;
-                        
-                        setTimeout(() => {
-                            this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
-                            this.disabled = false;
-                        }, 1500);
+                        location.reload();
                     });
                 }
             });
         }
 
-        // Modal functionality
-        function setupModal() {
-            const modal = document.getElementById('scheduleEditModal');
-            const form = document.getElementById('scheduleEditForm');
-            const saveButton = modal.querySelector('.btn-primary');
-            const addBrokenScheduleBtn = document.getElementById('addBrokenSchedule');
-            const brokenScheduleContainer = document.getElementById('brokenScheduleContainer');
-            const brokenScheduleTemplate = document.getElementById('brokenScheduleTemplate');
-            
-            saveButton.addEventListener('click', function() {
-                const formData = new FormData(form);
-                console.log('Saving schedule changes...');
-                
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-                this.disabled = true;
-                
-                setTimeout(() => {
-                    this.innerHTML = 'Save Changes';
-                    this.disabled = false;
-                    
-                    const modalInstance = bootstrap.Modal.getInstance(modal);
-                    modalInstance.hide();
-                    
-                    console.log('Schedule saved successfully');
-                }, 1500);
-            });
-            
-            // Add broken schedule functionality
-            addBrokenScheduleBtn.addEventListener('click', function() {
-                const template = brokenScheduleTemplate.cloneNode(true);
-                template.id = '';
-                template.classList.remove('d-none');
-                
-                // Add remove functionality
-                const removeBtn = template.querySelector('.remove-broken-schedule');
-                removeBtn.addEventListener('click', function() {
-                    template.remove();
-                });
-                
-                brokenScheduleContainer.appendChild(template);
-                console.log('Added new broken schedule');
-            });
-            
-            // Rest day checkbox handlers
-            const restDayCheckboxes = modal.querySelectorAll('[id$="Off"]');
-            restDayCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const day = this.id.replace('Off', '');
-                    const timeInputs = modal.querySelectorAll(`#${day}In, #${day}Out`);
-                    
-                    timeInputs.forEach(input => {
-                        input.disabled = this.checked;
-                        if (this.checked) {
-                            input.value = '';
-                        }
-                    });
-                });
-            });
-        }
-
-        // Filter schedules based on search
         function filterSchedules() {
-            const searchTerm = document.getElementById('scheduleSearch').value.toLowerCase();
+            const term = document.getElementById('scheduleSearch')?.value.toLowerCase() || '';
             const tableBody = document.getElementById('scheduleTableBody');
-            
-            const rows = tableBody.querySelectorAll('tr');
+            if (!tableBody) return;
             let visibleCount = 0;
-            
-            rows.forEach(row => {
-                const employeeName = row.querySelector('.user-name').textContent.toLowerCase();
-                const department = row.querySelector('.department-badge').textContent.toLowerCase();
-                
-                const matchesSearch = employeeName.includes(searchTerm) || department.includes(searchTerm);
-                
-                if (matchesSearch) {
-                    row.style.display = '';
-                    visibleCount++;
-                } else {
-                    row.style.display = 'none';
-                }
+            tableBody.querySelectorAll('tr').forEach(row => {
+                const name = row.querySelector('.user-name')?.textContent.toLowerCase() || '';
+                const dept = row.querySelector('.department-badge')?.textContent.toLowerCase() || '';
+                const match = name.includes(term) || dept.includes(term);
+                row.style.display = match ? '' : 'none';
+                if (match) visibleCount++;
             });
-            
             console.log(`Showing ${visibleCount} schedules`);
         }
 
-        // Add interactive effects
         function addInteractiveEffects() {
-            // Table row hover effects
-            const tableRows = document.querySelectorAll('tbody tr');
-            tableRows.forEach(row => {
-                row.addEventListener('mouseenter', function() {
-                    this.style.backgroundColor = '#f8f9fa';
-                });
-                
-                row.addEventListener('mouseleave', function() {
-                    this.style.backgroundColor = '';
-                });
+            document.querySelectorAll('tbody tr').forEach(row => {
+                row.addEventListener('mouseenter', () => row.style.backgroundColor = '#f8f9fa');
+                row.addEventListener('mouseleave', () => row.style.backgroundColor = '');
             });
         }
 
-        // Initialize when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initScheduleManagement();
-        });
+        document.addEventListener('DOMContentLoaded', initScheduleManagement);
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(e) {
-            // Ctrl/Cmd + K to focus search
+        document.addEventListener('keydown', e => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                document.getElementById('scheduleSearch').focus();
+                document.getElementById('scheduleSearch')?.focus();
             }
-            
-            // Escape to clear search
             if (e.key === 'Escape') {
-                const searchInput = document.getElementById('scheduleSearch');
-                if (document.activeElement === searchInput) {
-                    searchInput.value = '';
+                const search = document.getElementById('scheduleSearch');
+                if (document.activeElement === search) {
+                    search.value = '';
                     filterSchedules();
-                    searchInput.blur();
+                    search.blur();
                 }
             }
-            
         });
     </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="schedule.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 {% endblock %}

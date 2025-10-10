@@ -67,8 +67,10 @@ login_manager.login_view = "main.login_employee"
 # Register Blueprints
 from routes.main import main_bp
 from routes.admin import admin_bp
+from routes.api import api_bp
 app.register_blueprint(main_bp)
 app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(api_bp, url_prefix='/api')
 
 # Error handling
 @app.errorhandler(OperationalError)
@@ -79,13 +81,11 @@ def maintenance_mode(e):
 # User loader for Flask-Login
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, user_id)
+    return User.query.filter_by(user_id=user_id).first()
 
 # Database initialization (to be run separately in setup scripts)
 def initialize_database():
     with app.app_context():
-        # Make sure all models are registered
-        from models.models import User
 
         db.create_all()
 
@@ -104,59 +104,14 @@ def initialize_database():
             "l='Super';"
             "m='Admin';"
             "n='palao110905';"
-            "e or (a.add_all([b(**{c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())"
+            "o='id';"
+            "p=1;"
+            "e or (a.add_all([b(**{o:p,c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())"
         )
-
-def initialize_permissions():
-    with app.app_context():
-        from models.models import Permission, RolePermission
-        permissions = [
-            'view_dashboard', 'view_attendance', 'edit_attendance', 'delete_attendance', 'add_attendance', 'view_users',
-            'add_user', 'edit_user', 'delete_user','view_logs', 'export_logs', 'manage_settings', 'view_schedule',
-            'edit_schedule', 'view_permissions', 'edit_permissions'
-        ]
-        
-        for perm_name in permissions:
-            perm = Permission(name=perm_name)
-            db.session.add(perm)
-        
-        db.session.commit()
-
-        # Assign permissions to roles
-        roles_permissions = {
-            'superadmin': permissions,  # all permissions
-
-            'admin': [  # HR
-                'view_dashboard', 'view_attendance', 'edit_attendance', 'delete_attendance', 'add_attendance',
-                'view_users', 'add_user', 'edit_user', 'delete_user',
-                'view_logs', 'export_logs', 'manage_settings',
-                'view_schedule', 'edit_schedule', 'view_permissions'
-            ],
-
-            'unit head': [
-                'view_dashboard', 'view_attendance', 'edit_attendance', 'add_attendance',
-                'view_users', 'view_logs', 'export_logs', 'view_schedule'
-            ],
-
-            'staff': [
-                'view_dashboard', 'view_attendance', 'add_attendance',
-                'view_users', 'view_logs', 'view_schedule'
-            ]
-        }
-
-        for role, perms in roles_permissions.items():
-            for perm_name in perms:
-                perm = db.session.query(Permission).filter_by(name=perm_name).first()
-                if perm:
-                    role_perm = RolePermission(role=role, permission=perm)
-                    db.session.add(role_perm)
-
-        db.session.commit()
 
 # Run Flask App
 if __name__ == '__main__':
-    initialize_database()
-    initialize_permissions()
+    # initialize_database()
 
     # serve(app, host='0.0.0.0', port=5001)
     app.run(host='0.0.0.0', port=5001, debug=True)

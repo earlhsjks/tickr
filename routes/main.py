@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import login_user, login_required, logout_user, current_user
 from datetime import datetime, timedelta, time
-from models.models import db, User, Attendance, Schedule, GlobalSettings, AttendanceInconsistency
+from models.models import db, User, Attendance, Schedule, GlobalSettings
 
 main_bp = Blueprint('main', __name__)
 
@@ -77,7 +77,7 @@ def check_attendance_flags(attendance_entry):
 # Home Route
 @main_bp.route('/')
 def home():
-    return render_template('auth/employee.html')
+    return render_template('auth/gia.html')
 
 @main_bp.route('/', methods=['GET', 'POST'])
 def login_employee():

@@ -28,46 +28,8 @@
           <div class="search-container flex-grow-1 flex-md-grow-0">
             <input type="text" class="form-control" placeholder="Search users..." id="userSearch" />
           </div>
-          <button class="btn btn-success add-user-btn">
+          <button class="btn btn-success add-user-btn" data-bs-toggle="modal" data-bs-target="#addUserModal">
             <i class="fas fa-plus me-2"></i>Add User
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Section -->
-  <div class="content-card mb-4">
-    <div class="card-body">
-      <div class="row g-3 align-items-center">
-        <div class="col-md-3">
-          <select class="form-select" id="departmentFilter">
-            <option value="">All Departments</option>
-            {% for office in offices %}
-            <option value="{{ office.name|lower }}">{{ office.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select" id="statusFilter">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="pending">Pending</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select" id="roleFilter">
-            <option value="">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="head">Unit Head</option>
-            <option value="staff">Staff</option>
-            <option value="gia">GIA</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <button class="btn btn-outline-secondary w-100" id="clearFilters">
-            <i class="fas fa-times me-2"></i>Clear Filters
           </button>
         </div>
       </div>
@@ -88,15 +50,10 @@
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover mb-0">
+        <table class="table table-hover mb-0 just">
           <thead class="table-light">
             <tr>
-              <th class="ps-4">
-                <input type="checkbox" class="form-check-input" id="selectAll" />
-              </th>
-              <th>Employee</th>
-              <th>Course & Year</th>
-              <th>Department</th>
+              <th class="ps-4">User</th>
               <th>Role</th>
               <th>Status</th>
               <th>Last Login</th>
@@ -107,47 +64,32 @@
             {% for user in users %}
             <tr>
               <td class="ps-4">
-                <input type="checkbox" class="form-check-input user-checkbox" />
-              </td>
-              <td>
                 <div class="d-flex align-items-center">
                   <div class="user-avatar me-3">
                     {% if user.avatar %}
-                    <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" alt="User Avatar"
-                      class="rounded-circle" width="40" height="40" />
+                      <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" 
+                          alt="User Avatar" class="rounded-circle" width="40" height="40" />
                     {% else %}
-                    <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
-                      style="width: 40px; height: 40px">
-                      <span class="initials">{{ user.first_name[0] }}{{ user.last_name[0] }}</span>
-                    </div>
+                      <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
+                          style="width: 40px; height: 40px">
+                        <span class="initials">{{ user.first_name[0] }}{{ user.last_name[0] }}</span>
+                      </div>
                     {% endif %}
                   </div>
                   <div>
-                    <div class="user-name">
-                      {{ user.first_name }} {{ user.last_name }}
-                    </div>
+                    <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
                     <div class="user-email">{{ user.user_id }}</div>
                   </div>
                 </div>
               </td>
               <td>
-              <span class="courseyear-badge {% if user.course %}active{% else %}default{% endif %}">
-                {% if user.course %}
-                  {{ user.course }} - {{ user.year }}
-                {% else %}
-                  N/A
-                {% endif %}
-              </span>
-              </td>
-              <td>
-                <span class="department-badge {{ user.department|lower }}">
-                  {% if user.role == 'head' %} {{ user.office_name }} {% else %}
-                  {{ user.office.name if user.office.name else 'Not Assigned' }}
+                <span class="role-badge {{ user.role|lower }}">
+                  {% if user.role != 'gia' %}
+                    {{ user.role }}
+                  {% else %}
+                    {{ user.role|upper }}
                   {% endif %}
                 </span>
-              </td>
-              <td>
-                <span class="role-badge {{ user.role|lower }}">{% if user.role != 'gia' %} {{ user.role }} {% else %} {{ user.role|upper }} {% endif %}</span>
               </td>
               <td>
                 <span class="status-badge {{ user.status|lower }}">{{ user.status }}</span>
@@ -191,7 +133,7 @@
   </div>
 
   <!-- Add User Modal -->
-  <div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -201,60 +143,30 @@
         <div class="modal-body">
           <form id="addUserForm">
             <div class="row g-3">
-              <div class="col-12">
+              <div class="col-6">
                 <label for="addUserId" class="form-label">User ID</label>
                 <input type="text" class="form-control" id="addUserId" required />
-              </div>
-              <div class="col-md-6">
-                <label for="addFirstName" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="addFirstName" required />
-              </div>
-              <div class="col-md-6">
-                <label for="addLastName" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="addLastName" required />
-              </div>
-              <div class="col-16">
-                <label for="addMiddleInitial" class="form-label">Middle Initial</label>
-                <input type="text" class="form-control" id="addMiddleInitial" maxlength="1"
-                  style="text-transform: uppercase" />
               </div>
               <div class="col-6">
                 <label for="addRole" class="form-label">Role</label>
                 <select class="form-select" id="addRole" required>
                   <option value="">Select Role</option>
                   <option value="admin">Admin</option>
-                  <option value="head">Unit Head</option>
-                  <option value="staff">Staff</option>
                   <option value="gia">GIA</option>
                 </select>
               </div>
-              <div class="col-md-6">
-                <label for="editStatus" class="form-label">Status</label>
-                <select class="form-select" id="editStatus" disabled>
-                  <option value="">Select Status</option>
-                  <option value="active" selected>Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="pending">Pending</option>
-                </select>
+              <div class="col-md-8">
+                <label for="addFirstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="addFirstName" required />
               </div>
-              <div class="courseYearFields" style="display: none;">
-                <div class="row">
-                  <div class="col-md-7">
-                    <label for="addCourse" class="form-label">Course</label>
-                    <input type="text" class="form-control" id="addCourse">
-                  </div>
-                  <div class="col-md-5">
-                    <label for="addYear" class="form-label">Year</label>
-                    <select class="form-select" id="addYear">
-                      <option value="">Select Year</option>
-                      <option value="1">1st Year</option>
-                      <option value="2">2nd Year</option>
-                      <option value="3">3rd Year</option>
-                      <option value="4">4th Year</option>
-                      <option value="5">5th Year</option>
-                    </select>
-                  </div>
-                </div>
+              <div class="col-4">
+                <label for="addMiddleInitial" class="form-label">Middle Initial</label>
+                <input type="text" class="form-control" id="addMiddleInitial" maxlength="1"
+                  style="text-transform: uppercase" />
+              </div>
+              <div class="col-md-16">
+                <label for="addLastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="addLastName" required />
               </div>
             </div>
           </form>
@@ -282,34 +194,32 @@
         <div class="modal-body">
           <form id="editUserForm">
             <div class="row g-3">
-              <div class="col-12">
+              <div class="col-6">
                 <label for="editUserId" class="form-label">User ID</label>
                 <input type="text" class="form-control" id="editUserId" required />
-              </div>
-              <div class="col-md-6">
-                <label for="editFirstName" class="form-label">First Name</label>
-                <input type="text" class="form-control" id="editFirstName" required />
-              </div>
-              <div class="col-md-6">
-                <label for="editLastName" class="form-label">Last Name</label>
-                <input type="text" class="form-control" id="editLastName" required />
-              </div>
-              <div class="col-12">
-                <label for="editMiddleInitial" class="form-label">Middle Initial</label>
-                <input type="text" class="form-control" id="editMiddleInitial" maxlength="1"
-                  style="text-transform: uppercase;" />
               </div>
               <div class="col-md-6">
                 <label for="editRole" class="form-label">Role</label>
                 <select class="form-select" id="editRole" required>
                   <option value="">Select Role</option>
                   <option value="admin">Admin</option>
-                  <option value="head">Unit Head</option>
-                  <option value="staff">Staff</option>
                   <option value="gia">GIA</option>
                 </select>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-8">
+                <label for="editFirstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="editFirstName" required />
+              </div>
+              <div class="col-4">
+                <label for="editMiddleInitial" class="form-label">Middle Initial</label>
+                <input type="text" class="form-control" id="editMiddleInitial" maxlength="1"
+                  style="text-transform: uppercase;" />
+              </div>
+              <div class="col-md-12">
+                <label for="editLastName" class="form-label">Last Name</label>
+                <input type="text" class="form-control" id="editLastName" required />
+              </div>
+              <div class="col-md-12" hidden>
                 <label for="editStatus" class="form-label">Status</label>
                 <select class="form-select" id="editStatus" required>
                   <option value="">Select Status</option>
@@ -317,25 +227,6 @@
                   <option value="inactive">Inactive</option>
                   <option value="pending">Pending</option>
                 </select>
-              </div>
-              <div class="courseYearFields" style="display: none;">
-                <div class="row">
-                  <div class="col-md-7">
-                    <label for="editCourse" class="form-label">Course</label>
-                    <input type="text" class="form-control" id="editCourse">
-                  </div>
-                  <div class="col-md-5">
-                    <label for="editYear" class="form-label">Year</label>
-                    <select class="form-select" id="editYear">
-                      <option value="">Select Year</option>
-                      <option value="1">1st Year</option>
-                      <option value="2">2nd Year</option>
-                      <option value="3">3rd Year</option>
-                      <option value="4">4th Year</option>
-                      <option value="5">5th Year</option>
-                    </select>
-                  </div>
-                </div>
               </div>
             </div>
           </form>
@@ -380,441 +271,7 @@
     </div>
   </div>
 
-  <script>
-    function initUserManagement() {
-      setupSearch();
-      setupFilters();
-      setupTableInteractions();
-      setupBulkActions();
-      addInteractiveEffects();
-      setupInteractiveElements();
-    }
-
-    function setupSearch() {
-      const searchInput = document.getElementById('userSearch');
-      const tableBody = document.getElementById('usersTableBody');
-      const rows = tableBody.querySelectorAll('tr');
-
-      function filterUsers() {
-        const searchTerm = searchInput.value.trim().toLowerCase();
-        rows.forEach(row => {
-          const rowText = row.innerText.toLowerCase();
-          row.style.display = rowText.includes(searchTerm) ? '' : 'none';
-        });
-      }
-
-      searchInput.addEventListener('input', function () {
-        const searchTerm = this.value.trim().toLowerCase();
-        filterUsers();
-
-        if (searchTerm.length > 0) {
-          this.style.borderColor = '#10b981'; // green
-          setTimeout(() => {
-            this.style.borderColor = '#d1d5db'; // default gray
-          }, 1000);
-        }
-      });
-    }
-
-    // Filter functionality
-    function setupFilters() {
-        const filters = ['departmentFilter', 'statusFilter', 'roleFilter'];
-        
-        filters.forEach(filterId => {
-            const filter = document.getElementById(filterId);
-            filter.addEventListener('change', filterUsers);
-        });
-        
-        // Clear filters
-        document.getElementById('clearFilters').addEventListener('click', function() {
-            filters.forEach(filterId => {
-                document.getElementById(filterId).value = '';
-            });
-            document.getElementById('userSearch').value = '';
-            filterUsers();
-            
-            // Visual feedback
-            this.textContent = 'Cleared!';
-            setTimeout(() => {
-                this.innerHTML = '<i class="fas fa-times me-2"></i>Clear Filters';
-            }, 1000);
-        });
-    }
-
-    function filterUsers() {
-      const searchTerm = document.getElementById('userSearch').value.toLowerCase();
-      const departmentFilter = document.getElementById('departmentFilter').value;
-      const statusFilter = document.getElementById('statusFilter').value;
-      const roleFilter = document.getElementById('roleFilter').value;
-
-      const rows = document.querySelectorAll('#usersTableBody tr');
-      let visibleCount = 0;
-
-      rows.forEach(row => {
-        const userName = row.querySelector('.user-name').textContent.toLowerCase();
-        const userEmail = row.querySelector('.user-email').textContent.toLowerCase();
-        const department = row.querySelector('.department-badge').textContent.toLowerCase();
-        const status = row.querySelector('.status-badge').textContent.toLowerCase();
-        const role = row.querySelector('.role-badge').textContent.toLowerCase();
-
-        const matchesSearch = userName.includes(searchTerm) || userEmail.includes(searchTerm);
-        const matchesDepartment = !departmentFilter || department === departmentFilter;
-        const matchesStatus = !statusFilter || status === statusFilter;
-        const matchesRole = !roleFilter || role === roleFilter;
-
-        if (matchesSearch && matchesDepartment && matchesStatus && matchesRole) {
-          row.style.display = '';
-          visibleCount++;
-        } else {
-          row.style.display = 'none';
-        }
-      });
-
-      document.querySelector('.showing-info').textContent = `Showing ${visibleCount} of 248 users`;
-    }
-
-    function setupTableInteractions() {
-      const selectAllCheckbox = document.getElementById('selectAll');
-      const userCheckboxes = document.querySelectorAll('.user-checkbox');
-
-      selectAllCheckbox.addEventListener('change', function () {
-        userCheckboxes.forEach(cb => cb.checked = this.checked);
-        updateBulkActionVisibility();
-      });
-
-      userCheckboxes.forEach(cb => {
-        cb.addEventListener('change', function () {
-          const checked = document.querySelectorAll('.user-checkbox:checked').length;
-          selectAllCheckbox.checked = checked === userCheckboxes.length;
-          selectAllCheckbox.indeterminate = checked > 0 && checked < userCheckboxes.length;
-          updateBulkActionVisibility();
-        });
-      });
-
-      document.querySelectorAll('.action-buttons .btn').forEach(button => {
-        button.addEventListener('click', function (e) {
-          e.preventDefault();
-          const userName = this.closest('tr').querySelector('.user-name').textContent;
-          console.log(`${this.title} action for user: ${userName}`);
-          this.style.transform = 'scale(0.95)';
-          setTimeout(() => this.style.transform = '', 150);
-        });
-      });
-    }
-
-    function setupBulkActions() {
-      // Only spinner effect, no modal logic here!
-      const addUserBtn = document.querySelector('.add-user-btn');
-      if (addUserBtn) {
-        addUserBtn.addEventListener('click', function () {
-          this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
-          this.disabled = true;
-          setTimeout(() => {
-            this.innerHTML = '<i class="fas fa-plus me-2"></i>Add User';
-            this.disabled = false;
-          }, 500);
-        });
-      }
-    }
-
-    function updateBulkActionVisibility() {
-      const selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
-      console.log(`${selectedCount} users selected`);
-    }
-
-    function addInteractiveEffects() {
-      document.querySelectorAll('#usersTableBody tr').forEach(row => {
-        row.addEventListener('mouseenter', () => row.style.backgroundColor = '#f8f9fa');
-        row.addEventListener('mouseleave', () => row.style.backgroundColor = '');
-      });
-      
-      const refreshBtn = document.getElementById('refreshBtn');
-      const exportBtn = document.getElementById('exportBtn');
-
-      if (exportBtn) {
-        exportBtn.addEventListener('click', function () {
-          this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
-          this.disabled = true;
-
-          setTimeout(() => {
-            this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
-            this.disabled = false;
-
-            const link = document.createElement('a');
-            link.href = '/admin/export-users';
-            link.download = ''; // optional
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          }, 1000);
-        });
-      }
-
-      if (refreshBtn) {
-        refreshBtn.addEventListener('click', async function () {
-          this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
-          this.disabled = true;
-
-          location.reload(); // Reload the page to refresh data
-          
-          setTimeout(() => {
-            this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
-            this.disabled = false;
-          }, 2000);
-        });
-      }
-    }
-
-    function setupInteractiveElements() {
-      // Open Add User Modal
-      const addUserBtn = document.querySelector('.add-user-btn');
-      if (addUserBtn) {
-        addUserBtn.addEventListener('click', () => {
-          const modal = new bootstrap.Modal(document.getElementById('addUserModal'));
-          modal.show();
-        },);
-      }
-
-      function toggleCourseYearFields(roleElement) {
-        const selectedRole = roleElement.value;
-        const courseYearDivs = document.querySelectorAll('.courseYearFields');
-
-        courseYearDivs.forEach(div => {
-          div.style.display = selectedRole === 'gia' ? 'block' : 'none';
-        });
-      }
-
-      // Change handler
-      ['addRole', 'editRole'].forEach(roleId => {
-        const roleElem = document.getElementById(roleId);
-        roleElem.addEventListener('change', function () {
-          toggleCourseYearFields(roleElem);
-        });
-      });
-
-      // Submit New User
-      const saveNewUserBtn = document.getElementById('saveNewUser');
-      if (saveNewUserBtn) {
-        saveNewUserBtn.addEventListener('click', function () {
-          const addUserForm = document.getElementById('addUserForm');
-          if (addUserForm.checkValidity()) {
-            // Gather form data
-            const userData = {
-              userId: document.getElementById('addUserId').value,
-              firstName: document.getElementById('addFirstName').value,
-              lastName: document.getElementById('addLastName').value,
-              middleInitial: document.getElementById('addMiddleInitial').value || '',
-              role: document.getElementById('addRole').value,
-              course: document.getElementById('addCourse').value || '',
-              year: document.getElementById('addYear').value || '' 
-            };
-
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
-            this.disabled = true;
-            this.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-              this.innerHTML = '<i class="fas fa-plus me-2"></i>Add User';
-              this.disabled = false;
-              this.style.transform = '';
-            }, 1500);
-
-            //send data to server and get the json success response
-            fetch('/admin/add-user', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(userData)
-            })
-              .then(res => res.json())
-              .then(data => {
-                if (data.success) {
-                  const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
-                  if (modal) modal.hide();
-                  location.reload();
-                  filterUsers();
-                } else {
-                  console.error('Error adding user:', data.error);
-                }
-              });
-          } else {
-            addUserForm.reportValidity();
-          }
-        });
-      }
-
-      let userId = null;
-
-      // Open Edit User Modal
-      document.querySelectorAll('.action-buttons .btn-outline-primary').forEach(button => {
-        button.addEventListener('click', () => {
-          userId = button.dataset.userId;
-
-          fetch(`/admin/user/${userId}`)
-            .then(res => {
-              if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-              return res.json();
-            })
-            .then(user => {
-              document.getElementById('editUserId').value = user.user_id;
-              document.getElementById('editFirstName').value = user.first_name;
-              document.getElementById('editLastName').value = user.last_name;
-              document.getElementById('editMiddleInitial').value = user.middle_name || '';
-              document.getElementById('editRole').value = user.role;
-              document.getElementById('editStatus').value = user.status;
-              document.getElementById('editCourse').value = user.course || '';
-              document.getElementById('editYear').value = user.year || '';
-
-              new bootstrap.Modal(document.getElementById('editUserModal')).show();
-              toggleCourseYearFields(document.getElementById('editRole'));
-            })
-            .catch(err => {
-              console.error("Failed to load user:", err.message);
-              alert("User not found or something went wrong.");
-            });
-        });
-      });
-
-      // Submit Edit User
-      const saveUserChangesBtn = document.getElementById('saveUserChanges');
-      if (saveUserChangesBtn) {
-        saveUserChangesBtn.addEventListener('click', function () {
-          const form = document.getElementById('editUserForm');
-          if (!form.checkValidity()) {
-            form.reportValidity();
-            return;
-          }
-
-          // Show loading state
-          this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-          this.disabled = true;
-
-          // Prepare form data
-          const userData = {
-            userId: document.getElementById('editUserId').value,
-            firstName: document.getElementById('editFirstName').value,
-            lastName: document.getElementById('editLastName').value,
-            middleInitial: document.getElementById('editMiddleInitial').value,
-            role: document.getElementById('editRole').value,
-            status: document.getElementById('editStatus').value,
-            course: document.getElementById('editCourse').value,
-            year: document.getElementById('editYear').value,
-          };
-
-          // Send to backend
-          fetch(`/admin/update-user/${userId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-          })
-            .then(res => res.json())
-            .then(data => {
-              this.innerHTML = 'Save Changes';
-              this.disabled = false;
-
-              if (data.success) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-                if (modal) modal.hide();
-
-                // Refresh or update the UI
-                location.reload();
-                filterUsers();
-
-                // Optional: feedback
-                console.log('User updated successfully!');
-                // showToast('User updated successfully!', 'success');
-              } else {
-                console.error('Error updating user:', data.error);
-                // showToast(data.error || 'Failed to update user.', 'danger');
-              }
-            })
-            .catch(err => {
-              this.innerHTML = 'Save Changes';
-              this.disabled = false;
-              console.error('Fetch error:', err);
-              // showToast('Request failed. Check your connection.', 'danger');
-            });
-        });
-      }
-
-      let selectedUserId = null; // Global holder
-
-      // Delete User
-      document.querySelectorAll('.action-buttons .btn-outline-danger').forEach(button => {
-        button.addEventListener('click', function () {
-          const row = this.closest('tr');
-          const userName = row.querySelector('.user-name').textContent;
-          selectedUserId = this.dataset.userId;
-          document.getElementById('deleteUserName').textContent = userName;
-          const modal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-          modal.show();
-        });
-      });
-
-      const confirmDeleteBtn = document.getElementById('confirmDeleteUser');
-      if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', function () {
-          this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
-          this.disabled = true;
-          setTimeout(() => {
-            this.innerHTML = 'Delete User';
-            this.disabled = false;
-
-            fetch(`/admin/delete-user/${selectedUserId}`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ userId: document.getElementById('deleteUserName').textContent })
-            })
-            console.log('User deleted successfully');
-            new bootstrap.Modal(document.getElementById('deleteUserModal')).hide();
-            location.reload();
-          }, 1500);
-        });
-      }
-    }
-
-    function setupPagination() {
-      document.querySelectorAll('.pagination .page-link').forEach(link => {
-        link.addEventListener('click', function (e) {
-          if (!this.parentElement.classList.contains('disabled') &&
-            !this.parentElement.classList.contains('active')) {
-            e.preventDefault();
-            document.querySelectorAll('.pagination .page-item').forEach(item => {
-              item.classList.remove('active');
-            });
-            this.parentElement.classList.add('active');
-            console.log('Page changed to:', this.textContent);
-          }
-        });
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      initUserManagement();
-      setupPagination();
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('userSearch').focus();
-      }
-
-      if (e.key === 'Escape') {
-        const searchInput = document.getElementById('userSearch');
-        if (document.activeElement === searchInput) {
-          searchInput.value = '';
-          filterUsers();
-          searchInput.blur();
-        }
-      }
-    });
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/users.js') }}"></script>
   {% endblock %}
 </div>
