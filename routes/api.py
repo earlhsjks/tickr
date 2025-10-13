@@ -13,19 +13,21 @@ from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 api_bp = Blueprint('api', __name__)
 
 # GET ALL USER
-@api_bp.route('/data')
+@api_bp.route('/users-data', methods=['GET'])
 @login_required
 def get_data():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.all()
+    users = User.query.filter(User.role != "superadmin").all()
     users_list = []
     for user in users:
         data = user.__dict__.copy()
         data.pop('_sa_instance_state', None)
         data.pop('password', None)
+        data.pop('id', None)
+        data.pop('superadmin', None)
         users_list.append(data)
         
     return jsonify(users_list)
@@ -131,6 +133,37 @@ def get_user_schedule(user_id):
         'schedules': user_schedules
     })
 
+# UPDATE USER DETAILS
+@api_bp.route('/update-user/<string:user_id>', methods=['POST'])
+@login_required
+def update_user(user_id):
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid or missing JSON data'}), 400
+
+    # Update user fields
+    user.first_name = data.get('firstName', user.first_name)
+    user.last_name = data.get('lastName', user.last_name)
+    user.middle_name = data.get('middleInitial', user.middle_name)
+    user.role = data.get('role', user.role)
+    user.status = data.get('status', user.status)
+    user.role = data.get('role', user.role)
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'User updated successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f"Error updating user: {str(e)}"}), 500
+
 # DELETE USER
 @api_bp.route('/delete-user/<string:user_id>', methods=['POST'])
 @login_required
@@ -166,39 +199,8 @@ def delete_user_page(user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error deleting user: {str(e)}"}), 500
-    
-# UPDATE USER DETAILS
-@api_bp.route('/update-user/<string:user_id>', methods=['POST'])
-@login_required
-def update_user(user_id):
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
 
-    user = User.query.filter_by(user_id=user_id).first()
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
-
-    data = request.get_json()
-    if not data:
-        return jsonify({'success': False, 'error': 'Invalid or missing JSON data'}), 400
-
-    # Update user fields
-    user.first_name = data.get('firstName', user.first_name)
-    user.last_name = data.get('lastName', user.last_name)
-    user.middle_name = data.get('middleInitial', user.middle_name)
-    user.role = data.get('role', user.role)
-    user.status = data.get('status', user.status)
-    user.role_id = data.get('roleId', user.role_id)
-
-    try:
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'User updated successfully!'}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': f"Error updating user: {str(e)}"}), 500
-
-# EXPORT USER
+# EXPORT USERS
 @api_bp.route('/export-users', methods=['GET'])
 @login_required
 def export_users():
@@ -218,9 +220,6 @@ def export_users():
         'Last Name': [user.last_name for user in users],
         'First Name': [user.first_name for user in users],
         'Middle Initial': [user.middle_name[0].upper() if user.middle_name else '' for user in users],
-        'Course': [user.course for user in users],
-        'Year': [user.year for user in users],
-        'Office': [(user.office.name - user.office.campus) if user.office else 'Not Assigned' for user in users],
     }
 
     df = pd.DataFrame(data)

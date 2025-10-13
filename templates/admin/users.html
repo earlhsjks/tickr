@@ -61,57 +61,7 @@
             </tr>
           </thead>
           <tbody id="usersTableBody">
-            {% for user in users %}
-            <tr>
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                  <div class="user-avatar me-3">
-                    {% if user.avatar %}
-                      <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" 
-                          alt="User Avatar" class="rounded-circle" width="40" height="40" />
-                    {% else %}
-                      <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
-                          style="width: 40px; height: 40px">
-                        <span class="initials">{{ user.first_name[0] }}{{ user.last_name[0] }}</span>
-                      </div>
-                    {% endif %}
-                  </div>
-                  <div>
-                    <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
-                    <div class="user-email">{{ user.user_id }}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="role-badge {{ user.role|lower }}">
-                  {% if user.role != 'gia' %}
-                    {{ user.role }}
-                  {% else %}
-                    {{ user.role|upper }}
-                  {% endif %}
-                </span>
-              </td>
-              <td>
-                <span class="status-badge {{ user.status|lower }}">{{ user.status }}</span>
-              </td>
-              <td>
-                <div class="last-login">
-                  <div>{{ user.last_login }}</div>
-                  <small class="text-muted">{{ user.last_seen }}</small>
-                </div>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary" data-user-id="{{ user.user_id }}" title="Edit">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" data-user-id="{{ user.user_id }}" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
+            <!-- POPULATE BY JS -->
           </tbody>
         </table>
       </div>
