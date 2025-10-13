@@ -13,6 +13,5 @@ logs/
 *.idea/
 flask_session/
 migrations/
-static/
 migrations/
 instance/
