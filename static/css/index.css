@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 400px;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-right: 0;
+}
+
+.form-control {
+    border-left: 0;
+}
+
+.btn-primary {
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+footer {
+    font-size: 0.9rem;
+}

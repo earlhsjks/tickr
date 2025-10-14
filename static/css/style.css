@@ -1,0 +1,1231 @@
+/* ==============================================
+   REUSABLE BASE STYLES FOR HR PANELS
+   ============================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f9fafb;
+    color: #374151;
+    line-height: 1.5;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main Container - Reusable for all panels */
+.main-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+@media (min-width: 576px) {
+    .main-container {
+        padding: 24px;
+    }
+}
+
+@media (min-width: 768px) {
+    .main-container {
+        padding: 32px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .main-container {
+        padding: 40px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .main-container {
+        padding: 48px;
+    }
+}
+
+/* Page Header - Reusable component */
+.page-header {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.page-title h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.page-title p {
+    color: #6b7280;
+    font-size: 16px;
+}
+
+.page-actions .search-container input {
+    width: 280px;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.page-actions .search-container input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.page-actions .export-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+  
+/* Stats Section - Reusable component */
+.stats-section .stat-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    transition: box-shadow 0.2s;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.stats-section .stat-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+  
+.stats-section .stat-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+  
+.stats-section .stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+  
+.stats-section .total-icon {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+  
+.stats-section .present-icon {
+    background: #d1fae5;
+    color: #10b981;
+}
+  
+.stats-section .late-icon {
+    background: #fef3c7;
+    color: #f59e0b;
+}
+  
+.stats-section .pending-icon {
+    background: #e0e7ff;
+    color: #8b5cf6;
+}
+  
+.stats-section .stat-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 8px;
+}
+  
+.stats-section .stat-change {
+    font-size: 12px;
+    font-weight: 500;
+}
+  
+.stats-section .stat-change.positive {
+    color: #059669;
+}
+  
+.stats-section .stat-change.negative {
+    color: #dc2626;
+}
+  
+.stats-section .stat-change.neutral {
+    color: #6b7280;
+}
+  
+/* Content Cards - Reusable component */
+.content-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+  
+.content-card .card-header {
+    padding: 24px 24px 16px 24px;
+    border-bottom: 1px solid #f3f4f6;
+}
+  
+.content-card .card-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+  
+.content-card .card-body {
+    padding: 20px 24px 24px 24px;
+}
+  
+.content-card .view-all {
+    color: #3b82f6;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+}
+  
+.content-card .view-all:hover {
+    color: #2563eb;
+    text-decoration: none;
+}
+  
+/* Activity List - Reusable component */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+  
+.activity-list .activity-item {
+    padding: 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+}
+  
+.activity-list .activity-item:hover {
+    background: #f9fafb;
+}
+  
+.activity-list .activity-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+  
+.activity-list .activity-name {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+  
+.activity-list .activity-action {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+  
+.activity-list .activity-time {
+    font-size: 12px;
+    color: #9ca3af;
+}
+  
+/* Status Badges - Reusable component */
+.activity-status, .status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+  
+.activity-status.on-time, .status-badge.on-time {
+    background: #d1fae5;
+    color: #065f46;
+}
+  
+.activity-status.late, .status-badge.late {
+    background: #fee2e2;
+    color: #991b1b;
+}
+  
+.activity-status.pending, .status-badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+  
+.activity-status.completed, .status-badge.completed {
+    background: #dbeafe;
+    color: #1e40af;
+}
+  
+/* Department List - Reusable component */
+.department-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+  
+.department-list .department-item {
+    padding: 16px;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+  
+.department-list .department-item:hover {
+    border-color: #e5e7eb;
+}
+  
+.department-list .department-name {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+  
+.department-list .department-stats {
+    font-size: 12px;
+    color: #6b7280;
+}
+  
+.department-list .metric-label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+  
+.department-list .metric-value {
+    font-weight: 600;
+    color: #111827;
+    font-size: 14px;
+}
+  
+/* Progress Bars - Reusable component */
+.attendance-bar, .progress-bar-custom {
+    width: 60px;
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+}
+  
+.attendance-bar .attendance-fill, .progress-bar-custom .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+  
+/* Action Buttons - Reusable component */
+.action-button {
+    padding: 20px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 80px;
+}
+  
+.action-button.primary {
+    background: #3b82f6;
+    color: white;
+}
+  
+.action-button.primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+    color: white;
+}
+  
+.action-button.secondary {
+    background: #f9fafb;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+  
+.action-button.secondary:hover {
+    background: #f3f4f6;
+    transform: translateY(-1px);
+    color: #374151;
+}
+  
+.action-button .action-icon {
+    font-size: 20px;
+}
+  
+/* Summary Metrics - Reusable component */
+.summary-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+  
+.summary-metrics .summary-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+  
+.summary-metrics .summary-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+  
+.summary-metrics .summary-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+}
+  
+.summary-metrics .summary-trend {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+  
+.summary-metrics .summary-trend.positive {
+    background: #d1fae5;
+    color: #065f46;
+}
+  
+.summary-metrics .summary-trend.negative {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* ==============================================
+   DAILY LOGS SPECIFIC STYLES
+   ============================================== */
+
+/* Time Log Display */
+.time-log {
+    text-align: left;
+}
+
+.time-log .time-display {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.time-log small {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+/* Total Hours Display */
+.total-hours {
+    text-align: left;
+}
+
+.total-hours .hours-display {
+    font-weight: 600;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.total-hours small {
+    font-size: 11px;
+}
+
+/* Status Badges - Additional styles for logs */
+.status-badge.present {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-badge.missing {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-badge.overtime {
+    background: #e0e7ff;
+    color: #5b21b6;
+}
+
+.status-badge.absent {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Auto-refresh Toggle */
+.form-check-input:checked {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+/* Timeline Styles for Modal */
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e5e7eb;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #e5e7eb;
+}
+
+.timeline-content {
+    background: #f9fafb;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-left: 3px solid #e5e7eb;
+}
+
+/* Real-time indicator */
+.card-header small {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Responsive adjustments for daily logs */
+@media (max-width: 768px) {
+    .time-log .time-display {
+        font-size: 13px;
+    }
+    
+    .total-hours .hours-display {
+        font-size: 13px;
+    }
+    
+    .timeline {
+        padding-left: 20px;
+    }
+    
+    .timeline::before {
+        left: 10px;
+    }
+    
+    .timeline-marker {
+        left: -17px;
+        width: 10px;
+        height: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 12px;
+    }
+    
+    .action-buttons .btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .timeline-content {
+        padding: 8px 12px;
+    }
+    
+    .card-footer {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+}
+
+/* ==============================================
+   SCHEDULE MANAGEMENT SPECIFIC STYLES
+   ============================================== */
+
+/* Schedule Time Display */
+.schedule-time {
+    text-align: left;
+}
+
+.schedule-time .time-display {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.schedule-time small {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+/* Total Hours Display */
+.total-hours {
+    text-align: left;
+}
+
+.total-hours .hours-display {
+    font-weight: 600;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.total-hours small {
+    font-size: 11px;
+}
+
+/* Broken Time Button */
+.broken-time-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.broken-time-btn.active {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+}
+
+.broken-time-btn:not(.active) {
+    background-color: transparent;
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.broken-time-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+/* Schedule Modal Styling */
+.modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 20px 24px;
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 16px 24px;
+}
+
+/* Broken Schedule Items */
+.broken-schedule-item {
+    background-color: #fef3c7;
+    border-color: #f59e0b !important;
+}
+
+.broken-schedule-item h6 {
+    color: #92400e;
+}
+
+.remove-broken-schedule {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.remove-broken-schedule:hover {
+    background-color: #dc2626;
+    color: white;
+}
+
+/* Modal Size Adjustments */
+.modal-xl {
+    max-width: 1200px;
+}
+
+/* Day Schedule Inputs */
+.form-check {
+    margin-top: 8px;
+}
+
+.form-check-label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Clear Schedules Button */
+.clear-schedules-btn {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+    font-weight: 500;
+}
+
+.clear-schedules-btn:hover {
+    background-color: #d97706;
+    border-color: #d97706;
+    color: white;
+}
+
+/* Schedule Table Enhancements */
+.table th {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+/* Responsive Schedule Table */
+@media (max-width: 768px) {
+    .schedule-time .time-display {
+        font-size: 13px;
+    }
+    
+    .total-hours .hours-display {
+        font-size: 13px;
+    }
+    
+    .broken-time-btn {
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 12px;
+    }
+    
+    .action-buttons .btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .broken-time-btn {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .modal-xl {
+        max-width: 95%;
+    }
+}
+
+/* ==============================================
+   USER MANAGEMENT SPECIFIC STYLES
+   ============================================== */
+
+/* User Table Styles */
+.table th {
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 16px 12px;
+}
+
+.table td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+/* User Avatar */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.user-email {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Department Badges – Base Style */
+.department-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Override for 'notasigned' */
+.department-badge.notasigned {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Base Badge Style */
+.courseyear-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+/* Valid Course Year (e.g., 1st to 5th Year) */
+.courseyear-badge.active {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* Default or "None" */
+.courseyear-badge.default {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Role Badges */
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+.role-badge.admin {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.role-badge.head {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.role-badge.staff {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.role-badge.gia {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* Status Badges - Extending existing styles */
+.status-badge.active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.inactive {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-badge.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.maintenance {
+    background: #fef3c7;
+    color: #92400e;
+}
+/* Last Login */
+.last-login {
+    font-size: 13px;
+}
+
+.last-login div:first-child {
+    color: #111827;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.action-buttons .btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Table Footer */
+.card-footer {
+    background: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    padding: 16px 24px;
+}
+
+.showing-info {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* Pagination Customization */
+.pagination-sm .page-link {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.pagination .page-link {
+    color: #6b7280;
+    border-color: #e5e7eb;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.pagination .page-link:hover {
+    color: #3b82f6;
+    background-color: #f9fafb;
+}
+
+/* Filter Section */
+.form-select {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Responsive adjustments for user table */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 13px;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+    
+    .action-buttons .btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .table th,
+    .table td {
+        padding: 12px 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-footer {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+    
+    .pagination {
+        justify-content: center;
+    }
+}
+
+/* ==============================================
+   WORK ASSIGNMENT (OFFICE MANAGEMENT) STYLES
+   ============================================== */
+
+/* Office Icon */
+.office-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.office-name {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.office-code {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* Office Location */
+.office-location div:first-child {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+/* Capacity Info */
+.capacity-info {
+    text-align: center;
+}
+
+.capacity-number {
+    font-weight: 600;
+    color: #111827;
+    font-size: 16px;
+    margin-bottom: 2px;
+}
+
+/* Assignment Info */
+.assignment-info {
+    text-align: center;
+}
+
+.assigned-count {
+    font-weight: 600;
+    color: #111827;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.capacity-bar {
+    width: 60px;
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.capacity-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+/* Manager Info */
+.manager-info {
+    text-align: left;
+}
+
+.manager-name {
+    font-weight: 500;
+    color: #111827;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+/* Employee Assignment Modal */
+.employee-list {
+    background: #f9fafb;
+}
+
+.employee-item {
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+}
+
+.employee-item:hover {
+    background: #f3f4f6;
+}
+
+.employee-item:last-child {
+    margin-bottom: 0;
+}
+
+.assign-btn, .unassign-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.assign-btn:hover, .unassign-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Responsive adjustments for office management */
+@media (max-width: 768px) {
+    .office-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    .capacity-bar {
+        width: 50px;
+    }
+    
+    .assignment-info,
+    .capacity-info {
+        font-size: 13px;
+    }
+    
+    .assigned-count,
+    .capacity-number {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .employee-list {
+        height: 200px !important;
+    }
+    
+    .modal-lg {
+        max-width: 95%;
+    }
+}
+/* ==============================================
+   RESPONSIVE DESIGN - Mobile First
+   ============================================== */
+
+@media (max-width: 768px) {
+    .main-container {
+        padding: 16px;
+    }
+    
+    .page-actions .search-container input {
+        width: 100%;
+    }
+    
+    .page-actions {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+    
+    .activity-list .activity-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px;
+    }
+    
+    .department-list .department-item {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+    
+    .department-list .department-metrics {
+        justify-content: space-between !important;
+    }
+    
+    .summary-metrics .summary-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .main-container {
+        padding: 12px;
+    }
+    
+    .page-title h1 {
+        font-size: 24px;
+    }
+    
+    .stats-section .stat-value {
+        font-size: 28px;
+    }
+    
+    .action-button {
+        min-height: 70px;
+        padding: 16px 12px;
+    }
+}
