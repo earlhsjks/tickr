@@ -1,9 +1,5 @@
-// GIA Schedule Management JavaScript
-
-const { createElement } = require("react");
-
-// Initialize schedule management functionality
 function initScheduleManagement() {
+    loadSchedules();
     setupSearch();
     setupBrokenTimeButtons();
     setupScheduleActions();
@@ -29,83 +25,41 @@ function setupSearch() {
     });
 }
 
-function loadSchedules() {
-    fetch(`/api/schedule-data`)
+async function loadSchedules() {
+    fetch(`/api/get-schedules`)
     .then(res => {
-        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         return res.json();
     })
-    .then(users => {
-        const tbody = document.getElementById('scheduleTableBody');
-        tbody.innerHTML = '';
+    
+    const users = data.users;
+    const schedules = data.schedules;
 
-        users.forEach(user => {
-            const tr = createElement('tr');
+    const userMap = {}
+    users.forEach(u => {
+        userMap[u.user_id] = `${u.first_name} ${u.last_name}`;
+    })
 
-            tr.innerHTML = `
-            <td class="ps-4">
-                <div class="d-flex align-items-center">
-                    <div class="user-avatar me-3">JS</div>
-                    <div>
-                        <div class="user-name">John Smith</div>
-                        <!-- <div class="user-email">Engineering Manager</div> -->
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">8:00-5:00</div>
-                    <small class="text-muted">8 hours</small>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">8:00-5:00</div>
-                    <small class="text-muted">8 hours</small>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">8:00-5:00</div>
-                    <small class="text-muted">8 hours</small>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">8:00-5:00</div>
-                    <small class="text-muted">8 hours</small>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">8:00-5:00</div>
-                    <small class="text-muted">8 hours</small>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">Off</div>
-                    <small class="text-muted">Rest day</small>
-                </div>
-            </td>
-            <td>
-                <div class="schedule-time">
-                    <div class="time-display">Off</div>
-                    <small class="text-muted">Rest day</small>
-                </div>
-            </td>
-            <td>
-                <div class="action-buttons">
-                    <button class="btn btn-sm btn-outline-primary" title="Edit Schedule">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" title="Delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </td>
-            `;
+    const scheduleMap = [];
+    schedules.forEach(s => {
+        if (!scheduleMap[s.user_id])scheduleMap[s.user_is] = {};
+        scheduleMap[s.user_id][s.day] = `${s.start_time || ''} - ${s.end_time || ''}`;
+    })
+
+    const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const tbody = document.getElementById('scheduleTableBody');
+    tbody.innerHTML = '';
+
+    users.forEach(u => {
+        const row = document.createElement('tr');
+        let rowHTML = `<td>${u.first_name} ${u.last_name}</td>`;
+
+        days.forEach(day => {
+            const sched = scheduleMap[u.user_id]?.[day] || '-';
+            rowHTML += `<td>${sched}</td>`
         })
+
+        row.innerHTML = rowHTML;
+        tbody.appendChild(row);
     })
 }
 
@@ -166,6 +120,14 @@ function setupScheduleActions() {
         }
     });
     
+    // Add schedule button
+    const addScheduleBtn = document.querySelector('.add-schedule-btn');
+    addScheduleBtn.addEventListener('click', function() {
+        const modal = new bootstrap.Modal(document.getElementById('scheduleEditModal'));
+        modal.show();
+        console.log('Add schedule modal opened');
+    });
+    
     // Edit schedule buttons
     const editButtons = document.querySelectorAll('.action-buttons .btn-outline-primary');
     editButtons.forEach(button => {
@@ -178,6 +140,28 @@ function setupScheduleActions() {
             
             console.log(`Edit schedule for: ${employeeName}`);
         });
+    });
+    
+    // Convert schedule buttons
+    // Delete buttons
+    const deleteButtons = document.querySelectorAll('.btn-outline-danger');
+    deleteButtons.forEach(button => {
+        if (button.title === 'Delete') {
+            button.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const employeeName = row.querySelector('.user-name').textContent;
+                
+                if (confirm(`Are you sure you want to delete the schedule for ${employeeName}?`)) {
+                    console.log(`Schedule deleted for: ${employeeName}`);
+                    
+                    // Visual feedback
+                    row.style.opacity = '0.5';
+                    setTimeout(() => {
+                        row.remove();
+                    }, 500);
+                }
+            });
+        }
     });
     
     // Export and refresh buttons

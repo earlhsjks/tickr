@@ -92,46 +92,6 @@ def get_user(user_id):
 
     return jsonify(user_data)
 
-
-@api_bp.route('/get-schedule/<string:user_id>')
-@login_required
-def get_user_schedule(user_id):
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
-
-    user = User.query.filter_by(user_id=user_id).first()
-    if not user:
-        return jsonify({'success': False, 'error': 'User not found'}), 404
-
-    schedule = Schedule.query.filter_by(user_id=user_id).all()
-
-    user_data = {
-        'user_id': user.user_id,
-        'full_name': f"{user.first_name} {user.last_name}",
-        'middle_name': user.middle_name[0] if user.middle_name else '',
-        'office': user.office_id
-    }
-
-    user_schedules = [
-        {
-            'id': s.id,
-            'day': s.day,
-            'start_time': s.start_time.strftime('%H:%M') if s.start_time else None,
-            'end_time': s.end_time.strftime('%H:%M') if s.end_time else None,
-            'is_broken': s.is_broken,
-            'second_start_time': s.second_start_time.strftime('%H:%M') if s.second_start_time else None,
-            'second_end_time': s.second_end_time.strftime('%H:%M') if s.second_end_time else None,
-            'rest_day': s.rest_day
-        }
-        for s in schedule
-    ]
-
-    return jsonify({
-        'user': user_data,
-        'schedules': user_schedules
-    })
-
 # UPDATE USER DETAILS
 @api_bp.route('/update-user/<string:user_id>', methods=['POST'])
 @login_required
@@ -241,12 +201,63 @@ def get_schedules():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    schedule = User.query.filter(User.role != "superadmin", User.role != "admin").all()
+    users = User.query.all()
+    schedules = Schedule.query.all()
+    users_list = []
     sched_list = []
+
     for user in users:
+        data = user.__dict__.copy()
+        data.pop('_sa_instance_state', None)
+        data.pop('password', None)
+        data.pop('id', None)
+        users_list.append(data)
+    
+    for schedule in schedules:
         data = schedule.__dict__.copy()
         data.pop('_sa_instance_state', None)
         data.pop('id', None)
         sched_list.append(data)
 
-    return jsonify(sched_list)
+    return jsonify({
+        'schedules': sched_list,
+        'users': users_list
+    })
+
+@api_bp.route('/get-schedule/<string:user_id>')
+@login_required
+def get_user_schedule(user_id):
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
+    schedule = Schedule.query.filter_by(user_id=user_id).all()
+
+    user_data = {
+        'user_id': user.user_id,
+        'full_name': f"{user.first_name} {user.last_name}",
+        'middle_name': user.middle_name[0] if user.middle_name else '',
+    }
+
+    user_schedules = [
+        {
+            'id': s.id,
+            'day': s.day,
+            'start_time': s.start_time.strftime('%H:%M') if s.start_time else None,
+            'end_time': s.end_time.strftime('%H:%M') if s.end_time else None,
+            'is_broken': s.is_broken,
+            'second_start_time': s.second_start_time.strftime('%H:%M') if s.second_start_time else None,
+            'second_end_time': s.second_end_time.strftime('%H:%M') if s.second_end_time else None,
+            'rest_day': s.rest_day
+        }
+        for s in schedule
+    ]
+
+    return jsonify({
+        'user': user_data,
+        'schedules': user_schedules
+    })

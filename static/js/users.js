@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadUsers();
 });
 
-function setupSearch() {
+async function setupSearch() {
     const searchInput = document.getElementById('userSearch');
     const tableBody = document.getElementById('usersTableBody');
     const rows = tableBody.querySelectorAll('tr');
