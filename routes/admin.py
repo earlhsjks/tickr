@@ -130,6 +130,31 @@ def admin_dashboard():
         current_time = datetime.now().strftime("%A, %B %d, %Y"),
     )
 
+# VIEW USERS PAGE
+@admin_bp.route('/users')
+@login_required
+def users():
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return render_template('auth/admin.html')
+
+    users = User.query.filter(User.role != "superadmin").all()
+
+    return render_template('admin/users.html', current_user=current_user)
+
+# GIA SCHEDULE PAGE
+@admin_bp.route('/gia-schedule')
+@login_required
+def gia_schedule():
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return render_template('auth/admin.html')
+    
+    users = User.query.filter(User.role == "gia").all()
+    schedules = Schedule.query.all()
+
+    return render_template('admin/schedule.html')
+
 # Attendance 
 @admin_bp.route('/attendance-records', methods=['GET', 'POST'])
 @login_required
@@ -186,20 +211,6 @@ def admin_attendance():
         inconsistencies=inconsistencies,
         current_month=f"{year}-{month:02d}",
         datetime=datetime
-    )
-
-# VIEW USERS
-@admin_bp.route('/users')
-@login_required
-def users():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/admin.html')
-
-    users = User.query.filter(User.role != "superadmin").all()
-
-    return render_template('admin/users.html',
-                           current_user=current_user,
     )
 
 # DAILY LOGS PAGE
@@ -287,24 +298,6 @@ def overtime_requests():
     ).join(User).filter(AttendanceInconsistency.issue_type == "Overtime").all()
 
     return render_template('admin/overtime_requests.html', overtime_requests=overtime_requests)
-
-# GIA SCHEDULE MANAGEMENT
-@admin_bp.route('/gia-schedule')
-@login_required
-def gia_schedule():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/admin.html')
-    
-    users = User.query.filter(User.role == "gia").all()
-    schedules = Schedule.query.all()
-
-    # Create a mapping of user_id to their schedules
-    schedule_map = defaultdict(list)
-    for schedule in schedules:
-        schedule_map[schedule.user_id].append(schedule)
-
-    return render_template('admin/schedule.html', users=users, schedule_map=schedule_map)
 
 # OFFICE MANAGEMENT
 @admin_bp.route('/work-assignment')

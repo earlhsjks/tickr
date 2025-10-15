@@ -88,43 +88,43 @@ function loadUsers() {
                 const tr = document.createElement('tr');
 
                 tr.innerHTML = `
-              <td class="ps-4">
-                <div class="d-flex align-items-center">
-                  <div class="user-avatar me-3">
-                      <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
-                          style="width: 40px; height: 40px">
-                        <span class="initials">${user.first_name[0]}${user.last_name[0]}</span>
-                      </div>
-                  </div>
-                  <div>
-                    <div class="user-name">${user.first_name} ${user.last_name}</div>
-                    <div class="user-email">${user.user_id}</div>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span class="role-badge ${user.role.toLowerCase()}">${user.role === "gia" ? "GIA" : user.role}</span>
-              </td>
-              <td>
-                <span class="status-badge ${user.status.toLowerCase()}">${user.status}</span>
-              </td>
-              <td>
-                <div class="last-login">
-                  <div>{{ user.last_login }}</div>
-                  <small class="text-muted">{{ user.last_seen }}</small>
-                </div>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button class="btn btn-sm btn-outline-primary" data-user-id="${user.user_id}" title="Edit">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" data-user-id="${user.user_id}" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </div>
-              </td>
-            `;
+                <td class="ps-4">
+                    <div class="d-flex align-items-center">
+                    <div class="user-avatar me-3">
+                        <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
+                            style="width: 40px; height: 40px">
+                            <span class="initials">${user.first_name[0]}${user.last_name[0]}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="user-name">${user.first_name} ${user.last_name}</div>
+                        <div class="user-email">${user.user_id}</div>
+                    </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="role-badge ${user.role.toLowerCase()}">${user.role === "gia" ? "GIA" : user.role}</span>
+                </td>
+                <td>
+                    <span class="status-badge ${user.status.toLowerCase()}">${user.status}</span>
+                </td>
+                <td>
+                    <div class="last-login">
+                    <div>{{ user.last_login }}</div>
+                    <small class="text-muted">{{ user.last_seen }}</small>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary" data-user-id="${user.user_id}" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" data-user-id="${user.user_id}" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    </div>
+                </td>
+                `;
 
                 tbody.appendChild(tr);
             })
@@ -246,35 +246,35 @@ document.getElementById('saveNewUser').addEventListener('click', function () {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
     })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            const modalEl = document.getElementById('addUserModal');
-            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const modalEl = document.getElementById('addUserModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-            // Give Bootstrap time to finish transition before hiding
+                // Give Bootstrap time to finish transition before hiding
+                setTimeout(() => {
+                    modal.hide();
+                    // Remove backdrop and focus trap manually in case
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    loadUsers();
+                }, 300);
+            } else {
+                console.error('Error adding user:', data.error);
+            }
+        })
+        .catch(err => console.error('Fetch failed:', err))
+        .finally(() => {
+            // Restore button after fetch finishes
             setTimeout(() => {
-                modal.hide();
-                // Remove backdrop and focus trap manually in case
-                document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-                document.body.classList.remove('modal-open');
-                document.body.style.overflow = '';
-                loadUsers();
-            }, 300);
-        } else {
-            console.error('Error adding user:', data.error);
-        }
-    })
-    .catch(err => console.error('Fetch failed:', err))
-    .finally(() => {
-        // Restore button after fetch finishes
-        setTimeout(() => {
-            this.innerHTML = '<i class="fas fa-plus me-2"></i>Add User';
-            this.disabled = false;
-            this.style.transform = '';
-            document.getElementById('addUserForm').reset();
-        }, 200);
-    });
+                this.innerHTML = '<i class="fas fa-plus me-2"></i>Add User';
+                this.disabled = false;
+                this.style.transform = '';
+                document.getElementById('addUserForm').reset();
+            }, 200);
+        });
 });
 
 // SUBMIT EDIT USER

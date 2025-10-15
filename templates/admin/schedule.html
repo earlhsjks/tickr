@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/schedule.js') }}"></script>
+
     <div class="main-container">
         <!-- Page Header -->
         <div class="page-header">
@@ -23,14 +26,11 @@
                 </div>
                 <div class="col-md-6">
                     <div class="page-actions d-flex justify-content-md-end gap-3 mt-3 mt-md-0">
-                        <div class="search-container flex-grow-1 flex-md-grow-0">
+                        <div class="search-container flex-grow-1 flex-md-grow-0" hidden>
                             <input type="text" class="form-control" placeholder="Search employees..." id="scheduleSearch">
                         </div>
                         <button class="btn btn-warning clear-schedules-btn">
                             <i class="fas fa-broom me-2"></i>Clear All Schedules
-                        </button>
-                        <button class="btn btn-success add-schedule-btn">
-                            <i class="fas fa-plus me-2"></i>Add Schedule
                         </button>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="ps-4">Employee</th>
+                                <th class="ps-4">GIA</th>
                                 <th>Monday</th>
                                 <th>Tuesday</th>
                                 <th>Wednesday</th>
@@ -68,6 +68,69 @@
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">JS</div>
+                                        <div>
+                                            <div class="user-name">John Smith</div>
+                                            <!-- <div class="user-email">Engineering Manager</div> -->
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00-5:00</div>
+                                        <small class="text-muted">8 hours</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00-5:00</div>
+                                        <small class="text-muted">8 hours</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00-5:00</div>
+                                        <small class="text-muted">8 hours</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00-5:00</div>
+                                        <small class="text-muted">8 hours</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">8:00-5:00</div>
+                                        <small class="text-muted">8 hours</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">Off</div>
+                                        <small class="text-muted">Rest day</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="schedule-time">
+                                        <div class="time-display">Off</div>
+                                        <small class="text-muted">Rest day</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-sm btn-outline-primary" title="Edit Schedule">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                             {% for user in users %}
                             <tr>
                                 <td class="ps-4">
@@ -163,8 +226,7 @@
                             <!-- Employee Selection -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
-                                    <h5 class="text-left mb-3">Employee</h5>
-                                    <h6 class="text-left mb-3" id="editUserName"></h6>
+                                    <h5 class="text-left mb-3" id="editUserName">Employee</h5>
                                 </div>
                             </div>
 
@@ -307,206 +369,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function initScheduleManagement() {
-            setupSearch();
-            setupBrokenTimeButtons();
-            setupScheduleActions();
-            addInteractiveEffects();
-        }
-
-        function safeSetValue(id, value) {
-            const el = document.getElementById(id);
-            if (el) el.value = value;
-        }
-
-        function safeSetChecked(id, checked) {
-            const el = document.getElementById(id);
-            if (el) el.checked = checked;
-        }
-
-        function setupSearch() {
-            const searchInput = document.getElementById('scheduleSearch');
-            if (!searchInput) return;
-            searchInput.addEventListener('input', function() {
-                filterSchedules();
-                if (this.value.trim().length > 0) {
-                    this.style.borderColor = '#10b981';
-                    setTimeout(() => this.style.borderColor = '#d1d5db', 1000);
-                }
-            });
-        }
-
-        function setupBrokenTimeButtons() {
-            document.querySelectorAll('.broken-time-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const isBroken = this.dataset.broken === 'true';
-                    const row = this.closest('tr');
-                    const name = row?.querySelector('.user-name')?.textContent || 'Unknown';
-                    this.dataset.broken = (!isBroken).toString();
-                    if (isBroken) {
-                        this.className = 'btn btn-sm btn-outline-warning broken-time-btn';
-                        this.innerHTML = '<i class="fas fa-play me-1"></i>Normal Time';
-                        console.log(`${name} switched to normal time`);
-                    } else {
-                        this.className = 'btn btn-sm btn-warning broken-time-btn active';
-                        this.innerHTML = '<i class="fas fa-pause me-1"></i>Broken Time';
-                        console.log(`${name} switched to broken time`);
-                    }
-                    this.style.transform = 'scale(0.95)';
-                    setTimeout(() => this.style.transform = '', 150);
-                });
-            });
-        }
-
-        function setupScheduleActions() {
-            const clearBtn = document.querySelector('.clear-schedules-btn');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function() {
-                    if (confirm('Clear all schedules?')) {
-                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clearing...';
-                        this.disabled = true;
-                        setTimeout(() => {
-                            this.innerHTML = '<i class="fas fa-broom me-2"></i>Clear All Schedules';
-                            this.disabled = false;
-                            console.log('All schedules cleared');
-                        }, 2000);
-                    }
-                });
-            }
-
-            const addBtn = document.querySelector('.add-schedule-btn');
-            if (addBtn) {
-                addBtn.addEventListener('click', () => {
-                    new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
-                    console.log('Add schedule modal opened');
-                });
-            }
-
-            document.querySelectorAll('.action-buttons .btn-outline-primary').forEach(button => {
-                button.addEventListener('click', function() {
-                    const userId = this.dataset.userId;
-                    const row = this.closest('tr');
-                    const name = row?.querySelector('.user-name')?.textContent || 'Unknown';
-                    console.log(`Fetching schedule for: ${name} (ID: ${userId})`);
-
-                    fetch(`/api/v1/get-schedule/${userId}`)
-                        .then(res => {
-                            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-                            return res.json();
-                        })
-                        .then(user => {
-                            // Basic info safely
-                            safeSetValue('editUserName', user.full_name);
-                            safeSetValue('editUserId', user.user_id);
-                            safeSetValue('editFirstName', user.first_name);
-                            safeSetValue('editLastName', user.last_name);
-                            safeSetValue('editMiddleInitial', user.middle_name || '');
-                            safeSetValue('editRole', user.role_id);
-                            safeSetValue('editStatus', user.status);
-                            safeSetValue('editCourse', user.course || '');
-                            safeSetValue('editYear', user.year || '');
-
-                            // Schedule mapping
-                            const scheduleMap = {};
-                            user.schedules.forEach(item => scheduleMap[item.day.toLowerCase()] = item);
-                            const days = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
-                            days.forEach(day => {
-                                const sched = scheduleMap[day] || {};
-                                safeSetValue(`${day}In`, sched.start_time || '');
-                                safeSetValue(`${day}Out`, sched.end_time || '');
-                                safeSetChecked(`${day}Off`, sched.rest_day === true);
-                                safeSetValue(`${day}SecondIn`, sched.is_broken ? (sched.second_start_time || '') : '');
-                                safeSetValue(`${day}SecondOut`, sched.is_broken ? (sched.second_end_time || '') : '');
-                                safeSetChecked(`${day}Broken`, !!sched.is_broken);
-                            });
-
-                            new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
-                            if (document.getElementById('editRole')) toggleCourseYearFields(document.getElementById('editRole'));
-                        })
-                        .catch(err => {
-                            console.error("Failed to load user:", err.message);
-                            alert("User not found or something went wrong.");
-                        });
-                });
-            });
-
-            document.querySelectorAll('.btn-outline-danger[title="Delete"]').forEach(button => {
-                button.addEventListener('click', function() {
-                    const row = this.closest('tr');
-                    const name = row?.querySelector('.user-name')?.textContent || 'Unknown';
-                    if (confirm(`Delete schedule for ${name}?`)) {
-                        console.log(`Schedule deleted for: ${name}`);
-                        row.style.opacity = '0.5';
-                        setTimeout(() => row.remove(), 500);
-                    }
-                });
-            });
-
-            document.querySelectorAll('.btn-outline-primary').forEach(button => {
-                if (button.textContent.includes('Export')) {
-                    button.addEventListener('click', function() {
-                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
-                        this.disabled = true;
-                        setTimeout(() => {
-                            this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
-                            this.disabled = false;
-                        }, 2000);
-                    });
-                }
-            });
-
-            document.querySelectorAll('.btn-outline-secondary').forEach(button => {
-                if (button.textContent.includes('Refresh')) {
-                    button.addEventListener('click', function() {
-                        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
-                        this.disabled = true;
-                        location.reload();
-                    });
-                }
-            });
-        }
-
-        function filterSchedules() {
-            const term = document.getElementById('scheduleSearch')?.value.toLowerCase() || '';
-            const tableBody = document.getElementById('scheduleTableBody');
-            if (!tableBody) return;
-            let visibleCount = 0;
-            tableBody.querySelectorAll('tr').forEach(row => {
-                const name = row.querySelector('.user-name')?.textContent.toLowerCase() || '';
-                const dept = row.querySelector('.department-badge')?.textContent.toLowerCase() || '';
-                const match = name.includes(term) || dept.includes(term);
-                row.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
-            });
-            console.log(`Showing ${visibleCount} schedules`);
-        }
-
-        function addInteractiveEffects() {
-            document.querySelectorAll('tbody tr').forEach(row => {
-                row.addEventListener('mouseenter', () => row.style.backgroundColor = '#f8f9fa');
-                row.addEventListener('mouseleave', () => row.style.backgroundColor = '');
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', initScheduleManagement);
-
-        document.addEventListener('keydown', e => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                document.getElementById('scheduleSearch')?.focus();
-            }
-            if (e.key === 'Escape') {
-                const search = document.getElementById('scheduleSearch');
-                if (document.activeElement === search) {
-                    search.value = '';
-                    filterSchedules();
-                    search.blur();
-                }
-            }
-        });
-    </script>
-
-    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
 {% endblock %}

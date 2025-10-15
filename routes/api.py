@@ -234,3 +234,8 @@ def export_users():
     filename = f'GIA List {datetime.now().strftime("%m-%d-%Y")}.csv'
 
     return send_file(output, mimetype='text/csv', as_attachment=True, download_name=filename)
+
+# GET ALL SCHEDULE
+@api_bp.route('/get-schedules')
+def method_name():
+    pass
