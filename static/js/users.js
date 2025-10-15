@@ -131,6 +131,7 @@ function loadUsers() {
         })
 }
 
+// EDIT AND DELETE
 const tbody = document.getElementById('usersTableBody');
 tbody.addEventListener('click', e => {
     const editBtn = e.target.closest('.btn-outline-primary');
@@ -162,6 +163,63 @@ tbody.addEventListener('click', e => {
 
         loadUsers();
     }
+
+    // SUBMIT EDIT USER
+    document.getElementById('saveUserChanges').addEventListener('click', function () {
+        const form = document.getElementById('editUserForm');
+        const userId = editBtn.getAttribute('data-user-id');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        // Show loading state
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        this.disabled = true;
+
+        // Prepare form data
+        const userData = {
+            userId: document.getElementById('editUserId').value,
+            firstName: document.getElementById('editFirstName').value,
+            lastName: document.getElementById('editLastName').value,
+            middleInitial: document.getElementById('editMiddleInitial').value,
+            role: document.getElementById('editRole').value,
+        };
+
+        // Send to backend
+        fetch(`/api/update-user/${userId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        })
+            .then(res => res.json())
+            .then(data => {
+                this.innerHTML = 'Save Changes';
+                this.disabled = false;
+
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
+                    if (modal) modal.hide();
+
+                    loadUsers();
+                    // filterUsers();
+
+                    console.log('User updated successfully!');
+                    document.getElementById('addUserForm').reset();
+                } else {
+                    console.error('Error updating user:', data.error);
+                }
+            })
+            .catch(err => {
+                this.innerHTML = 'Save Changes';
+                this.disabled = false;
+                console.error('Fetch error:', err);
+            });
+
+        let selectedUserId = null;
+    });
 
     if (deleteBtn) {
         const userId = deleteBtn.getAttribute('data-user-id');
@@ -275,62 +333,6 @@ document.getElementById('saveNewUser').addEventListener('click', function () {
                 document.getElementById('addUserForm').reset();
             }, 200);
         });
-});
-
-// SUBMIT EDIT USER
-document.getElementById('saveUserChanges').addEventListener('click', function () {
-    const form = document.getElementById('editUserForm');
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    // Show loading state
-    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-    this.disabled = true;
-
-    // Prepare form data
-    const userData = {
-        userId: document.getElementById('editUserId').value,
-        firstName: document.getElementById('editFirstName').value,
-        lastName: document.getElementById('editLastName').value,
-        middleInitial: document.getElementById('editMiddleInitial').value,
-        role: document.getElementById('editRole').value,
-    };
-
-    // Send to backend
-    fetch(`/api/update-user/${userId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(userData)
-    })
-        .then(res => res.json())
-        .then(data => {
-            this.innerHTML = 'Save Changes';
-            this.disabled = false;
-
-            if (data.success) {
-                const modal = bootstrap.Modal.getInstance(document.getElementById('editUserModal'));
-                if (modal) modal.hide();
-
-                loadUsers();
-                filterUsers();
-
-                console.log('User updated successfully!');
-                document.getElementById('addUserForm').reset();
-            } else {
-                console.error('Error updating user:', data.error);
-            }
-        })
-        .catch(err => {
-            this.innerHTML = 'Save Changes';
-            this.disabled = false;
-            console.error('Fetch error:', err);
-        });
-
-    let selectedUserId = null;
 });
 
 function setupPagination() {

@@ -29,8 +29,8 @@ Currently **in active development**.
 ---
 
 ## 📌 Roadmap
-- [ ] Authentication & User Roles  
-- [ ] Employee CRUD  
+- [x] Authentication & User Roles  
+- [x] Employee CRUD  
 - [ ] Time Logs Module  
 - [ ] Approvals Module  
 - [ ] Schedule Management  

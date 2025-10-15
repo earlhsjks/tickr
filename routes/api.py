@@ -27,7 +27,6 @@ def get_data():
         data.pop('_sa_instance_state', None)
         data.pop('password', None)
         data.pop('id', None)
-        data.pop('superadmin', None)
         users_list.append(data)
         
     return jsonify(users_list)
@@ -237,5 +236,17 @@ def export_users():
 
 # GET ALL SCHEDULE
 @api_bp.route('/get-schedules')
-def method_name():
-    pass
+def get_schedules():
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+    
+    schedule = User.query.filter(User.role != "superadmin", User.role != "admin").all()
+    sched_list = []
+    for user in users:
+        data = schedule.__dict__.copy()
+        data.pop('_sa_instance_state', None)
+        data.pop('id', None)
+        sched_list.append(data)
+
+    return jsonify(sched_list)
