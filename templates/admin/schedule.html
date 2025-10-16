@@ -32,7 +32,7 @@
                         <button class="btn btn-warning clear-schedules-btn">
                             <i class="fas fa-broom me-2"></i>Clear All Schedules
                         </button>
-                        <button class="btn btn-success add-schedule-btn">
+                        <button class="btn btn-success add-schedule-btn" hidden>
                             <i class="fas fa-plus me-2"></i>Add Schedule
                         </button>
                     </div>
@@ -60,156 +60,18 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="ps-4">GIA</th>
-                                <th>Monday</th>
-                                <th>Tuesday</th>
-                                <th>Wednesday</th>
-                                <th>Thursday</th>
-                                <th>Friday</th>
-                                <th>Saturday</th>
-                                <th>Sunday</th>
-                                <th>Actions</th>
+                                <th class="text-center">Monday</th>
+                                <th class="text-center">Tuesday</th>
+                                <th class="text-center">Wednesday</th>
+                                <th class="text-center">Thursday</th>
+                                <th class="text-center">Friday</th>
+                                <th class="text-center">Saturday</th>
+                                <th class="text-center">Sunday</th>
+                                <th class="text-center">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="usersTableBody">
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3">JS</div>
-                                        <div>
-                                            <div class="user-name">John Smith</div>
-                                            <!-- <div class="user-email">Engineering Manager</div> -->
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">8:00-5:00</div>
-                                        <small class="text-muted">8 hours</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="schedule-time">
-                                        <div class="time-display">Off</div>
-                                        <small class="text-muted">Rest day</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary" title="Edit Schedule">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% for user in users %}
-                            <tr>
-                                <td class="ps-4">
-                                    <input type="checkbox" class="form-check-input user-checkbox" />
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3">
-                                            {% if user.avatar %}
-                                                <img src="{{ url_for('static', filename='avatars/' + user.avatar) }}" alt="User Avatar"
-                                                    class="rounded-circle" width="40" height="40" />
-                                            {% else %}
-                                                <div class="default-avatar rounded-circle d-flex align-items-center justify-content-center"
-                                                    style="width: 40px; height: 40px">
-                                                    <span class="initials">{{ user.first_name[0] }}{{ user.last_name[0] }}</span>
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                        <div>
-                                            <div class="user-name">{{ user.first_name }} {{ user.last_name }}</div>
-                                            <div class="user-email">{{ user.user_id }}</div>
-                                        </div>
-                                    </div>
-                                </td>
-
-                                {% for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
-                                    <td>
-                                        {% if schedule_map[user.user_id].get(day) %}
-                                            {% set sched = schedule_map[user.user_id][day] %}
-                                            <div class="schedule-time">
-                                                <div class="time-display">
-                                                    {% if sched.rest_day %}
-                                                        Off
-                                                    {% else %}
-                                                            {{ sched.start_time.strftime("%I:%M %p") }} - {{ sched.end_time.strftime("%I:%M %p") }}
-                                                    {% endif %}
-                                                </div>
-                                                <small class="text-muted">
-                                                    {% if sched.rest_day %}
-                                                        Rest day
-                                                    {% elif sched.start_time and sched.end_time %}
-                                                        {% set start_minutes = sched.start_time.hour * 60 + sched.start_time.minute %}
-                                                        {% set end_minutes = sched.end_time.hour * 60 + sched.end_time.minute %}
-                                                        {% if end_minutes < start_minutes %}
-                                                            {% set end_minutes = end_minutes + 24 * 60 %}
-                                                        {% endif %}
-                                                        {% set diff_minutes = end_minutes - start_minutes %}
-                                                        {% set hours = diff_minutes // 60 %}
-                                                        {% set minutes = diff_minutes % 60 %}
-                                                        {{ hours }} hours{% if minutes > 0 %} {{ minutes }}m{% endif %}
-                                                    {% else %}
-                                                        No schedule
-                                                    {% endif %}
-                                                </small>
-                                            </div>
-                                        {% else %}
-                                            <div class="schedule-time">
-                                                <div class="time-display">N/A</div>
-                                                <small class="text-muted">No schedule</small>
-                                            </div>
-                                        {% endif %}
-                                    </td>
-                                {% endfor %}
-
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary" data-user-id="{{ user.user_id }}" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" data-user-id="{{ user.user_id }}" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
+                        <tbody id="scheduleTableBody">
+                            <!-- JS POP -->
                         </tbody>
                     </table>
                 </div>
@@ -221,7 +83,7 @@
             <div class="modal-dialog modal-xl">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Edit Employee Schedule</h5>
+                        <h5 class="modal-title">Edit GIA Schedule</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
@@ -229,9 +91,12 @@
                             <!-- Employee Selection -->
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
-                                    <h5 class="text-left mb-3" id="editUserName">Employee</h5>
+                                    <h5 class="text-left fw-bold" id="editWho"></h5>
                                 </div>
                             </div>
+
+                            <!-- Hidden ID -->
+                            <input type="text" name="userId" id="userId" readonly hidden>
 
                             <!-- Normal Schedule Section -->
                             <div class="mb-4">
@@ -333,7 +198,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary">Save Changes</button>
+                        <button type="submit" class="btn btn-primary" id="saveSchedBtn">Save Changes</button>
                     </div>
                 </div>
             </div>

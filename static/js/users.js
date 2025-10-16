@@ -102,26 +102,28 @@ function loadUsers() {
                     </div>
                     </div>
                 </td>
-                <td>
+                <td class="text-center">
                     <span class="role-badge ${user.role.toLowerCase()}">${user.role === "gia" ? "GIA" : user.role}</span>
                 </td>
-                <td>
+                <td class="text-center">
                     <span class="status-badge ${user.status.toLowerCase()}">${user.status}</span>
                 </td>
-                <td>
+                <td class="text-center">
                     <div class="last-login">
                     <div>{{ user.last_login }}</div>
                     <small class="text-muted">{{ user.last_seen }}</small>
                     </div>
                 </td>
-                <td>
-                    <div class="action-buttons">
-                    <button class="btn btn-sm btn-outline-primary" data-user-id="${user.user_id}" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" data-user-id="${user.user_id}" title="Delete">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <td class="text-center">
+                    <div class="d-inline-flex gap-2 justify-content-center">
+                        <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline-primary" data-user-id="${user.user_id}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" data-user-id="${user.user_id}" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        </div>
                     </div>
                 </td>
                 `;

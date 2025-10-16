@@ -201,7 +201,7 @@ def get_schedules():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.all()
+    users = User.query.filter(User.role != "superadmin", User.role != "admin")
     schedules = Schedule.query.all()
     users_list = []
     sched_list = []
@@ -240,7 +240,6 @@ def get_user_schedule(user_id):
     user_data = {
         'user_id': user.user_id,
         'full_name': f"{user.first_name} {user.last_name}",
-        'middle_name': user.middle_name[0] if user.middle_name else '',
     }
 
     user_schedules = [
@@ -261,3 +260,39 @@ def get_user_schedule(user_id):
         'user': user_data,
         'schedules': user_schedules
     })
+
+# UPDATE SCHEDULE
+@api_bp.route('/update-schedule/<string:user_id>')
+def update_schedule(user_id):
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid or missing JSON data'}), 400
+
+    schedule = Schedule.query.filter_by(user_id=user_id).all()
+    schedules = data.get('schedules', [])
+
+    for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+        match = next((s for s in schedules if s['day'] == day), None)
+
+        if match:
+            sched = Schedule.query.filter(user_id=user_id, day=day).first()
+            sched.start_time = match.get['start_time']
+            sched.end_time = match.get['end_time']
+        else:
+            new_sched = Schedule(
+                user=user_id,
+                day=day,
+                start_time=match['start_time'],
+                end_time=match['end_time']
+            )
+
+
+    return jsonify()
