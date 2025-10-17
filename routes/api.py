@@ -261,38 +261,54 @@ def get_user_schedule(user_id):
         'schedules': user_schedules
     })
 
+# Convert String to Time
+def parse_time(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%H%:%M%").time()
+    except ValueError:
+        return None
+
 # UPDATE SCHEDULE
-@api_bp.route('/update-schedule/<string:user_id>')
+@api_bp.route('/update-schedule/<string:user_id>', methods=['POST'])
+@login_required
 def update_schedule(user_id):
     if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
 
     user = User.query.filter_by(user_id=user_id).first()
     if not user:
         return jsonify({'success': False, 'error': 'User not found'}), 404
 
-    data = request.get_json()
+    data = request.get_json(silent=True)
     if not data:
         return jsonify({'success': False, 'error': 'Invalid or missing JSON data'}), 400
 
-    schedule = Schedule.query.filter_by(user_id=user_id).all()
     schedules = data.get('schedules', [])
+    try:
+        for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+            match = next((s for s in schedules if s['day'] == day), None)
 
-    for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
-        match = next((s for s in schedules if s['day'] == day), None)
+            if match:
+                sched = Schedule.query.filter_by(user_id=user_id, day=day).first()
+                if sched:
+                    # Update existing
+                    sched.start_time = parse_time(match.get('start_time'))
+                    sched.end_time = parse_time(match.get('end_time'))
+                else:
+                    # Add new
+                    new_sched = Schedule(
+                        user_id=user_id,
+                        day=day,
+                        start_time=match.get('start_time'),
+                        end_time=match.get('end_time')
+                    )
+                    db.session.add(new_sched)
 
-        if match:
-            sched = Schedule.query.filter(user_id=user_id, day=day).first()
-            sched.start_time = match.get['start_time']
-            sched.end_time = match.get['end_time']
-        else:
-            new_sched = Schedule(
-                user=user_id,
-                day=day,
-                start_time=match['start_time'],
-                end_time=match['end_time']
-            )
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Schedule updated successfully!'})
 
-
-    return jsonify()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500

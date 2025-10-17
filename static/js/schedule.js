@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (editBtn) {
             const userId = editBtn.getAttribute('data-user-id');
             console.log('Edit clicked:', userId);
-            
+
             fetch(`/api/get-schedule/${userId}`)
                 .then(res => {
                     if (!res.ok) throw new Error(`Server responded with ${res.status}`);
@@ -114,84 +114,67 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.getElementById('mondayIn').value = sched.find(s => s.day === 'monday')?.start_time || '';
                     document.getElementById('tuesdayIn').value = sched.find(s => s.day === 'tuesday')?.start_time || '';
                     document.getElementById('wednesdayIn').value = sched.find(s => s.day === 'wednesday')?.start_time || '';
-                    document.getElementById('thursdayIn').value = sched.find(s => s.day === 'thurday')?.start_time || '';
+                    document.getElementById('thursdayIn').value = sched.find(s => s.day === 'thursday')?.start_time || '';
                     document.getElementById('fridayIn').value = sched.find(s => s.day === 'friday')?.start_time || '';
                     document.getElementById('saturdayIn').value = sched.find(s => s.day === 'saturday')?.start_time || '';
                     document.getElementById('sundayIn').value = sched.find(s => s.day === 'sunday')?.start_time || '';
-                    
+
                     // Schedules OUT
                     document.getElementById('mondayOut').value = sched.find(s => s.day === 'monday')?.end_time || '';
                     document.getElementById('tuesdayOut').value = sched.find(s => s.day === 'tuesday')?.end_time || '';
                     document.getElementById('wednesdayOut').value = sched.find(s => s.day === 'wednesday')?.end_time || '';
-                    document.getElementById('thursdayOut').value = sched.find(s => s.day === 'thurday')?.end_time || '';
+                    document.getElementById('thursdayOut').value = sched.find(s => s.day === 'thursday')?.end_time || '';
                     document.getElementById('fridayOut').value = sched.find(s => s.day === 'friday')?.end_time || '';
                     document.getElementById('saturdayOut').value = sched.find(s => s.day === 'saturday')?.end_time || '';
-                    document.getElementById('sundayIn').value = sched.find(s => s.day === 'sunday')?.end_time || '';
+                    document.getElementById('sundayOut').value = sched.find(s => s.day === 'sunday')?.end_time || '';
 
                     new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
                 })
-
+                .catch(err => console.error('Error loading schedule:', err));
         }
 
         if (deleteBtn) {
             const userId = deleteBtn.getAttribute('data-user-id');
             console.log('Delete clicked:', userId);
-
-            const schedules = [
-                {
-                    day: 'monday',
-                    start_time: document.getElementById('mondayIn').value,
-                    end_time: document.getElementById('mondayOut').value
-                },
-                {
-                    day: 'tuesday',
-                    start_time: document.getElementById('tuesdayIn').value,
-                    end_time: document.getElementById('tuesdayOut').value
-                },
-                {
-                    day: 'wednesday',
-                    start_time: document.getElementById('wednesdayIn').value,
-                    end_time: document.getElementById('wednesdayOut').value
-                },
-                {
-                    day: 'thursday',
-                    start_time: document.getElementById('thursdayIn').value,
-                    end_time: document.getElementById('thursdayOut').value
-                },
-                {
-                    day: 'friday',
-                    start_time: document.getElementById('fridayIn').value,
-                    end_time: document.getElementById('fridayOut').value
-                },
-                {
-                    day: 'saturday',
-                    start_time: document.getElementById('saturdayIn').value,
-                    end_time: document.getElementById('saturdayOut').value
-                },
-            ];
-
-            fetch(`/api/update-schedule/${userId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    schedules: schedules
-                })
-            })
-
-            const data = await res.json();
-            console.log('Server response: ', data);
-            if(res.ok) console.log('Schedule updated successfully!')
+        }
     });
+});
 
-    // SAVE SCHEDULE
-    document.getElementById('saveSchedBtn').addEventListener('click', function() {
-        const userId = document.getElementById('userId').value;
 
-        console.log(userId);
-    })
+// SAVE SCHEDULE
+document.getElementById('saveSchedBtn').addEventListener('click', async function () {
+    const userId = document.getElementById('userId').value;
+    console.log('Saving schedule for:', userId);
+
+    const schedules = [
+        { day: 'monday', start_time: document.getElementById('mondayIn').value, end_time: document.getElementById('mondayOut').value },
+        { day: 'tuesday', start_time: document.getElementById('tuesdayIn').value, end_time: document.getElementById('tuesdayOut').value },
+        { day: 'wednesday', start_time: document.getElementById('wednesdayIn').value, end_time: document.getElementById('wednesdayOut').value },
+        { day: 'thursday', start_time: document.getElementById('thursdayIn').value, end_time: document.getElementById('thursdayOut').value },
+        { day: 'friday', start_time: document.getElementById('fridayIn').value, end_time: document.getElementById('fridayOut').value },
+        { day: 'saturday', start_time: document.getElementById('saturdayIn').value, end_time: document.getElementById('saturdayOut').value },
+        { day: 'sunday', start_time: document.getElementById('sundayIn').value, end_time: document.getElementById('sundayOut').value }
+    ];
+
+    try {
+        const res = await fetch(`/api/update-schedule/${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, schedules })
+        });
+
+        const data = await res.json();
+        console.log('Server response:', data);
+
+        if (res.ok) {
+            console.log('✅ Schedule updated successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('scheduleEditModal')).hide();
+        } else {
+            console.error('Failed to update schedule:', data);
+        }
+    } catch (err) {
+        console.error('Error saving schedule:', err);
+    }
 });
 
 // Broken time button functionality
