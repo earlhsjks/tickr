@@ -246,28 +246,34 @@ tbody.addEventListener('click', e => {
                     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
                     this.disabled = true;
 
-                    fetch(`/api/delete-user/${userId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ userId })
+                fetch(`/api/delete-user/${userId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                })
+                    .then(async res => {
+                        let data;
+                        try {
+                            data = await res.json();
+                        } catch {
+                            data = { success: false, error: 'Invalid JSON response from server' };
+                        }
+
+                        if (!res.ok || !data.success) {
+                            throw new Error(data.error || `Server responded with ${res.status}`);
+                        }
+
+                        console.log('User deleted successfully');
+                        modal.hide();
+                        loadUsers();
                     })
-                        .then(res => {
-                            if (!res.ok) throw new Error('Delete failed');
-                            return res.json();
-                        })
-                        .then(() => {
-                            console.log('User deleted successfully');
-                            modal.hide();
-                            loadUsers();
-                        })
-                        .catch(err => {
-                            console.error(err.message);
-                            alert('Failed to delete user.');
-                        })
-                        .finally(() => {
-                            this.innerHTML = 'Delete User';
-                            this.disabled = false;
-                        });
+                    .catch(err => {
+                        console.error('Failed to delete user:', err.message);
+                    })
+                    .finally(() => {
+                        this.innerHTML = 'Delete User';
+                        this.disabled = false;
+                    });
                 });
             })
             .catch(err => {

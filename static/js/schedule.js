@@ -44,7 +44,7 @@ async function loadSchedules() {
             scheduleMap[s.user_id][s.day] = `${s.start_time || ''} - ${s.end_time || ''}`;
         });
 
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const tbody = document.getElementById('scheduleTableBody');
         tbody.innerHTML = '';
 
@@ -64,7 +64,13 @@ async function loadSchedules() {
 
             days.forEach(day => {
                 const sched = scheduleMap[u.user_id]?.[day] || '-';
-                rowHTML += `<td class="text-center">${sched}</td>`;
+                rowHTML += `
+                    <td>
+                        <div class="schedule-time text-center">
+                            <div class="time-display">${sched}</div>
+                        </div>
+                    </td>
+                `;
             });
 
             rowHTML += `
@@ -73,7 +79,7 @@ async function loadSchedules() {
                     <button class="btn btn-sm btn-outline-primary" data-user-id="${u.user_id}" title="Edit Schedule">
                     <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-danger" data-user-id="${u.user_id}" title="Delete">
+                    <button class="btn btn-sm btn-outline-danger" data-user-id="${u.user_id}" title="Delete" hidden>
                     <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -88,94 +94,80 @@ async function loadSchedules() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const tbody = document.getElementById('scheduleTableBody');
-    tbody.addEventListener('click', e => {
-        const editBtn = e.target.closest('.btn-outline-primary');
-        const deleteBtn = e.target.closest('.btn-outline-danger');
+// EDIT SCHEDULE
+const tbody = document.getElementById('scheduleTableBody');
+tbody.addEventListener('click', e => {
+    const editBtn = e.target.closest('.btn-outline-primary');
+    const deleteBtn = e.target.closest('.btn-outline-danger');
 
-        if (editBtn) {
-            const userId = editBtn.getAttribute('data-user-id');
-            console.log('Edit clicked:', userId);
+    if (editBtn) {
+        const userId = editBtn.getAttribute('data-user-id');
+        console.log('Edit clicked:', userId);
 
-            fetch(`/api/get-schedule/${userId}`)
-                .then(res => {
-                    if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-                    return res.json();
-                })
-                .then(data => {
-                    const user = data.user || data[0]?.user;
-                    const sched = data.schedule || data[0]?.schedule || [];
+        fetch(`/api/get-schedule/${userId}`)
+            .then(res => {
+                if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+                return res.json();
+            })
+            .then(data => {
+                const user = data.user || data[0]?.user;
+                const sched = data.schedules || data[0]?.schedule || [];
 
-                    document.getElementById('editWho').textContent = user.full_name;
-                    document.getElementById('userId').value = user.user_id;
+                document.getElementById('editWho').textContent = user.full_name;
+                document.getElementById('userId').value = user.user_id;
 
-                    // Schedules IN
-                    document.getElementById('mondayIn').value = sched.find(s => s.day === 'monday')?.start_time || '';
-                    document.getElementById('tuesdayIn').value = sched.find(s => s.day === 'tuesday')?.start_time || '';
-                    document.getElementById('wednesdayIn').value = sched.find(s => s.day === 'wednesday')?.start_time || '';
-                    document.getElementById('thursdayIn').value = sched.find(s => s.day === 'thursday')?.start_time || '';
-                    document.getElementById('fridayIn').value = sched.find(s => s.day === 'friday')?.start_time || '';
-                    document.getElementById('saturdayIn').value = sched.find(s => s.day === 'saturday')?.start_time || '';
-                    document.getElementById('sundayIn').value = sched.find(s => s.day === 'sunday')?.start_time || '';
+                // Schedules IN
+                document.getElementById('mondayIn').value = sched.find(s => s.day === 'monday')?.start_time || '';
+                document.getElementById('tuesdayIn').value = sched.find(s => s.day === 'tuesday')?.start_time || '';
+                document.getElementById('wednesdayIn').value = sched.find(s => s.day === 'wednesday')?.start_time || '';
+                document.getElementById('thursdayIn').value = sched.find(s => s.day === 'thursday')?.start_time || '';
+                document.getElementById('fridayIn').value = sched.find(s => s.day === 'friday')?.start_time || '';
+                document.getElementById('saturdayIn').value = sched.find(s => s.day === 'saturday')?.start_time || '';
+                document.getElementById('sundayIn').value = sched.find(s => s.day === 'sunday')?.start_time || '';
 
-                    // Schedules OUT
-                    document.getElementById('mondayOut').value = sched.find(s => s.day === 'monday')?.end_time || '';
-                    document.getElementById('tuesdayOut').value = sched.find(s => s.day === 'tuesday')?.end_time || '';
-                    document.getElementById('wednesdayOut').value = sched.find(s => s.day === 'wednesday')?.end_time || '';
-                    document.getElementById('thursdayOut').value = sched.find(s => s.day === 'thursday')?.end_time || '';
-                    document.getElementById('fridayOut').value = sched.find(s => s.day === 'friday')?.end_time || '';
-                    document.getElementById('saturdayOut').value = sched.find(s => s.day === 'saturday')?.end_time || '';
-                    document.getElementById('sundayOut').value = sched.find(s => s.day === 'sunday')?.end_time || '';
+                // Schedules OUT
+                document.getElementById('mondayOut').value = sched.find(s => s.day === 'monday')?.end_time || '';
+                document.getElementById('tuesdayOut').value = sched.find(s => s.day === 'tuesday')?.end_time || '';
+                document.getElementById('wednesdayOut').value = sched.find(s => s.day === 'wednesday')?.end_time || '';
+                document.getElementById('thursdayOut').value = sched.find(s => s.day === 'thursday')?.end_time || '';
+                document.getElementById('fridayOut').value = sched.find(s => s.day === 'friday')?.end_time || '';
+                document.getElementById('saturdayOut').value = sched.find(s => s.day === 'saturday')?.end_time || '';
+                document.getElementById('sundayOut').value = sched.find(s => s.day === 'sunday')?.end_time || '';
 
-                    new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
-                })
-                .catch(err => console.error('Error loading schedule:', err));
-        }
+                const brokenContainer = document.getElementById('brokenScheduleContainer');
+                brokenContainer.innerHTML = '';
 
-        if (deleteBtn) {
-            const userId = deleteBtn.getAttribute('data-user-id');
-            console.log('Delete clicked:', userId);
-        }
-    });
-});
+                sched.forEach(s => {
+                    if (s.split_start_time && s.split_end_time) {
+                        // Clone template
+                        const template = document.getElementById('brokenScheduleTemplate');
+                        const clone = template.firstElementChild.cloneNode(true);
+                        clone.classList.remove('d-none');
 
+                        // Set day
+                        clone.querySelector('.broken-day').value = s.day;
 
-// SAVE SCHEDULE
-document.getElementById('saveSchedBtn').addEventListener('click', async function () {
-    const userId = document.getElementById('userId').value;
-    console.log('Saving schedule for:', userId);
+                        // Set split start/end
+                        const [startInput, endInput] = clone.querySelectorAll('input[type="time"]');
+                        startInput.value = s.split_start_time;
+                        endInput.value = s.split_end_time;
 
-    const schedules = [
-        { day: 'monday', start_time: document.getElementById('mondayIn').value, end_time: document.getElementById('mondayOut').value },
-        { day: 'tuesday', start_time: document.getElementById('tuesdayIn').value, end_time: document.getElementById('tuesdayOut').value },
-        { day: 'wednesday', start_time: document.getElementById('wednesdayIn').value, end_time: document.getElementById('wednesdayOut').value },
-        { day: 'thursday', start_time: document.getElementById('thursdayIn').value, end_time: document.getElementById('thursdayOut').value },
-        { day: 'friday', start_time: document.getElementById('fridayIn').value, end_time: document.getElementById('fridayOut').value },
-        { day: 'saturday', start_time: document.getElementById('saturdayIn').value, end_time: document.getElementById('saturdayOut').value },
-        { day: 'sunday', start_time: document.getElementById('sundayIn').value, end_time: document.getElementById('sundayOut').value }
-    ];
+                        // Append to container
+                        brokenContainer.appendChild(clone);
+                    }
+                });
 
-    try {
-        const res = await fetch(`/api/update-schedule/${userId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, schedules })
-        });
+                new bootstrap.Modal(document.getElementById('scheduleEditModal')).show();
+            })
+            .catch(err => console.error('Error loading schedule:', err));
+    }
 
-        const data = await res.json();
-        console.log('Server response:', data);
-
-        if (res.ok) {
-            console.log('✅ Schedule updated successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('scheduleEditModal')).hide();
-        } else {
-            console.error('Failed to update schedule:', data);
-        }
-    } catch (err) {
-        console.error('Error saving schedule:', err);
+    if (deleteBtn) {
+        const userId = deleteBtn.getAttribute('data-user-id');
+        console.log('Delete clicked:', userId);
     }
 });
+
 
 // Broken time button functionality
 function setupBrokenTimeButtons() {
@@ -234,76 +226,19 @@ function setupScheduleActions() {
         }
     });
 
-    // Add schedule button
-    const addScheduleBtn = document.querySelector('.add-schedule-btn');
-    addScheduleBtn.addEventListener('click', function () {
-        const modal = new bootstrap.Modal(document.getElementById('scheduleEditModal'));
-        modal.show();
-        console.log('Add schedule modal opened');
-    });
-
-    // Edit schedule buttons
-    const editButtons = document.querySelectorAll('.action-buttons .btn-outline-primary');
-    editButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const row = this.closest('tr');
-            const employeeName = row.querySelector('.user-name').textContent;
-
-            const modal = new bootstrap.Modal(document.getElementById('scheduleEditModal'));
-            modal.show();
-
-            console.log(`Edit schedule for: ${employeeName}`);
-        });
-    });
-
-    // Convert schedule buttons
-    // Delete buttons
-    const deleteButtons = document.querySelectorAll('.btn-outline-danger');
-    deleteButtons.forEach(button => {
-        if (button.title === 'Delete') {
-            button.addEventListener('click', function () {
-                const row = this.closest('tr');
-                const employeeName = row.querySelector('.user-name').textContent;
-
-                if (confirm(`Are you sure you want to delete the schedule for ${employeeName}?`)) {
-                    console.log(`Schedule deleted for: ${employeeName}`);
-
-                    // Visual feedback
-                    row.style.opacity = '0.5';
-                    setTimeout(() => {
-                        row.remove();
-                    }, 500);
-                }
-            });
-        }
-    });
-
-    // Export and refresh buttons
-    const exportButtons = document.querySelectorAll('.btn-outline-primary');
-    exportButtons.forEach(button => {
-        if (button.textContent.includes('Export')) {
-            button.addEventListener('click', function () {
-                this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Exporting...';
-                this.disabled = true;
-
-                setTimeout(() => {
-                    this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
-                    this.disabled = false;
-                }, 2000);
-            });
-        }
-    });
-
+    // Refresh button
     const refreshButtons = document.querySelectorAll('.btn-outline-secondary');
     refreshButtons.forEach(button => {
         if (button.textContent.includes('Refresh')) {
             button.addEventListener('click', function () {
                 this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
                 this.disabled = true;
+                loadSchedules()
 
                 setTimeout(() => {
                     this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
                     this.disabled = false;
+                    loadSchedules()
                 }, 1500);
             });
         }
@@ -319,22 +254,64 @@ function setupModal() {
     const brokenScheduleContainer = document.getElementById('brokenScheduleContainer');
     const brokenScheduleTemplate = document.getElementById('brokenScheduleTemplate');
 
-    saveButton.addEventListener('click', function () {
+    // Save Button
+    saveButton.addEventListener('click', async function () {
         const formData = new FormData(form);
-        console.log('Saving schedule changes...');
 
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
         this.disabled = true;
 
-        setTimeout(() => {
-            this.innerHTML = 'Save Changes';
-            this.disabled = false;
+        const userId = document.getElementById('userId').value;
+        console.log('Saving schedule for:', userId);
 
-            const modalInstance = bootstrap.Modal.getInstance(modal);
-            modalInstance.hide();
+        const schedules = [
+            { day: 'monday', start_time: document.getElementById('mondayIn').value, end_time: document.getElementById('mondayOut').value },
+            { day: 'tuesday', start_time: document.getElementById('tuesdayIn').value, end_time: document.getElementById('tuesdayOut').value },
+            { day: 'wednesday', start_time: document.getElementById('wednesdayIn').value, end_time: document.getElementById('wednesdayOut').value },
+            { day: 'thursday', start_time: document.getElementById('thursdayIn').value, end_time: document.getElementById('thursdayOut').value },
+            { day: 'friday', start_time: document.getElementById('fridayIn').value, end_time: document.getElementById('fridayOut').value },
+            { day: 'saturday', start_time: document.getElementById('saturdayIn').value, end_time: document.getElementById('saturdayOut').value },
+            { day: 'sunday', start_time: document.getElementById('sundayIn').value, end_time: document.getElementById('sundayOut').value }
+        ];
 
-            console.log('Schedule saved successfully');
-        }, 1500);
+        const brokenSched = [];
+
+        document.querySelectorAll('.broken-schedule-item').forEach(item => {
+            const day = item.querySelector('.broken-day')?.value || null;
+            const timeInputs = item.querySelectorAll('input[type="time"]');
+
+            const start = timeInputs[0]?.value || null;
+            const end = timeInputs[1]?.value || null;
+
+            brokenSched.push({
+                day,
+                split_start_time: start,
+                split_end_time: end
+            });
+        });
+
+        try {
+            const res = await fetch(`/api/update-schedule/${userId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, schedules, brokenSched })
+            });
+
+            const data = await res.json();
+            console.log('Server response:', data);
+
+            if (res.ok) {
+                this.innerHTML = 'Save Changes';
+                this.disabled = false;
+                console.log('Schedule updated successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('scheduleEditModal')).hide();
+                loadSchedules();
+            } else {
+                console.error('Failed to update schedule:', data);
+            }
+        } catch (err) {
+            console.error('Error saving schedule:', err);
+        }
     });
 
     // Add broken schedule functionality
@@ -368,31 +345,6 @@ function setupModal() {
             });
         });
     });
-}
-
-// Filter schedules based on search
-function filterSchedules() {
-    const searchTerm = document.getElementById('scheduleSearch').value.toLowerCase();
-    const tableBody = document.getElementById('scheduleTableBody');
-
-    const rows = tableBody.querySelectorAll('tr');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        const employeeName = row.querySelector('.user-name').textContent.toLowerCase();
-        const department = row.querySelector('.department-badge').textContent.toLowerCase();
-
-        const matchesSearch = employeeName.includes(searchTerm) || department.includes(searchTerm);
-
-        if (matchesSearch) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-
-    console.log(`Showing ${visibleCount} schedules`);
 }
 
 // Add interactive effects

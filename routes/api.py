@@ -12,6 +12,18 @@ from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 # Create a Blueprint for admin routes
 api_bp = Blueprint('api', __name__)
 
+# System Log
+def systemLogEntry(userId, action, details=None):
+    entry = Logs(
+        userId = userId,
+        action = action,
+        details = details,
+        timestamp = datetime.now()
+    )
+
+    db.session.add(entry)
+    db.session.commit()
+
 # GET ALL USER
 @api_bp.route('/users-data', methods=['GET'])
 @login_required
@@ -143,15 +155,7 @@ def delete_user_page(user_id):
         db.session.delete(user)
         db.session.commit()
 
-        # Optional: log the deletion (only if your Logs model is properly configured)
-        # from models import Logs
-        # log_entry = Logs(
-        #     admin_id=current_user.user_id,
-        #     action=f"Deleted User {user_id}",
-        #     details=f"Removed {user.first_name} {user.middle_name or ''} {user.last_name} ({user_id}), role: {user.role}"
-        # )
-        # db.session.add(log_entry)
-        # db.session.commit()
+        systemLogEntry()
 
         return jsonify({'success': True, 'message': 'User deleted successfully!'}), 200
 
@@ -194,6 +198,17 @@ def export_users():
 
     return send_file(output, mimetype='text/csv', as_attachment=True, download_name=filename)
 
+# Time to String
+def serialize_schedule(s):
+    return {
+        'user_id': s.user_id,
+        'day': s.day,
+        'start_time': s.start_time.strftime("%H:%M") if s.start_time else '',
+        'end_time': s.end_time.strftime("%H:%M") if s.end_time else '',
+        'split_start_time': s.split_start_time.strftime("%H:%M") if s.split_start_time else '',
+        'split_end_time': s.split_end_time.strftime("%H:%M") if s.split_end_time else ''
+    }
+
 # GET ALL SCHEDULE
 @api_bp.route('/get-schedules')
 def get_schedules():
@@ -204,20 +219,16 @@ def get_schedules():
     users = User.query.filter(User.role != "superadmin", User.role != "admin")
     schedules = Schedule.query.all()
     users_list = []
-    sched_list = []
+    sched_list = [serialize_schedule(s) for s in schedules]
 
     for user in users:
         data = user.__dict__.copy()
         data.pop('_sa_instance_state', None)
         data.pop('password', None)
+        data.pop('role', None)
+        data.pop('status', None)
         data.pop('id', None)
         users_list.append(data)
-    
-    for schedule in schedules:
-        data = schedule.__dict__.copy()
-        data.pop('_sa_instance_state', None)
-        data.pop('id', None)
-        sched_list.append(data)
 
     return jsonify({
         'schedules': sched_list,
@@ -248,10 +259,9 @@ def get_user_schedule(user_id):
             'day': s.day,
             'start_time': s.start_time.strftime('%H:%M') if s.start_time else None,
             'end_time': s.end_time.strftime('%H:%M') if s.end_time else None,
-            'is_broken': s.is_broken,
-            'second_start_time': s.second_start_time.strftime('%H:%M') if s.second_start_time else None,
-            'second_end_time': s.second_end_time.strftime('%H:%M') if s.second_end_time else None,
-            'rest_day': s.rest_day
+            'is_split_shift': s.is_split_shift,
+            'split_start_time': s.split_start_time.strftime('%H:%M') if s.split_start_time else None,
+            'split_end_time': s.split_end_time.strftime('%H:%M') if s.split_end_time else None,
         }
         for s in schedule
     ]
@@ -261,12 +271,13 @@ def get_user_schedule(user_id):
         'schedules': user_schedules
     })
 
-# Convert String to Time
+
 def parse_time(value):
+    """Convert 'HH:MM' string to Python time object or None."""
     if not value:
         return None
     try:
-        return datetime.strptime(value, "%H%:%M%").time()
+        return datetime.strptime(value, "%H:%M").time()
     except ValueError:
         return None
 
@@ -286,29 +297,48 @@ def update_schedule(user_id):
         return jsonify({'success': False, 'error': 'Invalid or missing JSON data'}), 400
 
     schedules = data.get('schedules', [])
+    brokenScheds = data.get('brokenSched', [])
+
     try:
         for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
-            match = next((s for s in schedules if s['day'] == day), None)
+            match = next((s for s in schedules if s.get('day') == day), None)
+            brokenMatch = next((b for b in brokenScheds if b.get('day') == day), None)
 
-            if match:
-                sched = Schedule.query.filter_by(user_id=user_id, day=day).first()
-                if sched:
-                    # Update existing
-                    sched.start_time = parse_time(match.get('start_time'))
-                    sched.end_time = parse_time(match.get('end_time'))
-                else:
-                    # Add new
-                    new_sched = Schedule(
-                        user_id=user_id,
-                        day=day,
-                        start_time=match.get('start_time'),
-                        end_time=match.get('end_time')
-                    )
-                    db.session.add(new_sched)
+            # Parse times safely (may be None)
+            start_time = parse_time(match.get('start_time')) if match else None
+            end_time = parse_time(match.get('end_time')) if match else None
+            split_start_time = parse_time(brokenMatch.get('split_start_time')) if brokenMatch else None
+            split_end_time = parse_time(brokenMatch.get('split_end_time')) if brokenMatch else None
+
+            # Determine split flag
+            isBroken = bool(split_start_time and split_end_time)
+
+            sched = Schedule.query.filter_by(user_id=user_id, day=day).first()
+
+            if sched:
+                # Update existing record
+                sched.start_time = start_time
+                sched.end_time = end_time
+                sched.split_start_time = split_start_time
+                sched.split_end_time = split_end_time
+                sched.is_split_shift = isBroken
+            elif match or brokenMatch:
+                # Only create new if there’s relevant data
+                new_sched = Schedule(
+                    user_id=user_id,
+                    day=day,
+                    start_time=start_time,
+                    end_time=end_time,
+                    split_start_time=split_start_time,
+                    split_end_time=split_end_time,
+                    is_split_shift=isBroken
+                )
+                db.session.add(new_sched)
 
         db.session.commit()
         return jsonify({'success': True, 'message': 'Schedule updated successfully!'})
 
     except Exception as e:
         db.session.rollback()
+        print("Error updating schedule:", e)
         return jsonify({'success': False, 'error': str(e)}), 500

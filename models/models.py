@@ -6,7 +6,7 @@ from datetime import time
 
 db = SQLAlchemy()
 
-### USERS ###
+### USER ###
 class User(UserMixin, db.Model):
     __tablename__ = 'user'
 
@@ -16,8 +16,29 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     middle_name = db.Column(db.String(50))
     password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='employee')  # admin | employee
+    role = db.Column(db.String(20), nullable=False, default='employee')
     status = db.Column(db.String(20), nullable=False, default='active')
+
+    attendance_records = db.relationship(
+        'Attendance',
+        back_populates='user',
+        cascade='all, delete-orphan',
+        passive_deletes=True
+    )
+
+    schedules = db.relationship(
+        'Schedule',
+        back_populates='user',
+        cascade='all, delete-orphan',
+        passive_deletes=True
+    )
+
+    logs = db.relationship(
+        'Logs',
+        back_populates='user',
+        cascade='all, delete-orphan',
+        passive_deletes=True
+    )
 
     def set_password(self, password):
         if password:
@@ -40,25 +61,25 @@ class Attendance(db.Model):
     clock_out = db.Column(db.Time)
     has_issue = db.Column(db.Boolean, default=False)
 
-    user = db.relationship('User', backref='attendance_records')
+    user = db.relationship('User', back_populates='attendance_records')
 
     def __repr__(self):
         return f"<Attendance {self.user_id} on {self.date}>"
 
-### SCHEDULES ###
+### SCHEDULE ###
 class Schedule(db.Model):
     __tablename__ = 'schedule'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey("user.user_id", ondelete="CASCADE"), nullable=False, index=True)
-    day = db.Column(db.String(10), nullable=False)  # Mon, Tue, etc.
-    start_time = db.Column(db.Time, nullable=False)
-    end_time = db.Column(db.Time, nullable=False)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE"), nullable=False, index=True)
+    day = db.Column(db.String(10), nullable=False)
+    start_time = db.Column(db.Time)
+    end_time = db.Column(db.Time)
     is_split_shift = db.Column(db.Boolean, default=False)
     split_start_time = db.Column(db.Time)
     split_end_time = db.Column(db.Time)
 
-    user = db.relationship('User', backref='schedules')
+    user = db.relationship('User', back_populates='schedules')
 
     __table_args__ = (
         db.UniqueConstraint('user_id', 'day', name='unique_schedule_per_user_day'),
@@ -94,7 +115,7 @@ class GlobalSettings(db.Model):
     def __repr__(self):
         return f"<GlobalSettings strict={self.enable_strict_schedule}>"
 
-### SYSTEM LOGS ###
+### LOGS ###
 class Logs(db.Model):
     __tablename__ = 'system_logs'
 
@@ -104,7 +125,7 @@ class Logs(db.Model):
     timestamp = db.Column(db.DateTime, server_default=func.now(), nullable=False)
     details = db.Column(db.Text)
 
-    user = db.relationship('User', backref='logs', lazy=True)
+    user = db.relationship('User', back_populates='logs', lazy=True)
 
     def __repr__(self):
         return f"<Log {self.action} by {self.user_id} at {self.timestamp}>"
