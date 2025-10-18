@@ -214,16 +214,22 @@ function setupScheduleActions() {
     // Clear all schedules button
     const clearSchedulesBtn = document.querySelector('.clear-schedules-btn');
     clearSchedulesBtn.addEventListener('click', function () {
-        if (confirm('Are you sure you want to clear all schedules? This action cannot be undone.')) {
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Clearing...';
-            this.disabled = true;
+        const modalElement = document.getElementById('clearConfirmModal');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modal.show();
 
-            setTimeout(() => {
-                this.innerHTML = '<i class="fas fa-broom me-2"></i>Clear All Schedules';
-                this.disabled = false;
-                console.log('All schedules cleared');
-            }, 2000);
-        }
+        document.getElementById('confirmClear').addEventListener('click', function () {
+            fetch('/api/purge-schedules',  {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(async res => {
+                if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+                console.log('All schedules cleared successfully!');
+                loadSchedules();
+                modal.hide();
+            })
+        })
     });
 
     // Refresh button

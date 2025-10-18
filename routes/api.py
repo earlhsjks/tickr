@@ -211,6 +211,7 @@ def serialize_schedule(s):
 
 # GET ALL SCHEDULE
 @api_bp.route('/get-schedules')
+@login_required
 def get_schedules():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
@@ -342,3 +343,17 @@ def update_schedule(user_id):
         db.session.rollback()
         print("Error updating schedule:", e)
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@api_bp.route('/purge-schedules', methods=['POST'])
+@login_required
+def purge_schedules():
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
+    
+    try:
+        db.session.query(Schedule).delete()
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'All schedules cleared successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f"Error clearing schedules: {str(e)}"}), 500

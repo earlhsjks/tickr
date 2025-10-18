@@ -76,7 +76,7 @@
 
         <!-- Schedule Editing Modal -->
         <div class="modal fade" id="scheduleEditModal" tabindex="-1">
-            <div class="modal-dialog modal-xl">
+            <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Edit GIA Schedule</h5>
@@ -98,79 +98,79 @@
                             <div class="mb-4">
                                 <h6 class="fw-bold mb-3">Normal Schedule</h6>
                                 <div class="row g-3">
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Monday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="mondayIn">
                                             <input type="time" class="form-control" id="mondayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="mondayOff">
                                             <label class="form-check-label" for="mondayOff">Rest Day</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Tuesday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="tuesdayIn">
                                             <input type="time" class="form-control" id="tuesdayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="tuesdayOff">
                                             <label class="form-check-label" for="tuesdayOff">Rest Day</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Wednesday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="wednesdayIn">
                                             <input type="time" class="form-control" id="wednesdayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="wednesdayOff">
                                             <label class="form-check-label" for="wednesdayOff">Rest Day</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Thursday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="thursdayIn">
                                             <input type="time" class="form-control" id="thursdayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="thursdayOff">
                                             <label class="form-check-label" for="thursdayOff">Rest Day</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Friday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="fridayIn">
                                             <input type="time" class="form-control" id="fridayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="fridayOff">
                                             <label class="form-check-label" for="fridayOff">Rest Day</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Saturday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="saturdayIn">
                                             <input type="time" class="form-control" id="saturdayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="saturdayOff">
                                             <label class="form-check-label" for="saturdayOff">Rest Day</label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6 col-lg-4">
+                                    <div class="col">
                                         <label class="form-label">Sunday</label>
                                         <div class="d-flex gap-2">
                                             <input type="time" class="form-control" id="sundayIn">
                                             <input type="time" class="form-control" id="sundayOut">
                                         </div>
-                                        <div class="form-check mt-2">
+                                        <div class="form-check mt-2" hidden>
                                             <input class="form-check-input" type="checkbox" id="sundayOff">
                                             <label class="form-check-label" for="sundayOff">Rest Day</label>
                                         </div>
@@ -210,7 +210,7 @@
                     </button>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-4">
+                    <div class="col">
                         <label class="form-label">Day</label>
                         <select class="form-select broken-day">
                             <option value="monday">Monday</option>
@@ -231,6 +231,33 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+      <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="clearConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">Confirm Clearing</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 48px"></i>
+                <h6>Are you sure you want to clear all GIA schedules?</h6>
+                <p class="text-muted mb-0">This action cannot be undone.</p>
+            </div>
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+            </button>
+            <button type="button" class="btn btn-danger" id="confirmClear">
+                Confirm
+            </button>
+            </div>
+        </div>
         </div>
     </div>
 

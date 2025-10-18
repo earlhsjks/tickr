@@ -34,7 +34,7 @@ migrate = Migrate(app, db)
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "main.login_employee"
+login_manager.login_view = "auth.login"
 
 # Session timeout enforcement
 # @app.before_request
@@ -64,11 +64,17 @@ login_manager.login_view = "main.login_employee"
 
 #     session['last_activity'] = datetime.now(timezone.utc).isoformat()  # Store as ISO string
 
+@app.route('/')
+def index():
+    return render_template('/auth/login.html')
+
 # Register Blueprints
 from routes.main import main_bp
+from routes.auth import auth_bp
 from routes.admin import admin_bp
 from routes.api import api_bp
 app.register_blueprint(main_bp)
+app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(api_bp, url_prefix='/api')
 

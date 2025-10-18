@@ -74,26 +74,6 @@ def check_attendance_flags(attendance_entry):
 
     db.session.commit()
 
-# Home Route
-@main_bp.route('/')
-def home():
-    return render_template('auth/gia.html')
-
-@main_bp.route('/', methods=['GET', 'POST'])
-def login_employee():
-    if request.method == 'POST':
-        user_id = request.form.get('user_id')
-        
-        user = User.query.filter_by(user_id=user_id, role="employee").first()
-
-        if user:
-            login_user(user)
-            return redirect(url_for('main.dashboard_employee'))
-        else:
-            flash("ID Not Found!", "danger")
-
-    return render_template('auth/employee.html')
-
 # Employee Dashboard
 @main_bp.route('/gia-dashboard')
 @login_required
@@ -118,13 +98,6 @@ def dashboard_employee():
         attendance_records=attendance_records,
         current_month=f"{year}-{month:02d}" 
     )
-
-# Logout Route
-@main_bp.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('main.home'))
 
 # Clock-In/Clock-Out Routes
 @main_bp.route('/clock-in')
