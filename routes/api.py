@@ -121,6 +121,7 @@ def update_user(user_id):
         return jsonify({'success': False, 'error': 'Invalid or missing JSON data'}), 400
 
     # Update user fields
+    user.user_id = data.get('userId', user.user_id)
     user.first_name = data.get('firstName', user.first_name)
     user.last_name = data.get('lastName', user.last_name)
     user.middle_name = data.get('middleInitial', user.middle_name)

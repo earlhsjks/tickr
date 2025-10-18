@@ -34,7 +34,7 @@ migrate = Migrate(app, db)
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "auth.login"
+login_manager.login_view = "app.index"
 
 # Session timeout enforcement
 # @app.before_request

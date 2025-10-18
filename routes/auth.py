@@ -17,7 +17,7 @@ def whoami():
     else:
         return jsonify({'loggedIn': False})
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     data = request.get_json()
 
@@ -46,7 +46,7 @@ def login():
         login_user(admin)
         return jsonify({'success': True, 'message': f'Welcome {admin.first_name}!'}), 200
 
-@auth_bp.route('/logout', methods=['POST'])
+@auth_bp.route('/logout', methods=['GET','POST'])
 @login_required
 def logout():
     logout_user()

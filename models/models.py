@@ -16,7 +16,7 @@ class User(UserMixin, db.Model):
     last_name = db.Column(db.String(50), nullable=False)
     middle_name = db.Column(db.String(50))
     password = db.Column(db.String(200), nullable=False)
-    role = db.Column(db.String(20), nullable=False, default='employee')
+    role = db.Column(db.String(20), nullable=False)
     status = db.Column(db.String(20), nullable=False, default='active')
 
     attendance_records = db.relationship(
@@ -55,7 +55,7 @@ class Attendance(db.Model):
     __tablename__ = 'attendance'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False, index=True)
     clock_in = db.Column(db.Time)
     clock_out = db.Column(db.Time)
@@ -71,7 +71,7 @@ class Schedule(db.Model):
     __tablename__ = 'schedule'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE"), nullable=False, index=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="CASCADE", onupdate="CASCADE"), nullable=False, index=True)
     day = db.Column(db.String(10), nullable=False)
     start_time = db.Column(db.Time)
     end_time = db.Column(db.Time)
@@ -120,7 +120,7 @@ class Logs(db.Model):
     __tablename__ = 'system_logs'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="SET NULL"), nullable=True, index=True)
+    user_id = db.Column(db.String(50), db.ForeignKey('user.user_id', ondelete="SET NULL", onupdate="CASCADE"), nullable=True, index=True)
     action = db.Column(db.String(255), nullable=False)
     timestamp = db.Column(db.DateTime, server_default=func.now(), nullable=False)
     details = db.Column(db.Text)

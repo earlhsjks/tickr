@@ -75,7 +75,7 @@ def check_attendance_flags(attendance_entry):
     db.session.commit()
 
 # Employee Dashboard
-@main_bp.route('/gia-dashboard')
+@main_bp.route('/dashboard')
 @login_required
 def dashboard_employee():
     month = request.args.get('month')  # Get selected month (format: YYYY-MM)
