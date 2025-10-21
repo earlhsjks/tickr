@@ -62,7 +62,7 @@ def logout():
 # Dashboard
 @admin_bp.route('/dashboard')
 @login_required
-def admin_dashboard():
+def dashboard():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')

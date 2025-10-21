@@ -1,13 +1,17 @@
 import os
 from datetime import timedelta, datetime, timezone
 import logging
-from flask import Flask, session, render_template
+from flask import Flask, session, render_template, redirect, url_for
 from flask_session import Session
 from flask_login import LoginManager
 from werkzeug.security import generate_password_hash as _
 from flask_migrate import Migrate
 from sqlalchemy.exc import OperationalError
 from waitress import serve
+from routes.gia import gia_bp
+from routes.auth import auth_bp
+from routes.admin import admin_bp
+from routes.api import api_bp
 
 from models.models import db, User
 from config import Config
@@ -34,7 +38,7 @@ migrate = Migrate(app, db)
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = "app.index"
+login_manager.login_view = 'auth.index'
 
 # Session timeout enforcement
 # @app.before_request
@@ -64,19 +68,16 @@ login_manager.login_view = "app.index"
 
 #     session['last_activity'] = datetime.now(timezone.utc).isoformat()  # Store as ISO string
 
-@app.route('/')
-def index():
-    return render_template('/auth/login.html')
-
 # Register Blueprints
-from routes.main import main_bp
-from routes.auth import auth_bp
-from routes.admin import admin_bp
-from routes.api import api_bp
-app.register_blueprint(main_bp)
+app.register_blueprint(gia_bp)
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(api_bp, url_prefix='/api')
+
+
+@app.route('/')
+def index():
+    return redirect(url_for('auth.index'))
 
 # Error handling
 @app.errorhandler(OperationalError)

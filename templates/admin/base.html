@@ -6,7 +6,7 @@
     <title>{% block title %}Tickr{% endblock %}</title>
     <meta content="width=device-width, initial-scale=1.0, shrink-to-fit=no" name="viewport" />
 
-    <link rel="shortcut icon" href="https://sms.ndmu.edu.ph/assets/site/images/gakkousoft_logos/ndmu_logo.png">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='media/ndmu_logo.png') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -16,7 +16,7 @@
 <body>
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="{{ url_for('admin.admin_dashboard') }}">
+            <a href="{{ url_for('admin.dashboard') }}">
                 <img src="https://sms.ndmu.edu.ph/assets/site/images/gakkousoft_logos/l_bordered.png" alt="NDMU Logo">
                 <span>TICKR ADMIN</span>
             </a>
@@ -25,7 +25,7 @@
 
         <ul class="sidebar-menu">
             <li class="sidebar-menu-item">
-                <a class="sidebar-menu-button" href="{{ url_for('admin.admin_dashboard') }}">
+                <a class="sidebar-menu-button" href="{{ url_for('admin.dashboard') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-house-door" viewBox="0 0 16 16">
                         <path

@@ -59,7 +59,6 @@ class Attendance(db.Model):
     date = db.Column(db.Date, nullable=False, index=True)
     clock_in = db.Column(db.Time)
     clock_out = db.Column(db.Time)
-    has_issue = db.Column(db.Boolean, default=False)
 
     user = db.relationship('User', back_populates='attendance_records')
 
@@ -94,7 +93,6 @@ class GlobalSettings(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, default=1)
     enable_strict_schedule = db.Column(db.Boolean, default=False)
-    auto_clock_out_hours = db.Column(db.Integer, default=10)
     allow_early_out = db.Column(db.Boolean, default=True)
     allow_overtime = db.Column(db.Boolean, default=False)
     default_start = db.Column(db.Time, default=time(8, 0))

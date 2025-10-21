@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash
 import pandas as pd
 import io
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 # from flask_apscheduler import APScheduler
 
@@ -358,3 +358,303 @@ def purge_schedules():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error clearing schedules: {str(e)}"}), 500
+    
+
+### GIA API ####
+
+@api_bp.route('/status')
+@login_required
+def status():
+    user_id = request.args.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Missing user_id'}), 400
+
+    today = date.today()
+
+    # Get latest attendance for today
+    last_record = Attendance.query.filter(
+        Attendance.user_id == user_id,
+        Attendance.date == today
+    ).order_by(Attendance.id.desc()).first()
+
+    # Get today's schedule(s)
+    user_schedules = Schedule.query.filter_by(
+        user_id=user_id,
+        day=datetime.today().strftime('%A').lower()
+    ).all()
+
+    # Check global settings for strict schedule enforcement
+    global_settings = GlobalSettings.query.first()
+    strict_schedule = bool(global_settings and global_settings.enable_strict_schedule)
+
+    schedule_end = None
+    is_30_mins = False
+
+    # No record = not clocked in yet
+    if not last_record or not last_record.clock_in:
+        return jsonify({
+            'clocked_in': False,
+            'clocked_out': False,
+            'is30min': False
+        }), 200
+
+    clock_in_time = last_record.clock_in
+
+    # Determine applicable schedule
+    for sched in user_schedules:
+        # Check first shift
+        if sched.start_time and sched.end_time:
+            early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
+            if early_start <= clock_in_time <= sched.end_time:
+                schedule_end = sched.end_time
+                break
+
+        # Check second shift (split schedule)
+        if sched.is_split_shift and sched.split_start_time and sched.split_end_time:
+            early_second_start = (datetime.combine(today, sched.split_start_time) - timedelta(hours=1)).time()
+            if early_second_start <= clock_in_time <= sched.split_end_time:
+                schedule_end = sched.split_end_time
+                break
+
+    # Check if user exceeded 30-min grace period
+    if strict_schedule and schedule_end:
+        now = datetime.now()
+        grace_limit = datetime.combine(today, schedule_end) + timedelta(minutes=30)
+        if now > grace_limit:
+            is_30_mins = True
+
+    # Response
+    return jsonify({
+        'clocked_in': bool(last_record.clock_in and not last_record.clock_out),
+        'clocked_out': bool(last_record.clock_out),
+        'is30min': is_30_mins
+    }), 200
+
+def serialize_records(s):
+    if s.clock_in and s.clock_out:
+        clock_in_dt = datetime.combine(date.today(), s.clock_in)
+        clock_out_dt = datetime.combine(date.today(), s.clock_out)
+        time_difference = clock_out_dt - clock_in_dt
+        t_hours = round(time_difference.total_seconds() / 3600, 2)
+    else:
+        t_hours = 0
+
+    return {
+        'date': s.date.strftime("%b %d, %Y"),
+        'clock_in': s.clock_in.strftime("%H:%M") if s.clock_in else '',
+        'clock_out': s.clock_out.strftime("%H:%M") if s.clock_out else '',
+        'total_hours': t_hours,
+    }
+
+@api_bp.route('/gia-data', methods=['GET'])
+@login_required
+def gia_data():
+    user_id = request.args.get('user_id')
+
+    records = Attendance.query.filter_by(user_id=user_id).order_by(Attendance.date.desc()).all()
+    user_records = [serialize_records(r) for r in records]
+
+    return jsonify(user_records)
+
+@api_bp.route('/clock-in', methods=['POST'])
+def clock_in():
+    user_id = request.get_json()
+
+    try:
+        today_name = datetime.today().strftime('%A')
+        now = datetime.now().time()
+
+        # Get Schedules and Global Settings 
+        user_schedules = Schedule.query.filter_by(user_id=user_id, day=today_name).all()
+        global_settings = GlobalSettings.query.first()
+
+        # Apply default schedule if no personal one exists
+        if not user_schedules and global_settings and global_settings.default_start and global_settings.default_end:
+            user_schedules = [Schedule(
+                user_id=user_id,
+                day=today_name,
+                start_time=global_settings.default_start,
+                end_time=global_settings.default_end
+            )]
+
+        if not user_schedules:
+            return jsonify({'success': False, 'error': 'No schedule set for today.'}), 400
+
+        # Early-in Rules 
+        allowed_early_in = global_settings.allowed_early_in_mins if global_settings else 0
+        special_early_in = allowed_early_in
+
+        # Add special 30min early-in for 7:30 AM weekday shifts
+        if today_name in ["monday", "tuesday", "wednesday", "thursday", "friday"]:
+            if any(s.start_time == time(7, 30) for s in user_schedules):
+                special_early_in += 30
+
+        # Determine Valid Schedule 
+        valid_schedule = None
+        is_split_shift = False
+
+        for sched in user_schedules:
+            # First shift validation
+            earliest_in = (datetime.combine(datetime.today(), sched.start_time) - timedelta(minutes=special_early_in)).time()
+            if earliest_in <= now <= sched.end_time:
+                valid_schedule = sched
+                break
+
+            # Second shift validation (if broken)
+            if sched.is_split_shift and sched.split_start_time and sched.split_end_time:
+                earliest_second_in = (datetime.combine(datetime.today(), sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
+                if earliest_second_in <= now <= sched.split_end_time:
+                    valid_schedule = sched
+                    is_split_shift = True
+                    break
+
+        # Enforce strict schedule
+        if global_settings and global_settings.enable_strict_schedule and not valid_schedule:
+            return jsonify({'success': False, 'error': 'Clock-in not allowed outside your scheduled shift.'}), 400
+
+        # Check Attendance Rules 
+        today_start = datetime.combine(datetime.today(), datetime.min.time())
+
+        active_shifts = Attendance.query.filter(
+            Attendance.user_id == user_id,
+            Attendance.clock_in >= today_start,
+            Attendance.clock_out.is_(None)
+        ).all()
+
+        # Limit to 2 clock-ins per day
+        if len(active_shifts) >= 2:
+            return jsonify({'success': False, 'error': 'Maximum of two clock-ins allowed per day.'}), 400
+
+        # Prevent duplicate clock-in for same shift
+        for shift in active_shifts:
+            if valid_schedule:
+                if not is_split_shift and valid_schedule.start_time <= shift.clock_in.time() <= valid_schedule.end_time:
+                    return jsonify({'success': False, 'error': 'Already clocked in for this shift. Clock out first.'}), 400
+                if is_split_shift and shift.clock_in.time() >= valid_schedule.split_start_time:
+                    return jsonify({'success': False, 'error': 'Already clocked in for your second shift.'}), 400
+
+        #  Create and Save Attendance Entry 
+        new_entry = Attendance(
+            user_id=user_id,
+            date=datetime.now(),
+            clock_in=datetime.now().time()
+        )
+        db.session.add(new_entry)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Clock-in successful!',
+            'data': {
+                'user_id': user_id,
+                'clock_in': new_entry.clock_in.strftime("%H:%M:%S"),
+                'date': new_entry.date.strftime("%Y-%m-%d"),
+                'shift': 'second' if is_split_shift else 'first'
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f'Clock-in failed: {str(e)}'}), 500
+    
+@api_bp.route('/clock-out', methods=['POST'])
+@login_required
+def clock_out():
+    user_id = request.get_json()
+
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Missing user_id'}), 400
+
+    try:
+        # Define current time and date
+        now = datetime.now()
+        actual_clock_out = now.time()
+        today = now.date()
+
+        # Get the user's active clock-in record for today
+        last_record = Attendance.query.filter(
+            Attendance.user_id == user_id,
+            Attendance.clock_in != None,
+            Attendance.clock_out == None,
+            Attendance.date == today,
+        ).order_by(Attendance.id.desc()).first()
+
+        if not last_record:
+            return jsonify({'success': False, 'error': 'No active clock-in found for today.'}), 400
+        
+        # Store clock-in time (it's already a datetime.time object from the database)
+        clock_in_time = last_record.clock_in 
+
+        # Get global settings and user schedule
+        global_settings = GlobalSettings.query.first()
+        strict_schedule = bool(global_settings and global_settings.enable_strict_schedule)
+        user_schedules = Schedule.query.filter_by(
+            user_id=user_id,
+            day=datetime.today().strftime('%A').lower()
+        ).all()
+
+        schedule_end = None
+        is_second_shift = False
+
+        # Determine applicable schedule
+        for sched in user_schedules:
+            early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
+            # FIX: Removed the redundant .time() here to prevent the error
+            if early_start <= clock_in_time <= sched.end_time: 
+                schedule_end = sched.end_time
+                break
+
+            if sched.is_split_shift and sched.split_start_time and sched.split_end_time:
+                early_second_start = (datetime.combine(today, sched.split_start_time) - timedelta(hours=1)).time()
+                # FIX: Removed the redundant .time() here
+                if early_second_start <= clock_in_time <= sched.split_end_time:
+                    schedule_end = sched.split_end_time
+                    is_second_shift = True
+                    break
+
+        # Strict schedule enforcement
+        if strict_schedule and schedule_end:
+            # Convert time objects to full datetime objects for accurate comparison/arithmetic
+            actual_clock_out_dt = datetime.combine(today, actual_clock_out)
+            schedule_end_dt = datetime.combine(today, schedule_end)
+            
+            # Calculate the grace limit (datetime + timedelta)
+            grace_limit = schedule_end_dt + timedelta(minutes=30)
+            
+            # Check for clock-out past grace limit
+            if actual_clock_out_dt > grace_limit:
+                return jsonify({
+                    'success': False,
+                    'error': 'More than 30 minutes past scheduled end time.'
+                }), 400
+
+            evening_cutoff = datetime.combine(today, time(18, 30))
+
+            # Apply schedule end cap logic using full datetime objects for comparison
+            if schedule_end_dt < actual_clock_out_dt < evening_cutoff:
+                last_record.clock_out = schedule_end # Cap clock-out time
+            else:
+                last_record.clock_out = actual_clock_out # Use the actual time
+        else:
+            last_record.clock_out = actual_clock_out
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': 'Clock-out successful!',
+            'data': {
+                'user_id': user_id,
+                'clock_in': last_record.clock_in.strftime("%H:%M:%S"),
+                'clock_out': last_record.clock_out.strftime("%H:%M:%S"),
+                'date': last_record.date.strftime("%Y-%m-%d"),
+                'shift': 'second' if is_second_shift else 'first'
+            }
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Clock-out failed: {str(e)}'
+        }), 500

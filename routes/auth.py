@@ -5,17 +5,15 @@ from models.models import User
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/whoami')
-def whoami():
+@auth_bp.route('/')
+def index():
     if current_user.is_authenticated:
-        return jsonify({
-            'loggedIn': True,
-            'userId': current_user.user_id,
-            'role': current_user.role,
-            'name': f"{current_user.first_name}"
-        })
-    else:
-        return jsonify({'loggedIn': False})
+        if current_user.role not in ['superadmin', 'admin']:
+            return render_template('/gia/dashboard.html')
+        else:
+            return render_template('/admin/dashboard.html')
+
+    return render_template('/auth/login.html')
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -24,10 +22,11 @@ def login():
     gia_id = data.get('giaId')
     admin_id = data.get('adminId')
     password = data.get('password')
-    
-    if gia_id:
-        gia = User.query.filter_by(user_id=gia_id).first()
 
+    gia = User.query.filter_by(user_id=gia_id).first()
+    isGia = User.query.filter_by(user_id=gia_id, role='gia').first() is not None
+    
+    if gia_id and isGia:
         if not gia:
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
@@ -45,6 +44,8 @@ def login():
 
         login_user(admin)
         return jsonify({'success': True, 'message': f'Welcome {admin.first_name}!'}), 200
+    
+    return jsonify({'success': False, 'error': 'Incorrect username or password'}), 401
 
 @auth_bp.route('/logout', methods=['GET','POST'])
 @login_required
