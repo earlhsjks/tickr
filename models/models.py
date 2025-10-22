@@ -122,6 +122,7 @@ class Logs(db.Model):
     action = db.Column(db.String(255), nullable=False)
     timestamp = db.Column(db.DateTime, server_default=func.now(), nullable=False)
     details = db.Column(db.Text)
+    client_ip = db.Column(db.String(45))
 
     user = db.relationship('User', back_populates='logs', lazy=True)
 

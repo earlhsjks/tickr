@@ -484,6 +484,132 @@ body {
     color: #6b7280;
 }
 
+/* ==============================================
+   AUDIT LOGS SPECIFIC STYLES
+   ============================================== */
+
+/* Action Badges */
+.action-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: capitalize;
+    white-space: nowrap;
+    transition: transform 0.2s;
+}
+
+.action-badge.created {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.action-badge.edited {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.action-badge.deleted {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.action-badge.updated {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.action-badge.rejected {
+    background: #fce7f3;
+    color: #be185d;
+}
+
+.action-badge.login {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.action-badge.clock.in {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+/* Timestamp Display */
+.timestamp .fw-medium {
+    color: #111827;
+    font-size: 14px;
+}
+
+.timestamp .text-muted {
+    font-size: 12px;
+}
+
+/* User Info Display */
+.user-info .fw-medium {
+    color: #111827;
+    font-size: 14px;
+}
+
+.user-info .text-muted {
+    font-size: 12px;
+}
+
+/* Affected Data Display */
+.affected-data .fw-medium {
+    color: #111827;
+    font-size: 14px;
+}
+
+.affected-data .text-muted {
+    font-size: 12px;
+}
+
+/* Details Text */
+.details-text {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.4;
+}
+
+/* Table Row Interactions */
+#auditLogsTableBody tr {
+    transition: background-color 0.2s;
+}
+
+#auditLogsTableBody tr:hover {
+    background-color: #f8f9fa !important;
+    cursor: pointer;
+}
+
+/* Responsive adjustments for audit logs */
+@media (max-width: 768px) {
+    .action-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .timestamp .fw-medium,
+    .user-info .fw-medium,
+    .affected-data .fw-medium {
+        font-size: 13px;
+    }
+    
+    .details-text {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 12px;
+    }
+    
+    .action-badge {
+        font-size: 9px;
+        padding: 2px 4px;
+    }
+}
+
 /* Auto-refresh Toggle */
 .form-check-input:checked {
     background-color: #10b981;
@@ -1170,6 +1296,155 @@ body {
         max-width: 95%;
     }
 }
+
+/* ==============================================
+   EXPORT PDF SPECIFIC STYLES
+   ============================================== */
+
+/* Export Summary Section */
+.export-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.export-summary h6 {
+    color: #374151;
+    margin-bottom: 12px;
+}
+
+.export-summary .fw-medium {
+    color: #111827;
+    font-size: 14px;
+}
+
+/* Department Filters */
+.department-filters {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: #f9fafb;
+}
+
+.department-filters .form-check {
+    margin-bottom: 8px;
+}
+
+.department-filters .form-check:last-child {
+    margin-bottom: 0;
+}
+
+/* Employee Selector */
+#employeeSelector {
+    font-size: 13px;
+}
+
+#employeeSelector optgroup {
+    font-weight: 600;
+    color: #374151;
+    background: #f3f4f6;
+}
+
+#employeeSelector option {
+    padding: 4px 8px;
+    font-size: 13px;
+}
+
+/* Quick Date Buttons */
+.btn-outline-secondary.btn-sm {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* Recent Exports Table */
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+}
+
+/* Preview Container */
+.preview-container {
+    min-height: 300px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-stats {
+    background: white;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    max-width: 200px;
+    margin: 0 auto;
+}
+
+/* Form Section Headers */
+.card-body h6.fw-bold {
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+/* Generate Button Styling */
+.btn-success.btn-lg {
+    font-weight: 600;
+    padding: 12px 24px;
+}
+
+/* Success Alert Positioning */
+.alert.position-fixed {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments for export page */
+@media (max-width: 768px) {
+    .export-summary {
+        padding: 16px;
+    }
+    
+    .department-filters {
+        max-height: 150px;
+    }
+    
+    #employeeSelector {
+        font-size: 12px;
+    }
+    
+    .btn-outline-secondary.btn-sm {
+        font-size: 11px;
+        padding: 3px 6px;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-actions {
+        margin-top: 16px;
+    }
+    
+    .export-summary .row {
+        row-gap: 12px;
+    }
+    
+    .preview-container {
+        min-height: 200px;
+    }
+}
+
 /* ==============================================
    RESPONSIVE DESIGN - Mobile First
    ============================================== */

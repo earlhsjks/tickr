@@ -1,6 +1,6 @@
 from flask import (Blueprint, render_template, redirect, url_for, request, flash, 
-                   send_file, session, request, jsonify)
-from flask_login import login_user, login_required, logout_user, current_user
+                   send_file, session, request)
+from flask_login import login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 import pandas as pd
 import io
@@ -8,7 +8,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import text, or_
 from flask_apscheduler import APScheduler
 
 # Create a Blueprint for admin routes
@@ -65,47 +64,58 @@ def logout():
 def dashboard():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
-        return render_template('auth/login.html')
+        return redirect(url_for('auth_bp.login')) 
     
-    # Exclude superadmin from statistics
     total_employees = User.query.filter(User.role != "superadmin").count()
 
-    # Today's Date
     today = datetime.now().date()
+    
+    completed_records = Attendance.query.filter(
+        Attendance.date == today,
+        Attendance.clock_out.isnot(None)
+    ).all()
 
-    # Dashboard Summary
-    average_hours_worked = (
-        db.session.query(db.func.avg(
-            db.func.extract('epoch', Attendance.clock_out - Attendance.clock_in) / 3600
-        )).filter(
-            Attendance.clock_out.isnot(None)
-        ).scalar() or 0
-    )
+    total_seconds_worked = 0
+    total_overtime_seconds = 0
+    compliant_shifts_count = 0
 
-    overtime_hours = (
-        db.session.query(db.func.sum(
-            db.func.extract('epoch', Attendance.clock_out - Attendance.clock_in) / 3600
-        )).filter(
-            Attendance.clock_out.isnot(None),
-            Attendance.clock_out > Attendance.clock_in + timedelta(hours=4)  # 4 hours overtime threshold
-        ).scalar() or 0
-    )
+    compliance_limit = timedelta(hours=4)
+    overtime_threshold = timedelta(hours=4)
+    
+    for record in completed_records:
+        dt_in = datetime.combine(record.date, record.clock_in)
+        dt_out = datetime.combine(today, record.clock_out)
+        
+        duration = dt_out - dt_in
+        total_seconds_worked += duration.total_seconds()
 
-    compliance_hours = (
-        db.session.query(db.func.sum(
-            db.func.extract('epoch', Attendance.clock_out - Attendance.clock_in) / 3600
-        )).filter(
-            Attendance.clock_out.isnot(None),
-            Attendance.clock_out <= Attendance.clock_in + timedelta(hours=4) # 4 hours compliance threshold
-        ).scalar() or 0
-    )
+        if duration > overtime_threshold:
+            overtime_duration = duration - overtime_threshold
+            total_overtime_seconds += overtime_duration.total_seconds()
+
+        if duration <= compliance_limit:
+            compliant_shifts_count += 1
+
+    total_hours_worked = total_seconds_worked / 3600
+    overtime_hours = total_overtime_seconds / 3600
+
+    num_completed_shifts = len(completed_records)
+    if num_completed_shifts > 0:
+        average_hours_worked = total_hours_worked / num_completed_shifts
+    else:
+        average_hours_worked = 0
+        
+    average_hours_worked = round(average_hours_worked, 2)
+    overtime_hours = round(overtime_hours, 2)
+
+    compliance_hours = compliant_shifts_count 
 
     return render_template(
         'admin/dashboard.html',
         user=current_user,
         total_employees=total_employees,
-        average_hours_worked=average_hours_worked,
-        overtime_hours=overtime_hours,
+        average_hours_worked=average_hours_worked, 
+        overtime_hours=overtime_hours,             
         compliance_hours=compliance_hours,
         current_time = datetime.now().strftime("%A, %B %d, %Y"),
     )
@@ -201,25 +211,7 @@ def daily_logs():
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
 
-    # Get the current date
-    today = datetime.today().date()
-
-    # Fetch daily logs for today
-    daily_logs = db.session.query(
-        User.first_name,
-        User.last_name,
-        Attendance.clock_in,
-        Attendance.clock_out
-    ).join(User).filter(
-        db.func.date(Attendance.clock_in) == today
-    ).order_by(Attendance.clock_in.desc()).all()
-
-    return render_template(
-        'admin/daily_log.html',
-        daily_logs=daily_logs,
-        current_date=today.strftime("%Y-%m-%d")
-        
-    )
+    return render_template('admin/daily_logs.html',)
 
 # MANUAL LOGS PAGE
 @admin_bp.route('/manual-logs', methods=['GET'])
@@ -623,43 +615,14 @@ def settings():
     return render_template("admin/settings.html", settings=settings)
 
 # Route to View Logs
-@admin_bp.route('/logs', methods=['GET', 'POST'])
+@admin_bp.route('/audit-logs', methods=['GET', 'POST'])
 @login_required
-def view_logs():
+def audit_logs():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Unauthorized access!", "danger")
         return render_template('auth/login.html')
 
-    # Get page and rows_per_page from args or form
-    page = int(request.args.get('page', 1))
-    if request.method == 'POST':
-        rows_per_page = int(request.form.get('rows_per_page', 25))
-        log_date = request.form.get('log_date', '')
-    else:
-        rows_per_page = int(request.args.get('rows_per_page', 25))
-        log_date = request.args.get('log_date', '')
-
-    # Join with User model and exclude logs from superadmins
-    query = Logs.query.join(User, User.user_id == Logs.admin_id).filter(User.role != 'superadmin').order_by(Logs.timestamp.desc())
-
-    if log_date:
-        try:
-            selected_date = datetime.strptime(log_date, "%Y-%m-%d").date()
-            query = query.filter(db.func.date(Logs.timestamp) == selected_date)
-        except ValueError:
-            pass
-
-    total_logs = query.count()
-    logs = query.offset((page - 1) * rows_per_page).limit(rows_per_page).all()
-
-    return render_template(
-        'admin/system_logs.html',
-        logs=logs,
-        rows_per_page=rows_per_page,
-        page=page,
-        total_logs=total_logs,
-        log_date=log_date
-    )
+    return render_template('admin/audit_logs.html')
 
 # DTR Print
 @admin_bp.route('/export-pdf')

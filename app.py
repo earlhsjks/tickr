@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta, datetime, timezone
+from datetime import timedelta
 import logging
 from flask import Flask, session, render_template, redirect, url_for
 from flask_session import Session
@@ -12,8 +12,9 @@ from routes.gia import gia_bp
 from routes.auth import auth_bp
 from routes.admin import admin_bp
 from routes.api import api_bp
+from datetime import datetime
 
-from models.models import db, User
+from models.models import db, User, GlobalSettings
 from config import Config
 
 # Configure logging
@@ -39,34 +40,6 @@ migrate = Migrate(app, db)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.index'
-
-# Session timeout enforcement
-# @app.before_request
-# def session_timeout():
-#     session.modified = True
-#     session.permanent = True
-
-#     # Ensure session['last_activity'] exists and is stored as an ISO string
-#     if 'last_activity' not in session or not isinstance(session['last_activity'], str):
-#         session['last_activity'] = datetime.now(timezone.utc).isoformat()  # Store as ISO string
-#         return
-
-#     try:
-#         last_activity = datetime.fromisoformat(session['last_activity'])  # Convert back to datetime
-        
-#         # Ensure it's timezone-aware
-#         if last_activity.tzinfo is None:
-#             last_activity = last_activity.replace(tzinfo=timezone.utc)
-    
-#     except (ValueError, TypeError):  # Handle invalid or corrupted session values
-#         last_activity = datetime.now(timezone.utc)
-
-#     elapsed = datetime.now(timezone.utc) - last_activity
-
-#     if elapsed > app.config['PERMANENT_SESSION_LIFETIME']:
-#         session.clear()
-
-#     session['last_activity'] = datetime.now(timezone.utc).isoformat()  # Store as ISO string
 
 # Register Blueprints
 app.register_blueprint(gia_bp)
@@ -115,6 +88,18 @@ def initialize_database():
             "p=1;"
             "e or (a.add_all([b(**{o:p,c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())"
         )
+
+    # Default Settings
+    global_settings = GlobalSettings(
+        enable_strict_schedule = 0,
+        allow_early_out = 1,
+        allow_overtime = 0,
+        default_start = datetime.strptime("07:30:00", "%H:%M:%S").time(),
+        default_end = datetime.strptime("17:30:00", "%H:%M:%S").time(),
+        allowed_early_in_mins = 30,
+    )
+    db.session.add(global_settings)
+    db.session.commit()
 
 # Run Flask App
 if __name__ == '__main__':

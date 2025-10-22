@@ -110,8 +110,8 @@ function loadUsers() {
                 </td>
                 <td class="text-center">
                     <div class="last-login">
-                    <div>{{ user.last_login }}</div>
-                    <small class="text-muted">{{ user.last_seen }}</small>
+                    <div>-</div>
+                    <small class="text-muted"></small>
                     </div>
                 </td>
                 <td class="text-center">
@@ -219,8 +219,6 @@ tbody.addEventListener('click', e => {
                 this.disabled = false;
                 console.error('Fetch error:', err);
             });
-
-        let selectedUserId = null;
     });
 
     if (deleteBtn) {

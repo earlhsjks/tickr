@@ -1,10 +1,9 @@
-from flask import (Blueprint, render_template, redirect, url_for, request, flash, 
-                   send_file, session, request, jsonify)
-from flask_login import login_user, login_required, logout_user, current_user
+from flask import (Blueprint, request, flash, 
+                   send_file, request, jsonify)
+from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 import pandas as pd
 import io
-from collections import defaultdict
 from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 # from flask_apscheduler import APScheduler
@@ -13,16 +12,20 @@ from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 api_bp = Blueprint('api', __name__)
 
 # System Log
-def systemLogEntry(userId, action, details=None):
-    entry = Logs(
-        userId = userId,
-        action = action,
-        details = details,
-        timestamp = datetime.now()
-    )
+def systemLogEntry(action, details):
+    try:
+        entry = Logs(
+            action=action,
+            details=details,
+            user_id=getattr(current_user, 'user_id', None),
+            timestamp=datetime.now(),
+            client_ip=request.remote_addr
 
-    db.session.add(entry)
-    db.session.commit()
+        )
+        db.session.add(entry)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
 
 # GET ALL USER
 @api_bp.route('/users-data', methods=['GET'])
@@ -77,12 +80,17 @@ def add_user():
     db.session.add(new_user)
     db.session.commit()
 
+    systemLogEntry(
+        action="Created",
+        details=f"User '{new_user.first_name} {new_user.last_name}' (ID: {new_user.user_id}) was created by {current_user.first_name} {current_user.last_name}."
+    )
+    
     return jsonify({
         'success': True,
     }), 200
 
 # GET USER DETAILS
-@api_bp.route('/get-user/<string:user_id>')
+@api_bp.route('/get-user/<string:user_id>', methods=['GET'])
 @login_required
 def get_user(user_id):
     if current_user.role not in ["superadmin", "admin"]:
@@ -131,6 +139,12 @@ def update_user(user_id):
 
     try:
         db.session.commit()
+
+        systemLogEntry(
+            action="Updated",
+            details=f"User '{user.first_name} {user.last_name}' (ID: {user.user_id}) was updated by {current_user.first_name} {current_user.last_name}."
+        )
+
         return jsonify({'success': True, 'message': 'User updated successfully!'}), 200
     except Exception as e:
         db.session.rollback()
@@ -152,11 +166,14 @@ def delete_user_page(user_id):
         # Delete related attendance records
         Attendance.query.filter_by(user_id=user.user_id).delete()
 
+        systemLogEntry(
+            action="Deleted",
+            details=f"User '{user.first_name} {user.last_name}' (ID: {user.user_id}) was deleted by {current_user.first_name} {current_user.last_name}."
+        )
+
         # Delete the user
         db.session.delete(user)
         db.session.commit()
-
-        systemLogEntry()
 
         return jsonify({'success': True, 'message': 'User deleted successfully!'}), 200
 
@@ -211,7 +228,7 @@ def serialize_schedule(s):
     }
 
 # GET ALL SCHEDULE
-@api_bp.route('/get-schedules')
+@api_bp.route('/get-schedules', methods=['GET'])
 @login_required
 def get_schedules():
     if current_user.role not in ["superadmin", "admin"]:
@@ -237,7 +254,7 @@ def get_schedules():
         'users': users_list
     })
 
-@api_bp.route('/get-schedule/<string:user_id>')
+@api_bp.route('/get-schedule/<string:user_id>', methods=['GET'])
 @login_required
 def get_user_schedule(user_id):
     if current_user.role not in ["superadmin", "admin"]:
@@ -338,6 +355,12 @@ def update_schedule(user_id):
                 db.session.add(new_sched)
 
         db.session.commit()
+
+        systemLogEntry(
+            action="Updated",
+            details=f"Schedule for user '{user.first_name} {user.last_name}' (ID: {user.user_id}) was updated by {current_user.first_name} {current_user.last_name}."
+        )
+
         return jsonify({'success': True, 'message': 'Schedule updated successfully!'})
 
     except Exception as e:
@@ -354,17 +377,123 @@ def purge_schedules():
     try:
         db.session.query(Schedule).delete()
         db.session.commit()
+
+        systemLogEntry(
+            action="Deleted",
+            details=f"All schedules were purged by {current_user.first_name} {current_user.last_name}."
+        )
+
         return jsonify({'success': True, 'message': 'All schedules cleared successfully!'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error clearing schedules: {str(e)}"}), 500
+
+def serialize_logs(l):
+    role = None
+    if (l.user.role == "admin"):
+        role = "Admin"
+    else:
+        role = 'GIA'
+
+    return {
+        'date': l.timestamp.strftime("%b %d, %Y"),
+        'time': l.timestamp.strftime("%I:%M %p"),
+        'full_name': f"{l.user.first_name} {l.user.last_name}",
+        'role': role,
+        'action': l.action, 
+        'details': l.details,
+        'ip': l.client_ip
+    }
+
+@api_bp.route('/get-logs')
+@login_required
+def get_logs():
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
+    logs = Logs.query.filter(Logs.user_id != 'superadmin').order_by(Logs.id.desc()).all()
+    logs_list = [serialize_logs(l) for l in logs]
+    
+    return jsonify(logs_list)
+
+def serialize_drecords(s):
+    if s.clock_in and s.clock_out:
+        clock_in_dt = datetime.combine(date.today(), s.clock_in)
+        clock_out_dt = datetime.combine(date.today(), s.clock_out)
+        time_difference = clock_out_dt - clock_in_dt
+        t_hours = round(time_difference.total_seconds() / 3600, 2)
+    else:
+        t_hours = 0
+
+    return {
+        'name_initial': f"{s.user.first_name[0]}{s.user.last_name[0]}",
+        'full_name': f"{s.user.first_name} {s.user.last_name}",
+        'user_id': s.user.user_id,
+        'log_id': s.id,
+        'date': s.date.strftime("%b %d, %Y"),
+        'clock_in': s.clock_in.strftime("%I:%M %p").lower() if s.clock_in else '',
+        'clock_out': s.clock_out.strftime("%I:%M %p").lower() if s.clock_out else '',
+        'total_hours': t_hours,
+    }
+
+@api_bp.route('/get-daily-logs')
+@login_required
+def get_daily_logs():
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
+    
+    records = Attendance.query.order_by(Attendance.date, Attendance.id).all()
+    records_list = [serialize_drecords(s) for s in records]
+
+    return jsonify(records_list)
+
+@api_bp.route('/get-user-log/<string:log_id>')
+def get_user_log(log_id):
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
+    
+    record = Attendance.query.get(log_id)
+    user_record = {
+        'log_id': record.id,
+        'full_name': f"{record.user.first_name} {record.user.last_name}",
+        'clock_in': record.clock_in.strftime("%H:%M") if record.clock_in else '',
+        'clock_out': record.clock_out.strftime("%H:%M") if record.clock_out else '',
+        # 'notes': record.notes if record.notes else '',
+    }
+
+    return jsonify(user_record)
+
+@api_bp.route('/update-log/<string:log_id>', methods=['POST'])
+def update_log(log_id):
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
+    
+    data = request.get_json()
+    log = Attendance.query.get(log_id)
+    
+    log.clock_in = data.get('clockIn', log.clock_in)
+    log.clock_out = data.get('clockOut', log.clock_out)
+
+    try:
+        db.session.commit()
+
+        return jsonify({'success': True, 'message': 'Log updated successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f"Error updating log: {str(e)}"}), 500
+
+
+
 ### GIA API ####
 
-@api_bp.route('/status')
+@api_bp.route('/status', methods=['GET'])
 @login_required
 def status():
     user_id = request.args.get('user_id')
+
+    if current_user.user_id != user_id:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+    
     if not user_id:
         return jsonify({'error': 'Missing user_id'}), 400
 
@@ -449,6 +578,10 @@ def serialize_records(s):
 @login_required
 def gia_data():
     user_id = request.args.get('user_id')
+
+    if current_user.user_id != user_id:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+    
     month = request.args.get('month')
     year, month = map(int, month.split('-'))
 
@@ -488,8 +621,11 @@ def gia_data():
 def clock_in():
     user_id = request.get_json()
 
+    if current_user.user_id != user_id:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+    
     try:
-        today_name = datetime.today().strftime('%A')
+        today_name = datetime.today().strftime('%A').lower()
         now = datetime.now().time()
 
         # Get Schedules and Global Settings 
@@ -525,14 +661,14 @@ def clock_in():
             # First shift validation
             earliest_in = (datetime.combine(datetime.today(), sched.start_time) - timedelta(minutes=special_early_in)).time()
             if earliest_in <= now <= sched.end_time:
-                valid_schedule = sched
+                valid_schedule = sched.start_time
                 break
 
             # Second shift validation (if broken)
-            if sched.is_split_shift and sched.split_start_time and sched.split_end_time:
+            if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
                 earliest_second_in = (datetime.combine(datetime.today(), sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
                 if earliest_second_in <= now <= sched.split_end_time:
-                    valid_schedule = sched
+                    valid_schedule = sched.split_start_time
                     is_split_shift = True
                     break
 
@@ -554,12 +690,12 @@ def clock_in():
             return jsonify({'success': False, 'error': 'Maximum of two clock-ins allowed per day.'}), 400
 
         # Prevent duplicate clock-in for same shift (not used, js covered)
-        for shift in active_shifts:
-            if valid_schedule:
-                if not is_split_shift and valid_schedule.start_time <= shift.clock_in <= valid_schedule.end_time:
-                    return jsonify({'success': False, 'error': 'Already clocked in for this shift. Clock out first.'}), 400
-                if is_split_shift and shift.clock_in >= valid_schedule.split_start_time:
-                    return jsonify({'success': False, 'error': 'Already clocked in for your second shift.'}), 400
+        # for shift in active_shifts:
+        #     if valid_schedule:
+        #         if not is_split_shift and valid_schedule.start_time <= shift.clock_in <= valid_schedule.end_time:
+        #             return jsonify({'success': False, 'error': 'Already clocked in for this shift. Clock out first.'}), 400
+        #         if is_split_shift and shift.clock_in >= valid_schedule.split_start_time:
+        #             return jsonify({'success': False, 'error': 'Already clocked in for your second shift.'}), 400
 
         #  Create and Save Attendance Entry 
         new_entry = Attendance(
@@ -569,6 +705,11 @@ def clock_in():
         )
         db.session.add(new_entry)
         db.session.commit()
+
+        systemLogEntry(
+            action="Clock In",
+            details=f"User {current_user.first_name} {current_user.last_name} clocked in."
+        )
 
         return jsonify({
             'success': True,
@@ -592,6 +733,8 @@ def clock_out():
 
     if not user_id:
         return jsonify({'success': False, 'error': 'Missing user_id'}), 400
+    if current_user.user_id != user_id:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 400
 
     try:
         # Define current time and date
@@ -621,7 +764,7 @@ def clock_out():
 
         if strict_schedule and user_schedules:
             schedule_end = None
-            is_second_shift = False
+            is_split_shift = False
 
             # Determine applicable schedule
             for sched in user_schedules:
@@ -635,7 +778,7 @@ def clock_out():
                     early_second_start = (datetime.combine(today, sched.split_start_time) - timedelta(hours=1)).time()
                     if early_second_start <= clock_in_time <= sched.split_end_time:
                         schedule_end = sched.split_end_time
-                        is_second_shift = True
+                        is_split_shift = True
                         break
 
             # Strict schedule enforcement
@@ -665,6 +808,11 @@ def clock_out():
 
         db.session.commit()
 
+        systemLogEntry(
+            action="Clock Out",
+            details=f"User {current_user.first_name} {current_user.last_name} clocked in."
+        )
+
         return jsonify({
             'success': True,
             'message': 'Clock-out successful!',
@@ -673,7 +821,7 @@ def clock_out():
                 'clock_in': last_record.clock_in.strftime("%H:%M:%S"),
                 'clock_out': last_record.clock_out.strftime("%H:%M:%S"),
                 'date': last_record.date.strftime("%Y-%m-%d"),
-                'shift': 'second' if is_second_shift else 'first'
+                'shift': 'second' if is_split_shift else 'first'
             }
         }), 200
 
