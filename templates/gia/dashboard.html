@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/gia_dashboard.css')}}">
 </head>
 <body>
-  <div class="main-container">
+  <div class="main-container" style="display:none;">
 
     <!-- Header -->
     <header class="page-header">
@@ -31,28 +31,28 @@
         <div class="stat-icon"><i class="fas fa-clock"></i></div>
         <div>
           <h4>Total Hours</h4>
-          <p>160 hrs</p>
+          <p><span id="summaryHours">-</span> hrs</p>
         </div>
       </div>
       <div class="stat-card green">
         <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
         <div>
           <h4>On Time</h4>
-          <p>18 days</p>
+          <p><span id="summaryOnTime">-</span> days</p>
         </div>
       </div>
       <div class="stat-card yellow">
         <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
         <div>
           <h4>Late</h4>
-          <p>2 days</p>
+          <p><span id="summaryLate">-</span> days</p>
         </div>
       </div>
       <div class="stat-card red">
         <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
         <div>
           <h4>Absences</h4>
-          <p>1 day</p>
+          <p><span id="summaryAbsences">-</span> day</p>
         </div>
       </div>
     </section>
@@ -70,23 +70,25 @@
     <section class="content-card">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h2>Recent Activity</h2>
-        <input type="month" class="form-control form-control-sm w-auto" value="2025-10" />
+        <input type="month" id="monthFilter" class="form-control form-control-sm w-auto" value="{{ month }}" />
       </div>
-      <div class="card-body table-responsive">
-        <table class="table table-hover align-middle">
-          <thead>
-            <tr>
-              <th class="text-center">Date</th>
-              <th class="text-center">Time In</th>
-              <th class="text-center">Time Out</th>
-              <!-- <th class="text-center">Status</th> -->
-              <th class="text-center">Total Hours</th>
-            </tr>
-          </thead>
-          <tbody id="activityTableBody">
-            <!-- JS POP -->
-          </tbody>
-        </table>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle table-nowrap">
+            <thead>
+              <tr>
+                <th class="text-center">Date</th>
+                <th class="text-center">Time In</th>
+                <th class="text-center">Time Out</th>
+                <!-- <th class="text-center">Status</th> -->
+                <th class="text-center">Total Hours</th>
+              </tr>
+            </thead>
+            <tbody id="activityTableBody">
+              <!-- JS POP -->
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   </div>

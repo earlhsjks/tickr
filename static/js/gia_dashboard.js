@@ -4,137 +4,151 @@ const successModal = new bootstrap.Modal(document.getElementById("clockSuccessMo
 const errorModal = new bootstrap.Modal(document.getElementById("clockErrorModal"));
 const successTime = document.getElementById("successTime");
 const currentTimeDisplay = document.getElementById("currentTime"); // Global clock display reference
+const monthFilter = document.getElementById("monthFilter");
 
 let isClockedIn = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const updateClock = () => {
-    const now = new Date();
-    currentTimeDisplay.textContent = now.toLocaleTimeString();
-  };
+    const updateClock = () => {
+        const now = new Date();
+        currentTimeDisplay.textContent = now.toLocaleTimeString();
+    };
 
-  updateClock();
-  setInterval(updateClock, 1000);
+    updateClock();
+    setInterval(updateClock, 1000);
 
-  await loadRecords();
-  await checkButton();
+    await loadRecords();
+    await checkButton();
 });
 
 async function checkButton() {
-  const userId = clockBtn.getAttribute('data-user-id');
-  try {
-    const res = await fetch(`/api/status?user_id=${userId}`);
-    const data = await res.json();
+    const userId = clockBtn.getAttribute('data-user-id');
+    try {
+        const res = await fetch(`/api/status?user_id=${userId}`);
+        const data = await res.json();
 
-    isClockedIn = data.clocked_in && !data.clocked_out; 
-    is30min = data.is30min;
+        isClockedIn = data.clocked_in && !data.clocked_out;
+        is30min = data.is30min;
 
-    clockBtn.innerHTML = isClockedIn && !is30min
-      ? '<i class="fas fa-stop me-2"></i>Clock Out'
-      : '<i class="fas fa-play me-2"></i>Clock In';
+        clockBtn.innerHTML = isClockedIn && !is30min
+            ? '<i class="fas fa-stop me-2"></i>Clock Out'
+            : '<i class="fas fa-play me-2"></i>Clock In';
 
-    if (isClockedIn && !is30min) {
-      statusText.textContent = 'Clocked In'
-      statusText.style.color = "#059669";
-    } else {
-      statusText.textContent = 'Clocked Out'
-      statusText.style.color = "";
+        if (isClockedIn && !is30min) {
+            statusText.textContent = 'Clocked In'
+            statusText.style.color = "#059669";
+        } else {
+            statusText.textContent = 'Clocked Out'
+            statusText.style.color = "";
+        }
+    } catch (err) {
+        console.error('Error checking button status:', err);
+        statusText.textContent = "Status Check Failed";
+        clockBtn.disabled = true;
+        clockBtn.style.background = "gray";
     }
-  } catch (err) {
-    console.error('Error checking button status:', err);
-    statusText.textContent = "Status Check Failed";
-    clockBtn.disabled = true;
-    clockBtn.style.background = "gray";
-  }
+
+    showPage();
 }
 
 // --- Function to Load Records ---
 async function loadRecords() {
-  try {
-    const userId = clockBtn.getAttribute('data-user-id');
-    const response = await fetch(`/api/gia-data?user_id=${encodeURIComponent(userId)}`);
+    try {
+        const userId = clockBtn.getAttribute('data-user-id');
+        const month = monthFilter.value;
+        const response = await fetch(
+        `/api/gia-data?user_id=${encodeURIComponent(userId)}&month=${encodeURIComponent(month)}`
+        );
+        if (!response.ok) {
+            throw new Error(`Failed to load records: ${response.status}`);
+        }
 
-    if (!response.ok) {
-      throw new Error(`Failed to load records: ${response.status}`);
-    }
+        const data = await response.json();
+        const records = data.records;
+        const summary = data.summary;
+        const tbody = document.getElementById('activityTableBody');
+        tbody.innerHTML = '';
 
-    const records = await response.json();
-    const tbody = document.getElementById('activityTableBody');
-    tbody.innerHTML = '';
+        // Summaries
+        document.getElementById('summaryHours').innerText = summary.total_hours;
+        document.getElementById('summaryOnTime').innerText = summary.total_on_time;
+        document.getElementById('summaryLate').innerText = summary.total_late;
+        document.getElementById('summaryAbsences').innerText = summary.total_absences;
 
-    // ... table population logic ...
-
-    // Simplified record rendering
-    if (records && records.length > 0) {
-        records.forEach(record => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
+        // Simplified record rendering
+        if (records && records.length > 0) {
+            records.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
               <td class="text-center">${record.date || '-'}</td>
               <td class="text-center">${record.clock_in || '-'}</td>
               <td class="text-center">${record.clock_out || '-'}</td>
               <td class="text-center">${record.total_hours || '-'}</td>
             `;
-            tbody.appendChild(tr);
-        });
-    } else {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>`;
-    }
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-3">No records found</td></tr>`;
+        }
 
-  } catch (err) {
-    console.error('Error loading records:', err);
-    document.getElementById("errorTitle").textContent = "Error Loading Records";
-    document.getElementById("errorMessage").textContent = "Could not fetch data. Please try again.";
-    errorModal.show(); // Use global errorModal
-  }
+    } catch (err) {
+        console.error('Error loading records:', err);
+        document.getElementById("errorTitle").textContent = "Error Loading Records";
+        document.getElementById("errorMessage").textContent = "Could not fetch data. Please try again.";
+        errorModal.show(); // Use global errorModal
+    }
 }
 
-// --- Handle Clock In/Out Event Listener ---
 clockBtn.addEventListener("click", async () => {
-  clockBtn.disabled = true; // Prevent double-clicking
+    clockBtn.disabled = true;
 
-  const now = new Date();
-  const time = now.toLocaleTimeString();
-  const userId = clockBtn.getAttribute('data-user-id');
+    const now = new Date();
+    const time = now.toLocaleTimeString();
+    const userId = clockBtn.getAttribute('data-user-id');
 
-  // Determine action based on CURRENT global state
-  const endpoint = isClockedIn ? '/api/clock-out' : '/api/clock-in';
-  const actionText = isClockedIn ? 'Clock Out' : 'Clock In';
+    const endpoint = isClockedIn ? '/api/clock-out' : '/api/clock-in';
+    const actionText = isClockedIn ? 'Clock Out' : 'Clock In';
 
-  try {
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userId )
-    });
+    try {
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userId)
+        });
 
-    const data = await res.json();
+        const data = await res.json();
 
-    if (data.success) {
-      // Update modal content and show
-      document.getElementById("successTitle").textContent = `${actionText} Successful!`;
-      successTime.textContent = time;
-      document.getElementById("successMessage").innerHTML = 
-        `You ${actionText.toLowerCase()} at <span class="fw-bold">${time}</span>.`;
-      successModal.show();
+        if (data.success) {
+            document.getElementById("successTitle").textContent = `${actionText} Successful!`;
+            successTime.textContent = time;
+            document.getElementById("successMessage").innerHTML =
+                `You ${actionText.toLowerCase()} at <span class="fw-bold">${time}</span>.`;
+            successModal.show();
 
-      // Refresh data and status after successful action
-      await loadRecords();
-      await checkButton(); // This fetches the new status and updates global state
-    } else {
-      // Show error modal
-      document.getElementById("errorTitle").textContent = `${actionText} Failed!`;
-      document.getElementById("errorMessage").textContent =
-        data.error || `Unable to record your ${actionText.toLowerCase()}. Please try again.`;
-      errorModal.show();
+            await loadRecords();
+            await checkButton();
+        } else {
+            document.getElementById("errorTitle").textContent = `${actionText} Failed!`;
+            document.getElementById("errorMessage").textContent =
+                data.error || `Unable to record your ${actionText.toLowerCase()}. Please try again.`;
+            errorModal.show();
+        }
+    } catch (err) {
+        console.error("Clock in/out error:", err);
+        document.getElementById("errorTitle").textContent = "Network Error";
+        document.getElementById("errorMessage").textContent = "Unable to reach the server.";
+        errorModal.show();
+    } finally {
+        clockBtn.disabled = false;
     }
-  } catch (err) {
-    console.error("Clock in/out error:", err);
-    document.getElementById("errorTitle").textContent = "Network Error";
-    document.getElementById("errorMessage").textContent = "Unable to reach the server.";
-    errorModal.show();
-  } finally {
-    clockBtn.disabled = false; // Re-enable button
-  }
-  // REMOVED: isClockedIn = !isClockedIn;
-  // State is now controlled by the server via checkButton()
 });
+
+monthFilter.addEventListener("change", () => {
+    loadRecords();
+})
+
+function showPage() {
+    const main = document.querySelector('.main-container');
+    main.style.display = 'block';
+    main.classList.add('visible');
+}

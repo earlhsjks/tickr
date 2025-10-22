@@ -359,7 +359,6 @@ def purge_schedules():
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error clearing schedules: {str(e)}"}), 500
     
-
 ### GIA API ####
 
 @api_bp.route('/status')
@@ -441,8 +440,8 @@ def serialize_records(s):
 
     return {
         'date': s.date.strftime("%b %d, %Y"),
-        'clock_in': s.clock_in.strftime("%H:%M") if s.clock_in else '',
-        'clock_out': s.clock_out.strftime("%H:%M") if s.clock_out else '',
+        'clock_in': s.clock_in.strftime("%I:%M %p").lower() if s.clock_in else '',
+        'clock_out': s.clock_out.strftime("%I:%M %p").lower() if s.clock_out else '',
         'total_hours': t_hours,
     }
 
@@ -450,11 +449,40 @@ def serialize_records(s):
 @login_required
 def gia_data():
     user_id = request.args.get('user_id')
+    month = request.args.get('month')
+    year, month = map(int, month.split('-'))
 
-    records = Attendance.query.filter_by(user_id=user_id).order_by(Attendance.date.desc()).all()
+    records = Attendance.query.filter(
+        Attendance.user_id == user_id,
+        db.extract('year', Attendance.date) == year,
+        db.extract('month', Attendance.date) == month,
+    ).order_by(Attendance.date.desc(), Attendance.id.desc()).all()
     user_records = [serialize_records(r) for r in records]
 
-    return jsonify(user_records)
+    t_hours = 0.0
+    sum_hours = 0.0
+    for record in records:
+        if record.clock_in and record.clock_out:
+            clock_in_dt = datetime.combine(date.today(), record.clock_in)
+            clock_out_dt = datetime.combine(date.today(), record.clock_out)
+            time_difference = clock_out_dt - clock_in_dt
+            t_hours = round(time_difference.total_seconds() / 3600, 2)
+        else:
+            t_hours = 0
+    
+        sum_hours += t_hours
+
+    summary = {
+        'total_hours': round(sum_hours, 2),
+        'total_on_time': 0,
+        'total_late': 0,
+        'total_absences': 0
+    }
+
+    return jsonify({
+        'records': user_records,
+        'summary': summary
+    })
 
 @api_bp.route('/clock-in', methods=['POST'])
 def clock_in():
@@ -513,24 +541,24 @@ def clock_in():
             return jsonify({'success': False, 'error': 'Clock-in not allowed outside your scheduled shift.'}), 400
 
         # Check Attendance Rules 
-        today_start = datetime.combine(datetime.today(), datetime.min.time())
+        today = datetime.today().date()
 
         active_shifts = Attendance.query.filter(
             Attendance.user_id == user_id,
-            Attendance.clock_in >= today_start,
-            Attendance.clock_out.is_(None)
+            Attendance.clock_in.is_not(None),
+            Attendance.date == today,
         ).all()
 
         # Limit to 2 clock-ins per day
         if len(active_shifts) >= 2:
             return jsonify({'success': False, 'error': 'Maximum of two clock-ins allowed per day.'}), 400
 
-        # Prevent duplicate clock-in for same shift
+        # Prevent duplicate clock-in for same shift (not used, js covered)
         for shift in active_shifts:
             if valid_schedule:
-                if not is_split_shift and valid_schedule.start_time <= shift.clock_in.time() <= valid_schedule.end_time:
+                if not is_split_shift and valid_schedule.start_time <= shift.clock_in <= valid_schedule.end_time:
                     return jsonify({'success': False, 'error': 'Already clocked in for this shift. Clock out first.'}), 400
-                if is_split_shift and shift.clock_in.time() >= valid_schedule.split_start_time:
+                if is_split_shift and shift.clock_in >= valid_schedule.split_start_time:
                     return jsonify({'success': False, 'error': 'Already clocked in for your second shift.'}), 400
 
         #  Create and Save Attendance Entry 
@@ -582,10 +610,8 @@ def clock_out():
         if not last_record:
             return jsonify({'success': False, 'error': 'No active clock-in found for today.'}), 400
         
-        # Store clock-in time (it's already a datetime.time object from the database)
         clock_in_time = last_record.clock_in 
 
-        # Get global settings and user schedule
         global_settings = GlobalSettings.query.first()
         strict_schedule = bool(global_settings and global_settings.enable_strict_schedule)
         user_schedules = Schedule.query.filter_by(
@@ -593,48 +619,47 @@ def clock_out():
             day=datetime.today().strftime('%A').lower()
         ).all()
 
-        schedule_end = None
-        is_second_shift = False
+        if strict_schedule and user_schedules:
+            schedule_end = None
+            is_second_shift = False
 
-        # Determine applicable schedule
-        for sched in user_schedules:
-            early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
-            # FIX: Removed the redundant .time() here to prevent the error
-            if early_start <= clock_in_time <= sched.end_time: 
-                schedule_end = sched.end_time
-                break
-
-            if sched.is_split_shift and sched.split_start_time and sched.split_end_time:
-                early_second_start = (datetime.combine(today, sched.split_start_time) - timedelta(hours=1)).time()
-                # FIX: Removed the redundant .time() here
-                if early_second_start <= clock_in_time <= sched.split_end_time:
-                    schedule_end = sched.split_end_time
-                    is_second_shift = True
+            # Determine applicable schedule
+            for sched in user_schedules:
+                if sched.start_time and sched.end_time:
+                    early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
+                    if early_start <= clock_in_time <= sched.end_time:
+                        schedule_end = sched.end_time
                     break
 
-        # Strict schedule enforcement
-        if strict_schedule and schedule_end:
-            # Convert time objects to full datetime objects for accurate comparison/arithmetic
-            actual_clock_out_dt = datetime.combine(today, actual_clock_out)
-            schedule_end_dt = datetime.combine(today, schedule_end)
-            
-            # Calculate the grace limit (datetime + timedelta)
-            grace_limit = schedule_end_dt + timedelta(minutes=30)
-            
-            # Check for clock-out past grace limit
-            if actual_clock_out_dt > grace_limit:
-                return jsonify({
-                    'success': False,
-                    'error': 'More than 30 minutes past scheduled end time.'
-                }), 400
+                if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
+                    early_second_start = (datetime.combine(today, sched.split_start_time) - timedelta(hours=1)).time()
+                    if early_second_start <= clock_in_time <= sched.split_end_time:
+                        schedule_end = sched.split_end_time
+                        is_second_shift = True
+                        break
 
-            evening_cutoff = datetime.combine(today, time(18, 30))
+            # Strict schedule enforcement
+            if schedule_end:
+                actual_clock_out_dt = datetime.combine(today, actual_clock_out)
+                schedule_end_dt = datetime.combine(today, schedule_end)
+                
+                grace_limit = schedule_end_dt + timedelta(minutes=30)
+                
+                if actual_clock_out_dt > grace_limit:
+                    return jsonify({
+                        'success': False,
+                        'error': 'More than 30 minutes past scheduled end time.'
+                    }), 400
 
-            # Apply schedule end cap logic using full datetime objects for comparison
-            if schedule_end_dt < actual_clock_out_dt < evening_cutoff:
-                last_record.clock_out = schedule_end # Cap clock-out time
+                evening_cutoff = datetime.combine(today, time(18, 30))
+
+                if schedule_end_dt < actual_clock_out_dt < evening_cutoff:
+                    last_record.clock_out = schedule_end
+                else:
+                    last_record.clock_out = actual_clock_out
             else:
-                last_record.clock_out = actual_clock_out # Use the actual time
+                last_record.clock_out = actual_clock_out
+
         else:
             last_record.clock_out = actual_clock_out
 

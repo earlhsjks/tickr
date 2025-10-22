@@ -81,7 +81,9 @@ def dashboard_gia():
     if current_user.role != 'gia':
         return redirect(url_for('admin.dashboard'))
     
-    return render_template('/gia/dashboard.html', user=current_user)
+    month = datetime.today().strftime("%Y-%m")
+    
+    return render_template('/gia/dashboard.html', user=current_user, month=month)
 
 # Clock-In/Clock-Out Routes
 @gia_bp.route('/clock-in')
@@ -260,44 +262,3 @@ def clock_out():
 
     # Redirect with `clocked_out=1` parameter
     return redirect(url_for('main.dashboard_employee', clocked_out=1))
-
-# Break Tracking Feature (Disabled)
-@gia_bp.route('/start-break')
-@login_required
-def start_break():
-    """Logs the start of an employee's break."""
-    last_record = Attendance.query.filter_by(user_id=current_user.user_id).order_by(Attendance.id.desc()).first()
-
-    if not last_record or last_record.clock_out:
-        flash("You must be clocked in before starting a break!", "warning")
-        return redirect(url_for('main.dashboard_employee'))
-
-    if last_record.break_start and not last_record.break_end:
-        flash("You are already on a break!", "warning")
-        return redirect(url_for('main.dashboard_employee'))
-
-    last_record.break_start = datetime.now()
-    db.session.commit()
-    flash("Break started!", "success")
-
-    return redirect(url_for('main.dashboard_employee'))
-
-@gia_bp.route('/end-break')
-@login_required
-def end_break():
-    """Logs the end of an employee's break."""
-    last_record = Attendance.query.filter_by(user_id=current_user.user_id).order_by(Attendance.id.desc()).first()
-
-    if not last_record or not last_record.break_start:
-        flash("You must start a break before ending it!", "warning")
-        return redirect(url_for('main.dashboard_employee'))
-
-    if last_record.break_end:
-        flash("You have already ended your break!", "warning")
-        return redirect(url_for('main.dashboard_employee'))
-
-    last_record.break_end = datetime.now()
-    db.session.commit()
-    flash("Break ended!", "success")
-
-    return redirect(url_for('main.dashboard_employee'))
