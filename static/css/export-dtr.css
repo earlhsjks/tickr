@@ -1,0 +1,93 @@
+/* ======================================================
+   DTR Export Page - Clean Minimal Layout
+   ====================================================== */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f9fafb;
+  color: #374151;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-container {
+  width: 100%;
+  max-width: 600px;
+  padding: 24px;
+}
+
+/* Header */
+.page-header {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.page-header p {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* Content Card */
+.content-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.month-input {
+  max-width: 280px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  transition: all 0.2s;
+}
+
+.month-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Button */
+.btn-primary {
+  background-color: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .page-header h1 {
+    font-size: 22px;
+  }
+
+  .month-input {
+    width: 100%;
+  }
+
+  .btn-primary {
+    width: 100%;
+  }
+}

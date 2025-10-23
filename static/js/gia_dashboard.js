@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadRecords();
     await checkButton();
-});
+    await betaPopupCheck()
+;});
 
 async function checkButton() {
     const userId = clockBtn.getAttribute('data-user-id');
@@ -151,4 +152,15 @@ function showPage() {
     const main = document.querySelector('.main-container');
     main.style.display = 'block';
     main.classList.add('visible');
+}
+
+betaPopupCheck = async () => {
+    const isFirstVisit = localStorage.getItem('betaNoticeShown') !== 'true';
+
+    if (isFirstVisit) {
+        const betaModal = new bootstrap.Modal(document.getElementById('betaNoticeModal'));
+        betaModal.show();
+
+        localStorage.setItem('betaNoticeShown', 'true');
+    }
 }

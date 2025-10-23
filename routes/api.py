@@ -3,7 +3,7 @@ from flask import (Blueprint, request, flash,
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 import pandas as pd
-import io
+import io, traceback
 from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 # from flask_apscheduler import APScheduler
@@ -35,7 +35,7 @@ def get_data():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.filter(User.role != "superadmin").all()
+    users = User.query.filter(User.role != "superadmin").order_by(User.role, User.first_name).all()
     users_list = []
     for user in users:
         data = user.__dict__.copy()
@@ -73,7 +73,7 @@ def add_user():
         user_id=user_id,
         first_name=first_name,
         last_name=last_name,
-        middle_name=middle_initial,
+        middle_name=middle_initial.upper(),
         role=role,
         password=generate_password_hash('admin123')
     )
@@ -132,7 +132,7 @@ def update_user(user_id):
     user.user_id = data.get('userId', user.user_id)
     user.first_name = data.get('firstName', user.first_name)
     user.last_name = data.get('lastName', user.last_name)
-    user.middle_name = data.get('middleInitial', user.middle_name)
+    user.middle_name = data.get('middleInitial', user.middle_name).upper()
     user.role = data.get('role', user.role)
     user.status = data.get('status', user.status)
     user.role = data.get('role', user.role)
@@ -448,7 +448,9 @@ def get_daily_logs():
     return jsonify(records_list)
 
 @api_bp.route('/get-user-log/<string:log_id>')
+@login_required
 def get_user_log(log_id):
+    
     if current_user.role not in ["superadmin", "admin"]:
         return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
@@ -464,6 +466,7 @@ def get_user_log(log_id):
     return jsonify(user_record)
 
 @api_bp.route('/update-log/<string:log_id>', methods=['POST'])
+@login_required
 def update_log(log_id):
     if current_user.role not in ["superadmin", "admin"]:
         return jsonify({'success': False, 'error': 'Access Denied'}), 403
@@ -483,8 +486,7 @@ def update_log(log_id):
         return jsonify({'success': False, 'error': f"Error updating log: {str(e)}"}), 500
 
 
-
-### GIA API ####
+##### GIA API #####
 
 @api_bp.route('/status', methods=['GET'])
 @login_required
@@ -618,6 +620,7 @@ def gia_data():
     })
 
 @api_bp.route('/clock-in', methods=['POST'])
+@login_required
 def clock_in():
     user_id = request.get_json()
 
@@ -658,13 +661,12 @@ def clock_in():
         is_split_shift = False
 
         for sched in user_schedules:
-            # First shift validation
-            earliest_in = (datetime.combine(datetime.today(), sched.start_time) - timedelta(minutes=special_early_in)).time()
-            if earliest_in <= now <= sched.end_time:
-                valid_schedule = sched.start_time
-                break
+            if sched.start_time and sched.end_time:
+                earliest_in = (datetime.combine(datetime.today(), sched.start_time) - timedelta(minutes=special_early_in)).time()
+                if earliest_in <= now <= sched.end_time:
+                    valid_schedule = sched.start_time
+                    break
 
-            # Second shift validation (if broken)
             if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
                 earliest_second_in = (datetime.combine(datetime.today(), sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
                 if earliest_second_in <= now <= sched.split_end_time:
@@ -724,7 +726,7 @@ def clock_in():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': f'Clock-in failed: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': f'Clock-in failed: {str(e)}', 'trace': traceback.format_exc()}), 500
     
 @api_bp.route('/clock-out', methods=['POST'])
 @login_required
@@ -737,18 +739,17 @@ def clock_out():
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
 
     try:
-        # Define current time and date
         now = datetime.now()
         actual_clock_out = now.time()
         today = now.date()
 
-        # Get the user's active clock-in record for today
         last_record = Attendance.query.filter(
             Attendance.user_id == user_id,
-            Attendance.clock_in != None,
-            Attendance.clock_out == None,
+            Attendance.clock_in.isnot(None),
+            Attendance.clock_out.is_(None),
             Attendance.date == today,
-        ).order_by(Attendance.id.desc()).first()
+        ).order_by(Attendance.clock_in.desc()).first()
+        print(last_record)
 
         if not last_record:
             return jsonify({'success': False, 'error': 'No active clock-in found for today.'}), 400
@@ -762,10 +763,10 @@ def clock_out():
             day=datetime.today().strftime('%A').lower()
         ).all()
 
-        if strict_schedule and user_schedules:
-            schedule_end = None
-            is_split_shift = False
+        schedule_end = None
+        is_split_shift = False
 
+        if strict_schedule and user_schedules:
             # Determine applicable schedule
             for sched in user_schedules:
                 if sched.start_time and sched.end_time:

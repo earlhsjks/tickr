@@ -338,3 +338,70 @@ body {
   border-radius: 8px;
   font-weight: 600;
 }
+
+/* ======================================================
+   BETA DEPLOYMENT MODAL STYLES
+   ====================================================== */
+.beta-modal {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 24px 20px;
+}
+
+.beta-modal .modal-body {
+  padding: 32px 20px;
+}
+
+.beta-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: #e0f2fe;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto;
+  box-shadow: 0 0 0 4px #f0f9ff;
+}
+
+.beta-modal h5 {
+  color: #111827;
+}
+
+.beta-modal p {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.beta-modal .alert {
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.beta-modal .btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Beta Btn */
+
+.beta-btn {
+  border-radius: 8px;
+  background-color: #f59e0b;
+  border: none;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.beta-btn:hover {
+  background-color: #d97706;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.beta-btn i {
+  font-size: 14px;
+}

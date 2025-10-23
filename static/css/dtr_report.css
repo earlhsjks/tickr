@@ -1,0 +1,193 @@
+@page {
+    size: 8.5in 11in;
+    margin: 0.2in;
+    margin-top: 0.5in;
+}
+
+body {
+    font-family: "Arial Narrow";
+    font-size: 10pt;
+    font-weight: 400;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.dtr h2 {
+    font-size: 10pt;
+    margin: 0;
+    font-weight: normal;
+}
+
+.address {
+    font-size: 10pt;
+    font-style: italic;
+    text-align: center;
+    font-weight: normal;
+}
+
+.dtr-title {
+    font-size: 10pt;
+    display: block; 
+    text-align: center;
+    text-transform: uppercase;
+    font-weight: normal;
+    padding-top: 20px;
+}
+
+.name {
+    font-size: 10pt;
+    text-decoration: underline;
+    padding-top: 20px;
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.subtitle {
+    font-size: 9pt;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-weight: 400;
+}
+
+.month-label {
+    font-size: 10pt;
+    text-align: left;
+    font-weight: 500;
+    margin-top: 5px;
+    margin-left: 3px;
+    margin-bottom: 3px;
+}
+
+/* Container for two users per page */
+.container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: auto;
+    page-break-inside: avoid;
+    page-break-before: auto;
+}
+
+/* Each DTR takes 48% width */
+.dtr { 
+    width: 48%; 
+    text-align: center; 
+}
+
+/* Table: Fixed size and compact layout */
+table {
+    width: 100%;
+    max-width: 95%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    table-layout: fixed;
+    margin: 0;
+    margin-left: 3px;
+}
+
+/* Table Header and Cells */
+th, td {
+    border: 0.001rem solid rgba(0, 0, 0, 0.6);
+    padding: 2px 4px;
+    text-align: center;
+    font-weight: normal;
+    line-height: 1;
+}
+
+/* Header cells remain bold */
+th {
+    background-color: #f2f2f2;
+    font-weight: 400;
+}
+
+th:nth-child(1), td:nth-child(1) { width: 1%; }  /* DATE */
+th:nth-child(2), td:nth-child(2) { width: 20%; }  /* EMPLOYEE */
+th:nth-child(3), td:nth-child(3) { width: 7%; }  /* CLOCK IN */
+
+.container {
+    padding: 5px;
+}
+
+.total-hours {
+    text-align: right;
+    font-size: 10pt;
+    margin-top: -5px;
+    margin-right: 17px;
+}
+
+.footer {
+    text-align: left;
+    font-size: 10pt;
+    margin-left: 3px;
+}
+
+.signature {
+    font-size: 10pt;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px; 
+}
+
+.signature p {
+    margin: 0;
+}
+
+.signature div {
+    font-size: 10pt;
+    text-align: center;
+    flex: 1;
+}
+
+.assign p:first-child {
+    font-size: 10pt;
+    text-decoration: underline; 
+    font-weight: bold;
+    margin: 3; 
+}
+
+.unit-head p {
+    font-size: 10pt;
+    text-align: center;
+    font-weight: normal; 
+    margin: 0; 
+}
+
+.assign p:last-child {
+    font-size: 10pt;
+    font-weight: normal; 
+    margin: 0; 
+}
+
+.unit-head p:first-child {
+    font-size: 10pt;
+    text-align: center;
+    font-weight: bold;
+    text-decoration: underline;
+    margin-top: 40px;
+}
+
+.assign p:first-child {
+    font-size: 10pt;
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+table tr {
+    font-size: 10pt;
+    height: 16px;
+    line-height: 16px;
+}
+
+.sysgen {
+    margin-top: 25px;
+    text-align: right;
+    font-size: 0.8em;
+    color: #888;
+    opacity: 0.5;
+}

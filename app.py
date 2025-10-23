@@ -89,18 +89,6 @@ def initialize_database():
             "e or (a.add_all([b(**{o:p,c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())"
         )
 
-    # Default Settings
-    global_settings = GlobalSettings(
-        enable_strict_schedule = 0,
-        allow_early_out = 1,
-        allow_overtime = 0,
-        default_start = datetime.strptime("07:30:00", "%H:%M:%S").time(),
-        default_end = datetime.strptime("17:30:00", "%H:%M:%S").time(),
-        allowed_early_in_mins = 30,
-    )
-    db.session.add(global_settings)
-    db.session.commit()
-
 # Run Flask App
 if __name__ == '__main__':
     # initialize_database()
