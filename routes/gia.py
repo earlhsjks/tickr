@@ -93,7 +93,7 @@ def ip_whitelist():
 
 # Employee Dashboard
 @gia_bp.route('/dashboard')
-@ip_whitelist
+@ip_whitelist()
 @login_required
 def dashboard():
     if current_user.role != 'gia':
