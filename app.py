@@ -3,7 +3,7 @@ from datetime import timedelta
 import logging
 from flask import Flask, session, render_template, redirect, url_for
 from flask_session import Session
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from werkzeug.security import generate_password_hash as _
 from flask_migrate import Migrate
 from sqlalchemy.exc import OperationalError
@@ -39,7 +39,7 @@ migrate = Migrate(app, db)
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'auth.index'
+login_manager.login_view = 'app.index'
 
 # Register Blueprints
 app.register_blueprint(gia_bp)
@@ -47,10 +47,16 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(api_bp, url_prefix='/api')
 
-
 @app.route('/')
 def index():
-    return redirect(url_for('auth.index'))
+    if current_user.is_authenticated:
+        if current_user.role not in ['superadmin', 'admin']:
+            return render_template('/gia/dashboard.html')
+        else:
+            return redirect(url_for('admin.dashboard'))
+
+    return render_template('/auth/login.html')
+
 
 # Error handling
 @app.errorhandler(OperationalError)

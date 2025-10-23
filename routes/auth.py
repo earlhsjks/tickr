@@ -6,16 +6,6 @@ from routes.api import systemLogEntry
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/')
-def index():
-    if current_user.is_authenticated:
-        if current_user.role not in ['superadmin', 'admin']:
-            return render_template('/gia/dashboard.html')
-        else:
-            return redirect(url_for('admin.dashboard'))
-
-    return render_template('/auth/login.html')
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     data = request.get_json()
