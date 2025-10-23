@@ -142,7 +142,7 @@ def update_user(user_id):
 
         systemLogEntry(
             action="Updated",
-            details=f"User '{user.first_name} {user.last_name}' (ID: {user.user_id}) was updated by {current_user.first_name} {current_user.last_name}."
+            details=f"#{user.id} User '{user.first_name} {user.last_name}' (ID: {user.user_id}) was updated by {current_user.first_name} {current_user.last_name}."
         )
 
         return jsonify({'success': True, 'message': 'User updated successfully!'}), 200
@@ -442,7 +442,7 @@ def get_daily_logs():
     if current_user.role not in ["superadmin", "admin"]:
         return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
-    records = Attendance.query.order_by(Attendance.date, Attendance.id).all()
+    records = Attendance.query.order_by(Attendance.date.desc(), Attendance.id.desc()).all()
     records_list = [serialize_drecords(s) for s in records]
 
     return jsonify(records_list)
@@ -479,6 +479,11 @@ def update_log(log_id):
 
     try:
         db.session.commit()
+
+        systemLogEntry(
+            action="Updated",
+            details=f"#{log.id} Attendance record updated for {log.user.first_name} {log.user.last_name}."
+        )
 
         return jsonify({'success': True, 'message': 'Log updated successfully!'}), 200
     except Exception as e:
@@ -811,7 +816,7 @@ def clock_out():
 
         systemLogEntry(
             action="Clock Out",
-            details=f"User {current_user.first_name} {current_user.last_name} clocked in."
+            details=f"User {current_user.first_name} {current_user.last_name} clocked out."
         )
 
         return jsonify({

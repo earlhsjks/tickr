@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, url_for, redirect
 from flask_login import login_user, logout_user, login_required ,current_user
 from werkzeug.security import check_password_hash
 from models.models import User
@@ -12,7 +12,7 @@ def index():
         if current_user.role not in ['superadmin', 'admin']:
             return render_template('/gia/dashboard.html')
         else:
-            return render_template('/admin/dashboard.html')
+            return redirect(url_for('admin.dashboard'))
 
     return render_template('/auth/login.html')
 

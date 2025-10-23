@@ -100,60 +100,59 @@ tbody.addEventListener('click', e => {
             });
     }
 
+    document.getElementById("saveLogChanges").addEventListener("click", function (e) {
+        const form = document.getElementById('editLogForm');
+        const logId = document.getElementById('logId').value;
+
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        this.disabled = true;
+
+        const editedData = {
+            clockIn: document.getElementById('editCheckIn').value,
+            clockOut: document.getElementById('editCheckOut').value,
+            notes: document.getElementById('editNotes').value,
+        }
+
+        // Send to backend
+        fetch(`/api/update-log/${logId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(editedData)
+        })
+            .then(res => res.json())
+            .then(data => {
+                this.innerHTML = 'Save Changes';
+                this.disabled = false;
+
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editLogModal'));
+                    modal.hide();
+                    loadLogs();
+                    filterLogs();
+                } else {
+                    console.error('Error updating user:', data.error);
+                }
+            })
+            .catch(err => {
+                this.innerHTML = 'Save Changes';
+                this.disabled = false;
+                console.error('Fetch error:', err);
+            });
+
+    })
+
     if (viewBtn) {
         new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
     }
 
 });
-
-document.getElementById("saveLogChanges").addEventListener("click", function (e) {
-    const form = document.getElementById('editLogForm');
-    const logId = document.getElementById('logId').value;
-
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
-    }
-
-    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-    this.disabled = true;
-
-    const editedData = {
-        clockIn: document.getElementById('editCheckIn').value,
-        clockOut: document.getElementById('editCheckOut').value,
-        notes: document.getElementById('editNotes').value,
-    }
-
-    // Send to backend
-    fetch(`/api/update-log/${logId}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(editedData)
-    })
-        .then(res => res.json())
-        .then(data => {
-            this.innerHTML = 'Save Changes';
-            this.disabled = false;
-
-            if (data.success) {
-                new bootstrap.Modal(document.getElementById('editLogModal')).hide();
-                
-                loadLogs();
-                form.reset();
-
-            } else {
-                console.error('Error updating user:', data.error);
-            }
-        })
-        .catch(err => {
-            this.innerHTML = 'Save Changes';
-            this.disabled = false;
-            console.error('Fetch error:', err);
-        });
-
-})
 
 // Search functionality
 function setupSearch() {
@@ -210,6 +209,7 @@ function setupAutoRefresh() {
         if (autoRefreshToggle.checked) {
             refreshInterval = setInterval(() => {
                 refreshLogs();
+                filterLogs();
             }, 30000); // Refresh every 30 seconds
         }
     }
@@ -267,8 +267,8 @@ function filterLogs() {
     rows.forEach(row => {
         const employeeName = row.querySelector('.user-name').textContent.toLowerCase();
         const employeeEmail = row.querySelector('.user-email').textContent.toLowerCase();
-        const department = row.querySelector('.department-badge').textContent.toLowerCase();
-        const status = row.querySelector('.status-badge').textContent.toLowerCase();
+        // const department = row.querySelector('.department-badge').textContent.toLowerCase();
+        // const status = row.querySelector('.status-badge').textContent.toLowerCase();
 
         const matchesSearch = employeeName.includes(searchTerm) || employeeEmail.includes(searchTerm);
         const matchesDepartment = !departmentFilter || department === departmentFilter;
@@ -348,10 +348,10 @@ function setupTableInteractions() {
 // Populate log details modal
 function populateLogDetailsModal(row) {
     const employeeName = row.querySelector('.user-name').textContent;
-    const department = row.querySelector('.department-badge').textContent;
+    // const department = row.querySelector('.department-badge').textContent;
     const checkIn = row.querySelector('.time-log .time-display').textContent;
     const totalHours = row.querySelector('.total-hours .hours-display').textContent;
-    const status = row.querySelector('.status-badge').textContent;
+    // const status = row.querySelector('.status-badge').textContent;
 
     // Update modal content (simplified for demo)
     const modal = document.getElementById('logDetailsModal');
@@ -395,16 +395,16 @@ function addInteractiveEffects() {
     });
 
     // Status badge hover effects
-    const statusBadges = document.querySelectorAll('.status-badge');
-    statusBadges.forEach(badge => {
-        badge.addEventListener('mouseenter', function () {
-            this.style.transform = 'scale(1.05)';
-        });
+    // const statusBadges = document.querySelectorAll('.status-badge');
+    // statusBadges.forEach(badge => {
+    //     badge.addEventListener('mouseenter', function () {
+    //         this.style.transform = 'scale(1.05)';
+    //     });
 
-        badge.addEventListener('mouseleave', function () {
-            this.style.transform = '';
-        });
-    });
+    //     badge.addEventListener('mouseleave', function () {
+    //         this.style.transform = '';
+    //     });
+    // });
 }
 
 // Initialize when DOM is loaded
@@ -428,14 +428,6 @@ document.addEventListener('keydown', function (e) {
             searchInput.value = '';
             filterLogs();
             searchInput.blur();
-        }
-    }
-
-    // R to refresh
-    if (e.key === 'r' || e.key === 'R') {
-        if (!e.ctrlKey && !e.metaKey) {
-            e.preventDefault();
-            refreshLogs();
         }
     }
 });

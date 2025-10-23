@@ -231,6 +231,128 @@ def manual_logs():
 
     return render_template('admin/manual_logs.html', manual_logs=manual_logs)
 
+# EXPORT DTR PAGE
+@admin_bp.route('/export-dtr')
+@login_required
+def export_dtr():
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Unauthorized access!", "danger")
+        return render_template('auth/login.html')
+    
+    month = datetime.today().strftime('%Y-%m')
+
+    return render_template('admin/export_dtr.html', month=month)
+
+# DTR Print
+@admin_bp.route('/export')
+@login_required
+def export_pdf():
+    if current_user.role not in ["superadmin", "admin"]:
+        return render_template('auth/login.html')
+
+    unit_head = GlobalSettings.query.first()
+    selected_month = request.args.get('month', '').strip() or datetime.today().strftime('%Y-%m')
+
+    try:
+        year, month = map(int, selected_month.split('-'))
+    except ValueError:
+        flash("Invalid month format. Defaulting to current month.", "warning")
+        return redirect(url_for('admin.export_pdf', month=datetime.today().strftime('%Y-%m')))
+
+    first_day = datetime(year, month, 1).date()
+    last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+    total_days = (last_day - first_day).days + 1
+
+    users = User.query.filter(User.role.notin_(["superadmin", "admin"])) \
+                      .order_by(User.last_name).all()
+
+    attendance_records = Attendance.query.filter(
+        Attendance.date >= first_day,
+        Attendance.date <= last_day
+    ).order_by(Attendance.date, Attendance.id).all()
+
+    # use plain dict with string keys so Jinja lookup is predictable
+    attendance_dict = {}
+    total_hours_dict = {str(user.user_id): "0:00" for user in users}
+
+    def to_datetime(val, record_date):
+        """Normalize time/datetime/iso strings to a datetime on record_date."""
+        if val is None:
+            return None
+        if isinstance(val, datetime):
+            return val
+        if isinstance(val, time):
+            return datetime.combine(record_date, val)
+        # attempt ISO parse/fallback
+        try:
+            return datetime.fromisoformat(str(val))
+        except Exception:
+            return None
+
+    # Populate attendance records (use string date keys)
+    for record in attendance_records:
+        user_key = str(record.user_id)
+        date_key = record.date.strftime('%Y-%m-%d')   # Attendance.date is a date
+
+        attendance_dict.setdefault(user_key, {}).setdefault(date_key, {
+            "shift1": {"in": None, "out": None},
+            "shift2": {"in": None, "out": None}
+        })
+
+        slot = attendance_dict[user_key][date_key]
+
+        cin = to_datetime(record.clock_in, record.date)
+        cout = to_datetime(record.clock_out, record.date)
+
+        # assign into first/second shift slots preserving order
+        if cin and cout:
+            if not slot["shift1"]["in"]:
+                slot["shift1"]["in"] = cin
+                slot["shift1"]["out"] = cout
+            elif slot["shift1"]["out"] is None:
+                slot["shift1"]["out"] = cout
+            else:
+                slot["shift2"]["in"] = cin
+                slot["shift2"]["out"] = cout
+        else:
+            # Skip adding the shift since clock-out is missing
+            pass
+
+    # Calculate total hours per user
+    for user in users:
+        user_key = str(user.user_id)
+        total_seconds = 0
+        for date_key, shifts in attendance_dict.get(user_key, {}).items():
+            for shift in ("shift1", "shift2"):
+                t_in = shifts[shift]["in"]
+                t_out = shifts[shift]["out"]
+                if not t_in or not t_out:
+                    continue
+                start_dt = t_in
+                end_dt = t_out
+                if end_dt < start_dt:
+                    end_dt += timedelta(days=1)
+                total_seconds += (end_dt - start_dt).total_seconds()
+
+        decimal_hours = round(total_seconds / 3600, 2)  # convert to decimal hours
+        total_hours_dict[user_key] = decimal_hours
+
+    user_pairs = [users[i:i + 2] for i in range(0, len(users), 2)]
+
+    return render_template(
+        'admin/dtr_report.html',
+        now=datetime.now(),
+        user_pairs=user_pairs,
+        month=month,
+        year=year,
+        total_days=total_days,
+        datetime=datetime,
+        unit_head=unit_head.unit_head if unit_head else "N/A",
+        attendance_dict=attendance_dict,
+        total_hours_dict=total_hours_dict
+    )
+
+
 # VIEW SHIFT TEMPLATE
 @admin_bp.route('/shift-template')
 @login_required
@@ -624,123 +746,6 @@ def audit_logs():
 
     return render_template('admin/audit_logs.html')
 
-# EXPORT DTR PAGE
-@admin_bp.route('/export-dtr')
-@login_required
-def export_dtr():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized access!", "danger")
-        return render_template('auth/login.html')
-    
-    month = datetime.today().strftime('%Y-%m')
-
-    return render_template('admin/export_dtr.html', month=month)
-
-# DTR Print
-@admin_bp.route('/export')
-@login_required
-def export_pdf():
-    if current_user.role not in ["superadmin", "admin"]:
-        return render_template('auth/login.html')
-
-    unit_head = GlobalSettings.query.first()
-    selected_month = request.args.get('month', '').strip() or datetime.today().strftime('%Y-%m')
-
-    try:
-        year, month = map(int, selected_month.split('-'))
-    except ValueError:
-        flash("Invalid month format. Defaulting to current month.", "warning")
-        return redirect(url_for('admin.export_pdf', month=datetime.today().strftime('%Y-%m')))
-
-    first_day = datetime(year, month, 1).date()
-    last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-    total_days = (last_day - first_day).days + 1
-
-    users = User.query.filter(User.role.notin_(["superadmin", "admin"])) \
-                      .order_by(User.last_name).all()
-
-    attendance_records = Attendance.query.filter(
-        Attendance.date >= first_day,
-        Attendance.date <= last_day
-    ).order_by(Attendance.date, Attendance.id).all()
-
-    # use plain dict with string keys so Jinja lookup is predictable
-    attendance_dict = {}
-    total_hours_dict = {str(user.user_id): "0:00" for user in users}
-
-    def to_datetime(val, record_date):
-        """Normalize time/datetime/iso strings to a datetime on record_date."""
-        if val is None:
-            return None
-        if isinstance(val, datetime):
-            return val
-        if isinstance(val, time):
-            return datetime.combine(record_date, val)
-        # attempt ISO parse/fallback
-        try:
-            return datetime.fromisoformat(str(val))
-        except Exception:
-            return None
-
-    # Populate attendance records (use string date keys)
-    for record in attendance_records:
-        user_key = str(record.user_id)
-        date_key = record.date.strftime('%Y-%m-%d')   # Attendance.date is a date
-
-        attendance_dict.setdefault(user_key, {}).setdefault(date_key, {
-            "shift1": {"in": None, "out": None},
-            "shift2": {"in": None, "out": None}
-        })
-
-        slot = attendance_dict[user_key][date_key]
-
-        cin = to_datetime(record.clock_in, record.date)
-        cout = to_datetime(record.clock_out, record.date)
-
-        # assign into first/second shift slots preserving order
-        if not slot["shift1"]["in"]:
-            slot["shift1"]["in"] = cin
-            slot["shift1"]["out"] = cout
-        elif slot["shift1"]["out"] is None:
-            slot["shift1"]["out"] = cout
-        else:
-            slot["shift2"]["in"] = cin
-            slot["shift2"]["out"] = cout
-
-    # Calculate total hours per user
-    for user in users:
-        user_key = str(user.user_id)
-        total_seconds = 0
-        for date_key, shifts in attendance_dict.get(user_key, {}).items():
-            for shift in ("shift1", "shift2"):
-                t_in = shifts[shift]["in"]
-                t_out = shifts[shift]["out"]
-                if not t_in or not t_out:
-                    continue
-                start_dt = t_in
-                end_dt = t_out
-                if end_dt < start_dt:
-                    end_dt += timedelta(days=1)
-                total_seconds += (end_dt - start_dt).total_seconds()
-
-        hours = int(total_seconds // 3600)
-        minutes = int((total_seconds % 3600) // 60)
-        total_hours_dict[user_key] = f"{hours}:{minutes:02d}"
-
-    user_pairs = [users[i:i + 2] for i in range(0, len(users), 2)]
-
-    return render_template(
-        'admin/dtr_report.html',
-        now=datetime.now(),
-        user_pairs=user_pairs,
-        month=month,
-        year=year,
-        total_days=total_days,
-        datetime=datetime,
-        unit_head=unit_head.unit_head if unit_head else "N/A",
-        attendance_dict=attendance_dict,
-        total_hours_dict=total_hours_dict
-    )
 
 @admin_bp.route('/export-excel')
 @login_required
