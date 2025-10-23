@@ -73,7 +73,7 @@ def check_attendance_flags(attendance_entry):
 # Employee Dashboard
 @gia_bp.route('/dashboard')
 @login_required
-def dashboard_gia():
+def dashboard():
     if current_user.role != 'gia':
         return redirect(url_for('admin.dashboard'))
     
