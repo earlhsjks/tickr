@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from models.models import db, Schedule, GlobalSettings
 
-gia_bp = Blueprint('main', __name__)
+gia_bp = Blueprint('gia', __name__)
 
 def check_attendance_flags(attendance_entry):
     """
