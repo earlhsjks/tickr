@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, request, abort
 from flask_login import login_required, current_user
 from datetime import datetime, timedelta
 from models.models import db, Schedule, GlobalSettings
@@ -70,8 +70,30 @@ def check_attendance_flags(attendance_entry):
 
     db.session.commit()
 
+WHITELIST = {
+    "0.0.0.0", # Local Host
+    "172.16.254.250", # GIA Station
+    "172.16.255.235", # Office Router
+    "172.16.255.236", # Printing 1
+    "172.16.255.237", # Printin 2
+    "172.16.255.83", # 3013 STN 23
+}
+
+# Decorator to apply to specific routes
+def ip_whitelist():
+    def wrapper(fn):
+        def decorated(*args, **kwargs):
+            client_ip = request.remote_addr
+            if client_ip not in WHITELIST:
+                abort(403)  # Forbidden
+            return fn(*args, **kwargs)
+        decorated.__name__ = fn.__name__  # Avoid Flask route errors
+        return decorated
+    return wrapper
+
 # Employee Dashboard
 @gia_bp.route('/dashboard')
+@ip_whitelist
 @login_required
 def dashboard():
     if current_user.role != 'gia':
