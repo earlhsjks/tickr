@@ -55,4 +55,4 @@ def login():
 def logout():
     logout_user()
 
-    return render_template('/auth/login.html')
+    return redirect(url_for('index'))
