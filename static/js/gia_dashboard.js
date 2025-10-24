@@ -136,9 +136,25 @@ clockBtn.addEventListener("click", async () => {
         }
     } catch (err) {
         console.error("Clock in/out error:", err);
-        document.getElementById("errorTitle").textContent = "Network Error";
-        document.getElementById("errorMessage").textContent = "Unable to reach the server.";
+        
+        const errorTitle = document.getElementById("errorTitle");
+        const errorMessage = document.getElementById("errorMessage");
+        
+        errorTitle.textContent = "Network Error";
+        errorMessage.textContent = "Unable to reach the server. Reloading in 5 seconds...";
+
         errorModal.show();
+
+        let countdown = 6;
+        const interval = setInterval(() => {
+            countdown--;
+            if (countdown > 0) {
+                errorMessage.textContent = `Unable to reach the server. Reloading in ${countdown} second${countdown === 1 ? '' : 's'}...`;
+            } else {
+                clearInterval(interval);
+                window.location.reload();
+            }
+        }, 1000);
     } finally {
         clockBtn.disabled = false;
     }
