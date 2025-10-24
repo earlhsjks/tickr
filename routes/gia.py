@@ -71,8 +71,8 @@ def check_attendance_flags(attendance_entry):
     db.session.commit()
 
 WHITELIST = {
-    "localhost", # Local Host
-    "127.0.0.1", # Local Host
+    # "localhost", # Local Host
+    # "127.0.0.1", # Local Host
     "172.16.255.237", # GIA Station
     "172.16.255.235", # Office Router
     "172.16.255.236", # Printing 1
@@ -107,9 +107,9 @@ def dashboard():
 # Route to redirect unauthorized users
 @gia_bp.route('/blocked')
 def blocked():
-    return "You are not allowed here.", 200
+    return render_template('gia/access_denied.html')
 
 # Global error handler for 403
 @gia_bp.errorhandler(403)
 def forbidden(e):
-    return redirect(url_for('blocked'))
+    return redirect(url_for('gia.blocked'))
