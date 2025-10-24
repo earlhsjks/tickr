@@ -8,7 +8,9 @@ function initDailyLogs() {
 }
 
 function loadLogs() {
-    fetch('/api/get-daily-logs')
+    dateFilter = document.getElementById("dateFilter").value
+
+    fetch(`/api/get-daily-logs?today=${dateFilter}`)
         .then(res => {
             if (!res.ok) throw new Error(`Server responded with ${res.status}`);
             return res.json();
@@ -443,5 +445,66 @@ document.addEventListener('visibilitychange', function () {
         if (autoRefreshToggle.checked) {
             refreshLogs();
         }
+    }
+});
+
+document.getElementById("dateFilter").addEventListener("change", () => {
+    loadLogs();
+})
+
+// Add Manual Log button
+const addManualLogBtn = document.querySelector('.add-manual-log-btn');
+addManualLogBtn.addEventListener('click', function () {
+    // Set default date to today
+    document.getElementById('addLogDate').value = new Date().toISOString().split('T')[0];
+
+    const modal = new bootstrap.Modal(document.getElementById('addManualLogModal'));
+    modal.show();
+});
+
+// Save new manual log
+const saveManualLogBtn = document.getElementById('saveManualLog');
+saveManualLogBtn.addEventListener('click', function () {
+    const form = document.getElementById('addManualLogForm');
+    if (form.checkValidity()) {
+
+        const newLog = {
+            userId: document.getElementById('addEmployee').value,
+            date: document.getElementById('addLogDate').value,
+            clockIn: document.getElementById('addTimeIn').value,
+            clockOut: document.getElementById('addTimeOut').value
+        }
+
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        this.disabled = true;
+
+        fetch('/api/add-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newLog)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    loadLogs();
+
+                    this.innerHTML = 'Add Manual Log';
+                    this.disabled = false;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addManualLogModal'));
+                    modal.hide();
+                    form.reset();
+                    console.log('New manual log added successfully');
+                    
+                } else {
+                    console.error('Error updating user:', data.error);
+                }
+            })
+            .catch(err => {
+                this.innerHTML = 'Save Changes';
+                this.disabled = false;
+                console.error('Fetch error:', err);
+            });
+    } else {
+        form.reportValidity();
     }
 });

@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Daily Logs - Tickr{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% set breadcrumb1 = "Time Logs" %}
@@ -26,6 +26,9 @@
                         <div class="search-container flex-grow-1 flex-md-grow-0">
                             <input type="text" class="form-control" placeholder="Search employees..." id="logsSearch">
                         </div>
+                        <button class="btn btn-success add-manual-log-btn">
+                            <i class="fas fa-plus me-2"></i>Add Log
+                        </button>
                         <button class="btn btn-primary" id="refreshLogs">
                             <i class="fas fa-sync me-2"></i>Refresh
                         </button>
@@ -94,7 +97,7 @@
                 <div class="row g-3 align-items-center">
                     <div class="col-md-3">
                         <label class="form-label">Date Range</label>
-                        <input type="date" class="form-control" id="dateFilter" value="2025-01-15">
+                        <input type="date" class="form-control" id="dateFilter" value="{{ today }}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Department</label>
@@ -159,56 +162,12 @@
                             </tr>
                         </thead>
                         <tbody id="logsTableBody">
-                            <tr>
-                                <td class="ps-4">
-                                    <div class="d-flex align-items-center">
-                                        <div class="user-avatar me-3">JS</div>
-                                        <div>
-                                            <div class="user-name">John Smith</div>
-                                            <div class="user-email">john.smith@company.com</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <!-- <td>
-                                    <span class="department-badge engineering">Engineering</span>
-                                </td> -->
-                                <td>
-                                    <div class="time-log">
-                                        <div class="time-display">8:45 AM</div>
-                                        <small class="text-muted">On time</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="time-log">
-                                        <div class="time-display">5:30 PM</div>
-                                        <small class="text-muted">Regular</small>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="total-hours">
-                                        <div class="hours-display">8.75 hrs</div>
-                                        <small class="text-success">Complete</small>
-                                    </div>
-                                </td>
-                                <!-- <td>
-                                    <span class="status-badge completed">Completed</span>
-                                </td> -->
-                                <td>
-                                    <div class="action-buttons">
-                                        <button class="btn btn-sm btn-outline-primary" title="View Details">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning" title="Edit Log">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            <!-- JS POP -->
                         </tbody>
                     </table>
                 </div>
             </div>
-            <div class="card-footer d-flex justify-content-between align-items-center">
+            <!-- <div class="card-footer d-flex justify-content-between align-items-center">
                 <div class="showing-info">
                     Showing 1-5 of 248 employees for January 15, 2025
                 </div>
@@ -231,7 +190,7 @@
                         </li>
                     </ul>
                 </nav>
-            </div>
+            </div> -->
         </div>
 
         <!-- Log Details Modal -->
@@ -386,6 +345,83 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn btn-primary" id="saveLogChanges">Save Changes</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Add Manual Log Modal -->
+    <div class="modal fade" id="addManualLogModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Manual Log Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addManualLogForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="addEmployee" class="form-label">Employee</label>
+                                <select class="form-select" id="addEmployee" required>
+                                    <option value="">Select GIA</option>
+                                    {% for user in users %}
+                                    <option value="{{ user.user_id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addLogDate" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="addLogDate" required>
+                            </div>
+                            <!-- <div class="col-md-6">
+                                <label for="addLogType" class="form-label">Log Type</label>
+                                <select class="form-select" id="addLogType" required>
+                                    <option value="">Select Type</option>
+                                    <option value="manual-entry">Manual Entry</option>
+                                    <option value="correction">Correction</option>
+                                    <option value="missed-punch">Missed Punch</option>
+                                    <option value="overtime">Overtime</option>
+                                </select>
+                            </div> -->
+                            <!-- <div class="col-md-6">
+                                <label for="addReason" class="form-label">Reason</label>
+                                <select class="form-select" id="addReason" required>
+                                    <option value="">Select Reason</option>
+                                    <option value="forgot-to-punch">Forgot to Punch</option>
+                                    <option value="system-error">System Error</option>
+                                    <option value="approved-overtime">Approved Overtime</option>
+                                    <option value="field-work">Field Work</option>
+                                    <option value="meeting-offsite">Meeting Offsite</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div> -->
+                            <div class="col-md-6">
+                                <label for="addTimeIn" class="form-label">Clock In</label>
+                                <input type="time" class="form-control" id="addTimeIn" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="addTimeOut" class="form-label">Clock Out</label>
+                                <input type="time" class="form-control" id="addTimeOut" required>
+                            </div>
+                            <!-- <div class="col-12">
+                                <label for="addNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="addNotes" rows="3" placeholder="Additional notes or explanation for this manual entry..."></textarea>
+                            </div> -->
+                            <!-- <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="addRequiresApproval">
+                                    <label class="form-check-label" for="addRequiresApproval">
+                                        Requires supervisor approval
+                                    </label>
+                                </div>
+                            </div> -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="saveManualLog">Add Manual Log</button>
                 </div>
             </div>
         </div>

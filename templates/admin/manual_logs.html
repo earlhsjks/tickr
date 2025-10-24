@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Manual Logs - Tickr{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
 {% set breadcrumb1 = "Time Logs" %}
@@ -35,7 +35,7 @@
         </div>
 
         <!-- Stats Section -->
-        <div class="stats-section mb-4">
+        <div class="stats-section mb-4" hidden>
             <div class="row g-3">
                 <div class="col-xl-3 col-lg-6 col-md-6">
                     <div class="stat-card h-100">
@@ -93,12 +93,12 @@
             <div class="card-body">
                 <div class="row g-3 align-items-center">
                     <div class="col-md-3">
-                        <label class="form-label">Date Range</label>
-                        <input type="date" class="form-control" id="dateFilter" value="2025-01-15">
+                        <label class="form-label">Month Range</label>
+                        <input type="month" class="form-control" id="dateFilter" value="{{ month }}">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Department</label>
-                        <select class="form-select" id="departmentFilter">
+                        <select class="form-select" id="departmentFilter" disabled>
                             <option value="">All Departments</option>
                             <option value="engineering">Engineering</option>
                             <option value="marketing">Marketing</option>
@@ -109,7 +109,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Log Type</label>
-                        <select class="form-select" id="logTypeFilter">
+                        <select class="form-select" id="logTypeFilter" disabled>
                             <option value="">All Types</option>
                             <option value="manual-entry">Manual Entry</option>
                             <option value="correction">Correction</option>
@@ -402,7 +402,7 @@
                     </table>
                 </div>
             </div>
-            <div class="card-footer d-flex justify-content-between align-items-center">
+            <!-- <div class="card-footer d-flex justify-content-between align-items-center">
                 <div class="showing-info">
                     Showing 1-4 of 89 manual log entries
                 </div>
@@ -425,7 +425,7 @@
                         </li>
                     </ul>
                 </nav>
-            </div>
+            </div> -->
         </div>
     </div>
 
@@ -738,7 +738,7 @@
             
             // Export and refresh buttons
             const exportBtn = document.querySelector('.btn-outline-primary');
-            const refreshBtn = document.getElementById('refreshLogs');
+            const refreshBtn = document.getElementById('refreshLogss');
             
             if (exportBtn && exportBtn.textContent.includes('Export')) {
                 exportBtn.addEventListener('click', function() {

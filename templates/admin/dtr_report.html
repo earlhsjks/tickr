@@ -18,7 +18,7 @@
             <div class="address">City of Koronadal, South Cotabato</div>
             <div class="dtr-title">DAILY TIME RECORD</div>
             <div class="name">
-                {{ user.last_name }}, {{ user.first_name }} {{ user.middle_name }}
+                {{ user.last_name }}, {{ user.first_name }} {% if user.middle_name %} {{ user.middle_name }}. {% endif %}
             </div>
             <div class="subtitle">Name</div>
             <div class="month-label">

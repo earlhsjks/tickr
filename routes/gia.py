@@ -103,3 +103,13 @@ def dashboard():
     month = datetime.today().strftime("%Y-%m")
     
     return render_template('/gia/dashboard.html', user=current_user, month=month)
+
+# Route to redirect unauthorized users
+@gia_bp.route('/blocked')
+def blocked():
+    return "You are not allowed here.", 200
+
+# Global error handler for 403
+@gia_bp.errorhandler(403)
+def forbidden(e):
+    return redirect(url_for('blocked'))

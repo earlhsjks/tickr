@@ -5,54 +5,53 @@ function initAuditLogs() {
     addInteractiveEffects();
 }
 
-function loadLogs() {
-    fetch('/api/get-logs')
+let currentPage = 1;
+const perPage = 8;
+
+function loadLogs(page = 1) {
+    currentPage = page;
+    const fromDate = document.getElementById("fromDate").value;
+    const toDate = document.getElementById("toDate").value;
+
+    fetch(`/api/get-logs?from=${fromDate}&to=${toDate}&page=${page}&per_page=${perPage}`)
         .then(res => {
             if (!res.ok) throw new Error(`Server responded with ${res.status}`);
             return res.json();
         })
-            .then(logs => {
-                const tbody = document.getElementById('auditLogsTableBody');
-                tbody.innerHTML = '';
+        .then(data => {
+            const tbody = document.getElementById('auditLogsTableBody');
+            tbody.innerHTML = '';
 
-                logs.forEach(log => {
-                    const tr = document.createElement("tr");
+            data.logs.forEach(log => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>
+                        <div class="timestamp">
+                            <div class="fw-medium">${log.date}</div>
+                            <small class="text-muted">${log.time}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            <div class="fw-medium">${log.full_name}</div>
+                            <small class="text-muted">${log.role}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="action-badge ${log.action.toLowerCase()}">${log.action}</span>
+                    </td>
+                    <td>
+                        <div class="details-text">${log.details}</div>
+                    </td>
+                    <td>
+                        <small class="text-muted">${log.ip}</small>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-                    tr.innerHTML = `
-                        <td>
-                            <div class="timestamp">
-                                <div class="fw-medium">${log.date}</div>
-                                <small class="text-muted">${log.time}</small>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="user-info">
-                                <div class="fw-medium">${log.full_name}</div>
-                                <small class="text-muted">${log.role}</small>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="action-badge ${log.action.toLowerCase()}">${log.action}</span>
-                        </td>
-                        <!-- <td>
-                                <div class="affected-data">
-                                    <div class="fw-medium">Schedule #23</div>
-                                    <small class="text-muted">John Smith</small>
-                                </div>
-                            </td> -->
-                        <td>
-                            <div class="details-text">
-                                ${log.details}
-                            </div>
-                        </td>
-                        <td>
-                            <small class="text-muted">${log.ip}</small>
-                        </td>
-                    `;
-
-                    tbody.appendChild(tr);
-                })
-            })
+            renderPagination(data.page, data.pages, data.total);
+        });
 }
 
 // Setup filter functionality
@@ -210,6 +209,7 @@ function setupTableInteractions() {
         this.disabled = true;
         
         setTimeout(() => {
+            loadLogs();
             this.innerHTML = '<i class="fas fa-sync me-1"></i>Refresh';
             this.disabled = false;
             console.log('Audit logs refreshed');
@@ -310,3 +310,55 @@ document.addEventListener('visibilitychange', function() {
         // Could trigger immediate refresh when page becomes visible
     }
 });
+
+fromDate = document.getElementById("fromDate");
+toDate = document.getElementById("toDate");
+
+[fromDate, toDate].forEach(input => {
+    if (input) {
+        input.addEventListener("change", () => {
+            loadLogs();
+        });
+    }
+});
+
+function renderPagination(current, totalPages, totalItems) {
+    const container = document.querySelector(".pagination");
+    const showingInfo = document.querySelector(".showing-info");
+
+    showingInfo.textContent = `Showing ${((current-1)*perPage+1)}-${Math.min(current*perPage, totalItems)} of ${totalItems} audit log entries`;
+
+    container.innerHTML = '';
+
+    // Previous
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${current === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#">Previous</a>`;
+    prevLi.addEventListener('click', e => {
+        e.preventDefault();
+        if (current > 1) loadLogs(current - 1);
+    });
+    container.appendChild(prevLi);
+
+    // Page numbers (you can limit the number of visible pages if needed)
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === current ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.addEventListener('click', e => {
+            e.preventDefault();
+            loadLogs(i);
+        });
+        container.appendChild(li);
+    }
+
+    // Next
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${current === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
+    nextLi.addEventListener('click', e => {
+        e.preventDefault();
+        if (current < totalPages) loadLogs(current + 1);
+    });
+    container.appendChild(nextLi);
+}

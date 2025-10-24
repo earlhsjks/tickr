@@ -221,10 +221,10 @@ def serialize_schedule(s):
     return {
         'user_id': s.user_id,
         'day': s.day,
-        'start_time': s.start_time.strftime("%H:%M") if s.start_time else '',
-        'end_time': s.end_time.strftime("%H:%M") if s.end_time else '',
-        'split_start_time': s.split_start_time.strftime("%H:%M") if s.split_start_time else '',
-        'split_end_time': s.split_end_time.strftime("%H:%M") if s.split_end_time else ''
+        'start_time': s.start_time.strftime("%I:%M %p") if s.start_time else '',
+        'end_time': s.end_time.strftime("%I:%M %p") if s.end_time else '',
+        'split_start_time': s.split_start_time.strftime("%I:%M %p") if s.split_start_time else '',
+        'split_end_time': s.split_end_time.strftime("%I:%M %p") if s.split_end_time else ''
     }
 
 # GET ALL SCHEDULE
@@ -235,7 +235,7 @@ def get_schedules():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.filter(User.role != "superadmin", User.role != "admin")
+    users = User.query.filter(User.role != "superadmin", User.role != "admin").order_by(User.first_name)
     schedules = Schedule.query.all()
     users_list = []
     sched_list = [serialize_schedule(s) for s in schedules]
@@ -410,11 +410,30 @@ def serialize_logs(l):
 def get_logs():
     if current_user.role not in ["superadmin", "admin"]:
         return jsonify({'success': False, 'error': 'Access Denied'}), 403
-    
-    logs = Logs.query.filter(Logs.user_id != 'superadmin').order_by(Logs.id.desc()).all()
-    logs_list = [serialize_logs(l) for l in logs]
-    
-    return jsonify(logs_list)
+
+    from_date = request.args.get("from")
+    to_date = request.args.get("to")
+    page = request.args.get("page", 1, type=int)       # current page
+    per_page = request.args.get("per_page", 20, type=int)  # items per page
+
+    from_date_obj = datetime.strptime(from_date, "%Y-%m-%d")
+    to_date_obj = datetime.strptime(to_date, "%Y-%m-%d") + timedelta(days=1) - timedelta(seconds=1)
+
+    pagination = Logs.query.filter(
+        Logs.user_id != 'superadmin',
+        Logs.timestamp >= from_date_obj,
+        Logs.timestamp <= to_date_obj
+    ).order_by(Logs.id.desc()).paginate(page=page, per_page=per_page, error_out=False)
+
+    logs_list = [serialize_logs(l) for l in pagination.items]
+
+    return jsonify({
+        "logs": logs_list,
+        "page": pagination.page,
+        "pages": pagination.pages,
+        "total": pagination.total,
+        "per_page": pagination.per_page
+    })
 
 def serialize_drecords(s):
     if s.clock_in and s.clock_out:
@@ -430,7 +449,7 @@ def serialize_drecords(s):
         'full_name': f"{s.user.first_name} {s.user.last_name}",
         'user_id': s.user.user_id,
         'log_id': s.id,
-        'date': s.date.strftime("%b %d, %Y"),
+        'date': s.date.strftime("%Y-%m-%d"),
         'clock_in': s.clock_in.strftime("%I:%M %p").lower() if s.clock_in else '',
         'clock_out': s.clock_out.strftime("%I:%M %p").lower() if s.clock_out else '',
         'total_hours': t_hours,
@@ -442,7 +461,9 @@ def get_daily_logs():
     if current_user.role not in ["superadmin", "admin"]:
         return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
-    records = Attendance.query.order_by(Attendance.date.desc(), Attendance.id.desc()).all()
+    today = request.args.get('today')
+
+    records = Attendance.query.filter(Attendance.date == today).order_by(Attendance.id.desc()).all()
     records_list = [serialize_drecords(s) for s in records]
 
     return jsonify(records_list)
@@ -490,6 +511,39 @@ def update_log(log_id):
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error updating log: {str(e)}"}), 500
 
+@api_bp.route('/add-log', methods=['POST'])
+def add_log():
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
+    
+    data = request.get_json()
+
+    user_id = data.get('userId')
+    user = User.query.filter_by(user_id=user_id).first()
+
+    if not user:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
+    new_log = Attendance(
+        user_id = user_id,
+        date = data.get('date'),
+        clock_in = data.get('clockIn'),
+        clock_out = data.get('clockOut'),
+        is_manual = True 
+    )
+
+    try:
+        db.session.add(new_log)
+
+        systemLogEntry(
+            action="Created",
+            details=f"New attendance record added for {user.first_name} {user.last_name}."
+        )
+
+        return jsonify({'success': True, 'message': 'Log updated successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f"Error updating log: {str(e)}"}), 500
 
 ##### GIA API #####
 

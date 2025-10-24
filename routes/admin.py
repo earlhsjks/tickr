@@ -145,64 +145,6 @@ def gia_schedule():
 
     return render_template('admin/schedule.html')
 
-# Attendance 
-@admin_bp.route('/attendance-records', methods=['GET', 'POST'])
-@login_required
-def admin_attendance():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized Access!", "danger")
-        return render_template('auth/login.html')
-
-    # Ensure `month` is properly formatted
-    month = request.args.get('month', '').strip()
-
-    if not month or '-' not in month:  # Handle missing or incorrect format
-        month = datetime.today().strftime('%Y-%m')  # Default to current month
-
-    try:
-        year, month = map(int, month.split('-'))  # Convert to integers
-    except ValueError:
-        flash("Invalid month format. Please select a valid month.", "danger")
-        return redirect(url_for('admin.admin_attendance'))
-
-    # Query attendance records for the selected month
-    attendance_records = db.session.query(
-        User.first_name,
-        User.last_name,
-        Attendance.user_id,
-        Attendance.clock_in,
-        Attendance.clock_out
-    ).join(User).filter(
-        db.extract('year', Attendance.clock_in) == year,
-        db.extract('month', Attendance.clock_in) == month
-    ).order_by(Attendance.clock_in.desc()).all()
-
-    # Fetch attendance inconsistencies for the selected month
-    inconsistency_records = AttendanceInconsistency.query.filter(
-        db.extract('year', AttendanceInconsistency.date) == year,
-        db.extract('month', AttendanceInconsistency.date) == month
-    ).all()
-
-    # Process inconsistencies into a dictionary (indexed by user_id & date)
-    inconsistencies = {}
-    for record in inconsistency_records:
-        date_str = record.date.strftime('%Y-%m-%d')  # Format properly
-        if record.user_id not in inconsistencies:
-            inconsistencies[record.user_id] = {}
-        if date_str not in inconsistencies[record.user_id]:
-            inconsistencies[record.user_id][date_str] = []
-        inconsistencies[record.user_id][date_str].append(record.issue_type)
-
-    # Pass the data to the template
-    return render_template(
-        'admin/attendance_records.html',
-        user=current_user,  # Ensure `user` is available in the template
-        attendance=attendance_records,
-        inconsistencies=inconsistencies,
-        current_month=f"{year}-{month:02d}",
-        datetime=datetime
-    )
-
 # DAILY LOGS PAGE
 @admin_bp.route('/daily-logs', methods=['GET'])
 @login_required
@@ -210,26 +152,23 @@ def daily_logs():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
+    
+    users = User.query.filter_by(role = 'gia').order_by(User.first_name).all()
+    today = datetime.now().date()
 
-    return render_template('admin/daily_logs.html',)
+    return render_template('admin/daily_logs.html', today=today, users=users)
 
 # MANUAL LOGS PAGE
-@admin_bp.route('/manual-logs', methods=['GET'])
+@admin_bp.route('/manual-logs')
 @login_required
 def manual_logs():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
+    
+    month = datetime.now().strftime("%Y-%m")
 
-    # Fetch manual logs
-    manual_logs = db.session.query(
-        # Logs.admin_id,
-        Logs.action,
-        Logs.details,
-        Logs.timestamp
-    ).filter(Logs.action.like('%Manual%')).order_by(Logs.timestamp.desc()).all()
-
-    return render_template('admin/manual_logs.html', manual_logs=manual_logs)
+    return render_template('admin/manual_logs.html', month=month)
 
 # EXPORT DTR PAGE
 @admin_bp.route('/export-dtr')
@@ -243,7 +182,7 @@ def export_dtr():
 
     return render_template('admin/export_dtr.html', month=month)
 
-# DTR Print
+# DTR PRINT
 @admin_bp.route('/export')
 @login_required
 def export_pdf():
@@ -352,291 +291,6 @@ def export_pdf():
         total_hours_dict=total_hours_dict
     )
 
-
-# VIEW SHIFT TEMPLATE
-@admin_bp.route('/shift-template')
-@login_required
-def shift_template():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/login.html')
-
-    # Fetch all shift templates
-    shift_templates = db.session.query(
-        User.first_name,
-        User.last_name,
-        Schedule.day,
-        Schedule.start_time,
-        Schedule.end_time,
-        Schedule.is_broken
-    ).join(User).filter(Schedule.is_broken == False).all()
-
-    return render_template('admin/shift_template.html', shift_templates=shift_templates)
-
-# VIEW OVERTIME REQUESTS
-@admin_bp.route('/overtime-requests')
-@login_required
-def overtime_requests():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/login.html')
-
-    # Fetch all overtime requests
-    overtime_requests = db.session.query(
-        User.first_name,
-        User.last_name,
-        Attendance.clock_in,
-        Attendance.clock_out,
-        AttendanceInconsistency.issue_type,
-        AttendanceInconsistency.date
-    ).join(User).filter(AttendanceInconsistency.issue_type == "Overtime").all()
-
-    return render_template('admin/overtime_requests.html', overtime_requests=overtime_requests)
-
-# OFFICE MANAGEMENT
-@admin_bp.route('/work-assignment')
-@login_required
-def admin_department():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/work-assignment.html')
-
-    heads = User.query.filter_by(role='head').all()
-    offices = Office.query.all()
-    return render_template('admin/work-assignment.html', offices=offices, heads=heads)
-
-# ADD NEW OFFICE
-@admin_bp.route('/add-office', methods=['POST'])
-@login_required
-def add_office():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/login.html')
-
-    office_name = request.form.get('name', '').strip()
-    campus = request.form.get('campus')
-    unit_head_id = request.form.get('head')
-
-    if not office_name or not campus or not unit_head_id:
-        flash("All fields are required!", "danger")
-        return redirect(url_for('admin.admin_offices'))
-
-    new_office = Office(name=office_name, campus=campus, unit_head_id=unit_head_id)
-
-    try:
-        db.session.add(new_office)
-        db.session.commit()
-        flash("Office added successfully!", "success")
-    except IntegrityError:
-        db.session.rollback()
-        flash("Office already exists!", "danger")
-
-    return redirect(url_for('admin.admin_offices'))
-
-# DELETE OFFICE
-@admin_bp.route('delete-office/<int:id>', methods=['GET'])
-@login_required
-def delete_office(id):
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/offices.html')
-
-    users = db.session.scalars(db.select(User)).all()
-    offices = Office.query.all()
-    users = User.query.filter(User.role != "superadmin").all()
-
-    return render_template('admin/offices.html', users=users, offices=offices)
-
-# Edit Office (Loads the Edit Page)
-@admin_bp.route('/edit-office/<int:id>', methods=['GET'])
-@login_required
-def edit_office(id):
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return render_template('auth/login.html')
-
-    office = Office.query.all()
-    return render_template('admin/edit_offices.html', office=office)
-
-# Specific User Attendance
-@admin_bp.route('/user-logs/<string:user_id>', methods=['GET'])
-@login_required
-def view_user_logs(user_id):
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized Access!", "danger")
-        return render_template('auth/login.html')
-
-    month = request.args.get('month')  # Use GET instead of POST to match filter form
-
-    user = User.query.get_or_404(user_id)
-
-    if month:
-        try:
-            year, month = map(int, month.split('-'))
-        except ValueError:
-            flash("Invalid date format.", "danger")
-            return redirect(url_for('admin.view_user_logs', user_id=user_id))
-    else:
-        today = datetime.today()
-        year, month = today.year, today.month
-
-    # Fetch attendance records for the selected employee and month
-    attendance_records = Attendance.query.filter(
-        Attendance.user_id == user_id,
-        db.extract('year', Attendance.clock_in) == year,
-        db.extract('month', Attendance.clock_in) == month
-    ).all()
-
-    # Fetch inconsistencies for the selected employee and month
-    inconsistency_records = AttendanceInconsistency.query.filter(
-        AttendanceInconsistency.user_id == user_id,
-        db.extract('year', AttendanceInconsistency.date) == year,
-        db.extract('month', AttendanceInconsistency.date) == month
-    ).all()
-
-    # Properly map inconsistencies by user_id and date
-    inconsistencies = {}
-    for record in inconsistency_records:
-        date_str = record.date.strftime('%Y-%m-%d')
-        if user_id not in inconsistencies:
-            inconsistencies[user_id] = {}
-        if date_str not in inconsistencies[user_id]:
-            inconsistencies[user_id][date_str] = []
-        inconsistencies[user_id][date_str].append(record.issue_type)
-
-    return render_template(
-        'admin/user_attendance.html',
-        user=user,
-        attendance=attendance_records or [],
-        inconsistencies=inconsistencies,
-        user_id=user_id,
-        current_month=f"{year}-{month:02d}"  # Ensure correct formatting
-    )
-
-# Edit Attendance Logs
-@admin_bp.route('/edit-attendance', methods=['POST'])
-@login_required
-def edit_attendance():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized Access!", "danger")
-        return render_template('auth/login.html')
-
-    record_id = request.form.get('save')  # Get the record ID from the button
-    if not record_id:
-        flash("Invalid request!", "danger")
-        return redirect(request.referrer)
-
-    attendance = Attendance.query.get_or_404(record_id)
-
-    try:
-        clock_in = request.form.get(f'clock_in_{record_id}')
-        clock_out = request.form.get(f'clock_out_{record_id}')
-
-        # Preserve the existing date
-        existing_date = attendance.clock_in.date() if attendance.clock_in else datetime.today().date()
-
-        changes = []  # To store log details
-
-        # Update clock-in with the same date
-        if clock_in:
-            clock_in_time = datetime.strptime(clock_in, "%H:%M").time()
-            new_clock_in = datetime.combine(existing_date, clock_in_time)
-            if attendance.clock_in != new_clock_in:
-                changes.append(f"Clock-In changed from {attendance.clock_in.strftime('%H:%M')} to {clock_in}")
-                attendance.clock_in = new_clock_in
-
-        # Update clock-out with the same date
-        if clock_out:
-            clock_out_time = datetime.strptime(clock_out, "%H:%M").time()
-            new_clock_out = datetime.combine(existing_date, clock_out_time)
-            if attendance.clock_out != new_clock_out:
-                changes.append(f"Clock-Out changed from {attendance.clock_out.strftime('%H:%M') if attendance.clock_out else 'N/A'} to {clock_out}")
-                attendance.clock_out = new_clock_out
-
-        db.session.commit()
-
-        # Log the attendance update
-        if changes:
-            log_entry = Logs(
-                admin_id=current_user.user_id,
-                action=f"Edited Attendance Record {record_id}",
-                details=" | ".join(changes)
-            )
-            db.session.add(log_entry)
-            db.session.commit()
-
-        flash("Attendance record updated successfully!", "success")
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error updating record: {e}", "danger")
-
-    return redirect(request.referrer)
-
-@admin_bp.route('/add-attendance-entry', methods=['POST'])
-@login_required
-def add_attendance_entry():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized Access!", "danger")
-        return render_template('auth/login.html')
-
-    user_id = request.form.get('user_id')
-    date_str = request.form.get('date')
-    clock_in_str = request.form.get('clock_in')
-    clock_out_str = request.form.get('clock_out')
-
-    try:
-        clock_in = datetime.strptime(f"{date_str} {clock_in_str}", "%Y-%m-%d %H:%M")
-        clock_out = datetime.strptime(f"{date_str} {clock_out_str}", "%Y-%m-%d %H:%M")
-    except (ValueError, TypeError):
-        flash("Invalid date or time format.", "danger")
-        return redirect(url_for('admin.view_user_logs', user_id=user_id))
-
-    # Save the new attendance entry
-    new_attendance = Attendance(
-        user_id=user_id,
-        clock_in=clock_in,
-        clock_out=clock_out
-    )
-    db.session.add(new_attendance)
-    db.session.commit()
-
-    flash("New attendance entry added successfully.", "success")
-    return redirect(url_for('admin.view_user_logs', user_id=user_id))
-
-@admin_bp.route('/delete-attendance-entry', methods=['POST'])
-@login_required
-def delete_attendance_entry():
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Unauthorized Access!", "danger")
-        return render_template('auth/login.html')
-
-    record_id = request.form.get('record_id')
-    attendance = Attendance.query.get(record_id)
-    if not attendance:
-        flash("Attendance entry not found.", "danger")
-        return redirect(request.referrer or url_for('admin.admin_employees'))
-
-    try:
-        db.session.delete(attendance)
-        db.session.commit()
-
-        # Log the deletion
-        log_entry = Logs(
-            admin_id=current_user.user_id,
-            action=f"Deleted Attendance Record {record_id}",
-            details=f"Deleted attendance entry for employee {attendance.user_id} on {attendance.clock_in.strftime('%Y-%m-%d') if attendance.clock_in else 'N/A'}"
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-
-        flash("Attendance entry deleted successfully.", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error deleting attendance entry: {e}", "danger")
-
-    return redirect(request.referrer or url_for('admin.admin_employees'))
-  
 # Account Settings (Change Password)
 @admin_bp.route('/account-settings', methods=['GET', 'POST'])
 @login_required
@@ -684,7 +338,7 @@ def account_settings():
     return render_template('admin/account_settings.html')
 
 # Global Settings
-@admin_bp.route('/settings', methods=["GET", "POST"])
+@admin_bp.route('/settings')
 @login_required
 def settings():
     if current_user.role not in ["superadmin", "admin"]:
@@ -734,32 +388,16 @@ def settings():
 
         return redirect(url_for("admin.settings"))
 
-    return render_template("admin/settings.html", settings=settings)
+    return render_template("admin/settings.html")
 
-# Route to View Logs
-@admin_bp.route('/audit-logs', methods=['GET', 'POST'])
+# AUDIT LOG PAGE
+@admin_bp.route('/audit-logs')
 @login_required
 def audit_logs():
     if current_user.role not in ["superadmin", "admin"]:
         flash("Unauthorized access!", "danger")
         return render_template('auth/login.html')
+    
+    today = datetime.now().date()
 
-    return render_template('admin/audit_logs.html')
-
-
-@admin_bp.route('/export-excel')
-@login_required
-def export_excel():
-    if current_user.role not in ["superadmin", "admin"]:
-        return render_template('auth/login.html')
-
-    records = Attendance.Session.scalars().all()
-    data = [{"Employee ID": record.user_id, "Clock In": record.clock_in, "Clock Out": record.clock_out or "N/A"} for record in records]
-
-    df = pd.DataFrame(data)
-    excel_file = io.BytesIO()
-    with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
-        df.to_excel(writer, index=False, sheet_name="Attendance")
-
-    excel_file.seek(0)
-    return send_file(excel_file, as_attachment=True, download_name="attendance_report.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return render_template('admin/audit_logs.html', today=today)

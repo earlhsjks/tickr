@@ -39,7 +39,7 @@ migrate = Migrate(app, db)
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'app.index'
+login_manager.login_view = 'index'
 
 # Register Blueprints
 app.register_blueprint(gia_bp)
@@ -56,7 +56,6 @@ def index():
             return redirect(url_for('admin.dashboard'))
 
     return render_template('/auth/login.html')
-
 
 # Error handling
 @app.errorhandler(OperationalError)
