@@ -72,7 +72,7 @@ def check_attendance_flags(attendance_entry):
 
 WHITELIST = {
     "localhost", # Local Host
-    "127.0.0.1", # Local Host
+    # "127.0.0.1", # Local Host
     "172.16.255.237", # GIA Station
     "172.16.255.235", # Office Router
     "172.16.255.236", # Printing 1
@@ -82,16 +82,16 @@ WHITELIST = {
 
 # Decorator to apply to specific routes
 def ip_whitelist():
-    if current_user.user_id is not 2024998:
-        def wrapper(fn):
-            def decorated(*args, **kwargs):
+    def wrapper(fn):
+        def decorated(*args, **kwargs):
+            if not current_user.is_authenticated or current_user.user_id != "2024998":
                 client_ip = request.remote_addr
                 if client_ip not in WHITELIST:
-                    abort(403)
-                return fn(*args, **kwargs)
-            decorated.__name__ = fn.__name__
-            return decorated
-        return wrapper
+                    return redirect(url_for('gia.blocked'))
+            return fn(*args, **kwargs)
+        decorated.__name__ = fn.__name__
+        return decorated
+    return wrapper
 
 # Employee Dashboard
 @gia_bp.route('/dashboard')
