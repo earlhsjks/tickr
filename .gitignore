@@ -1,17 +1,28 @@
+# Virtual environments
 venv/
-venv
-third-party/
+.third-party/
+
+# Python cache
 __pycache__/
-__pycache__
 *.pyc
 *.pyo
+
+# App secrets
 .env
-config.py
+
+# SQLite or local DB files
+instance/
 *.db
-logs/
+
+# Flask session files
+flask_session/
+
+# Migrations (optional, keep if you want)
+migrations/
+
+# IDE settings
 .vscode/
 *.idea/
-flask_session/
-migrations/
-migrations/
-instance/
+
+# Logs
+logs/
