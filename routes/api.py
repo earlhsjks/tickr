@@ -2,7 +2,6 @@ from flask import (Blueprint, request, flash,
                    send_file, request, jsonify)
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
-import pandas as pd
 import io, traceback
 from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs

@@ -2,8 +2,6 @@ from flask import (Blueprint, render_template, redirect, url_for, request, flash
                    send_file, session, request)
 from flask_login import login_required, logout_user, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
-import pandas as pd
-import io
 from collections import defaultdict
 from datetime import datetime, timedelta, date, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
