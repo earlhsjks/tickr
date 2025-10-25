@@ -28,7 +28,7 @@ app.config.from_object(Config)
 os.makedirs("./flask_session", exist_ok=True)
 app.config['SESSION_TYPE'] = 'filesystem'  # Store session data in files
 app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)  # Auto logout after 10 minutes
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=10)  # Auto logout after 10 minutes
 app.config['SESSION_FILE_DIR'] = "./flask_session"
 Session(app)
 
