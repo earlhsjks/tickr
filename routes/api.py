@@ -686,7 +686,7 @@ def clock_in():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    if request.remote_addr in WHITELIST:
+    if request.remote_addr not in WHITELIST:
         return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
     
     try:
@@ -800,7 +800,7 @@ def clock_out():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    if request.remote_addr in WHITELIST:
+    if request.remote_addr not in WHITELIST:
         return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
 
     try:
