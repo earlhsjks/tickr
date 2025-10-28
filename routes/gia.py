@@ -95,7 +95,6 @@ def ip_whitelist():
 # Employee Dashboard
 @gia_bp.route('/dashboard')
 @login_required
-@ip_whitelist()
 def dashboard():
     if current_user.role != 'gia':
         return redirect(url_for('admin.dashboard'))

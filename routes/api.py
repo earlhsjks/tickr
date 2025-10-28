@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash
 import io, traceback
 from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
+from routes.gia import WHITELIST
 # from flask_apscheduler import APScheduler
 
 # Create a Blueprint for admin routes
@@ -685,6 +686,9 @@ def clock_in():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
+    if request.remote_addr in WHITELIST:
+        return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
+    
     try:
         today_name = datetime.today().strftime('%A').lower()
         now = datetime.now().time()
@@ -795,6 +799,9 @@ def clock_out():
         return jsonify({'success': False, 'error': 'Missing user_id'}), 400
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
+    
+    if request.remote_addr in WHITELIST:
+        return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
 
     try:
         now = datetime.now()
