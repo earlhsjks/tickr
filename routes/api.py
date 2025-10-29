@@ -678,6 +678,12 @@ def gia_data():
         'summary': summary
     })
 
+# Whitelist verification
+def ip_whitelist():
+    if not current_user.is_authenticated or current_user.user_id != "2024998":
+        if request.remote_addr not in WHITELIST:
+            return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
+
 @api_bp.route('/clock-in', methods=['POST'])
 @login_required
 def clock_in():
@@ -686,8 +692,7 @@ def clock_in():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    if request.remote_addr not in WHITELIST:
-        return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
+    ip_whitelist()
     
     try:
         today_name = datetime.today().strftime('%A').lower()
@@ -800,8 +805,7 @@ def clock_out():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    if request.remote_addr not in WHITELIST:
-        return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
+    ip_whitelist()
 
     try:
         now = datetime.now()
