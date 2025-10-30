@@ -123,7 +123,7 @@ clockBtn.addEventListener("click", async () => {
             document.getElementById("successTitle").textContent = `${actionText} Successful!`;
             successTime.textContent = time;
             document.getElementById("successMessage").innerHTML =
-                `You ${actionText.toLowerCase()} at <span class="fw-bold">${time}</span>.`;
+                `You ${actionText.toLowerCase()} at <span class="fw-bold">${data.data.time_record}</span>.`;
             successModal.show();
 
             await loadRecords();

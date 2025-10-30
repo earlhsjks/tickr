@@ -712,7 +712,7 @@ def clock_in():
             )]
 
         if not user_schedules:
-            return jsonify({'success': False, 'error': 'No schedule set for today.'}), 400
+            return jsonify({'success': False, 'error': 'You don’t have a schedule for today.'}), 400
 
         # Early-in Rules 
         allowed_early_in = global_settings.allowed_early_in_mins if global_settings else 0
@@ -743,7 +743,7 @@ def clock_in():
 
         # Enforce strict schedule
         if global_settings and global_settings.enable_strict_schedule and not valid_schedule:
-            return jsonify({'success': False, 'error': 'Clock-in not allowed outside your scheduled shift.'}), 400
+            return jsonify({'success': False, 'error': 'Clock-in blocked. You\'re outside your allowed schedule window.'}), 400
 
         # Check Attendance Rules 
         today = datetime.today().date()
@@ -756,7 +756,7 @@ def clock_in():
 
         # Limit to 2 clock-ins per day
         if len(active_shifts) >= 2:
-            return jsonify({'success': False, 'error': 'Maximum of two clock-ins allowed per day.'}), 400
+            return jsonify({'success': False, 'error': 'You’ve already reached the daily limit of two clock-ins.'}), 400
 
         # Prevent duplicate clock-in for same shift (not used, js covered)
         # for shift in active_shifts:
@@ -785,7 +785,7 @@ def clock_in():
             'message': 'Clock-in successful!',
             'data': {
                 'user_id': user_id,
-                'clock_in': new_entry.clock_in.strftime("%H:%M:%S"),
+                'time_record': new_entry.clock_in.strftime("%I:%M %p"),
                 'date': new_entry.date.strftime("%Y-%m-%d"),
                 'shift': 'second' if is_split_shift else 'first'
             }
@@ -821,7 +821,7 @@ def clock_out():
         print(last_record)
 
         if not last_record:
-            return jsonify({'success': False, 'error': 'No active clock-in found for today.'}), 400
+            return jsonify({'success': False, 'error': 'You can’t clock out without clocking in first today.'}), 400
         
         clock_in_time = last_record.clock_in 
 
@@ -861,7 +861,7 @@ def clock_out():
                 if actual_clock_out_dt > grace_limit:
                     return jsonify({
                         'success': False,
-                        'error': 'More than 30 minutes past scheduled end time.'
+                        'error': 'Clock-out rejected. Exceeded the 30-minute grace period after your shift.'
                     }), 400
 
                 evening_cutoff = datetime.combine(today, time(18, 30))
@@ -888,8 +888,7 @@ def clock_out():
             'message': 'Clock-out successful!',
             'data': {
                 'user_id': user_id,
-                'clock_in': last_record.clock_in.strftime("%H:%M:%S"),
-                'clock_out': last_record.clock_out.strftime("%H:%M:%S"),
+                'time_record': last_record.clock_out.strftime("%I:%M %p"),
                 'date': last_record.date.strftime("%Y-%m-%d"),
                 'shift': 'second' if is_split_shift else 'first'
             }
