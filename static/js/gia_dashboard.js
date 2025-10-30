@@ -107,8 +107,13 @@ clockBtn.addEventListener("click", async () => {
     const time = now.toLocaleTimeString();
     const userId = clockBtn.getAttribute('data-user-id');
 
-    const endpoint = isClockedIn ? '/api/clock-out' : '/api/clock-in';
-    const actionText = isClockedIn ? 'Clock Out' : 'Clock In';
+    const endpoint = isClockedIn && !is30min 
+    ? '/api/clock-out' 
+    : '/api/clock-in';
+    
+    const actionText = isClockedIn && !is30min 
+    ? 'Clock Out' 
+    : 'Clock In';
 
     try {
         const res = await fetch(endpoint, {
