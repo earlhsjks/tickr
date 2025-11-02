@@ -455,6 +455,9 @@ document.getElementById("dateFilter").addEventListener("change", () => {
 // Add Manual Log button
 const addManualLogBtn = document.querySelector('.add-manual-log-btn');
 addManualLogBtn.addEventListener('click', function () {
+    dateFilter = document.getElementById("dateFilter").value
+    document.getElementById("addLogDate").value = dateFilter;
+
     const modal = new bootstrap.Modal(document.getElementById('addManualLogModal'));
     modal.show();
 });
