@@ -3,6 +3,7 @@ from flask import (Blueprint, request, flash,
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 import io, traceback
+import pandas as pd
 from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 from routes.gia import WHITELIST

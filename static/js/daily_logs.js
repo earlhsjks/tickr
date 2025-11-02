@@ -455,9 +455,6 @@ document.getElementById("dateFilter").addEventListener("change", () => {
 // Add Manual Log button
 const addManualLogBtn = document.querySelector('.add-manual-log-btn');
 addManualLogBtn.addEventListener('click', function () {
-    // Set default date to today
-    document.getElementById('addLogDate').value = new Date().toISOString().split('T')[0];
-
     const modal = new bootstrap.Modal(document.getElementById('addManualLogModal'));
     modal.show();
 });
