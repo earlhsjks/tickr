@@ -29,13 +29,13 @@ async function checkButton() {
         const data = await res.json();
 
         isClockedIn = data.clocked_in && !data.clocked_out;
-        is30min = data.is30min;
+        is_grace = data.is_grace;
 
-        clockBtn.innerHTML = isClockedIn && !is30min
+        clockBtn.innerHTML = isClockedIn && !is_grace
             ? '<i class="fas fa-stop me-2"></i>Clock Out'
             : '<i class="fas fa-play me-2"></i>Clock In';
 
-        if (isClockedIn && !is30min) {
+        if (isClockedIn && !is_grace) {
             statusText.textContent = 'Clocked In'
             statusText.style.color = "#059669";
         } else {
@@ -107,11 +107,11 @@ clockBtn.addEventListener("click", async () => {
     const time = now.toLocaleTimeString();
     const userId = clockBtn.getAttribute('data-user-id');
 
-    const endpoint = isClockedIn && !is30min 
+    const endpoint = isClockedIn && !is_grace 
     ? '/api/clock-out' 
     : '/api/clock-in';
     
-    const actionText = isClockedIn && !is30min 
+    const actionText = isClockedIn && !is_grace 
     ? 'Clock Out' 
     : 'Clock In';
 
