@@ -685,6 +685,8 @@ def ip_whitelist():
         client_ip = request.remote_addr
         if client_ip not in WHITELIST:
             return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
+        
+    return None
 
 @api_bp.route('/clock-in', methods=['POST'])
 @login_required
@@ -694,8 +696,10 @@ def clock_in():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    ip_whitelist()
-    
+    check = ip_whitelist()
+    if check:
+        return check
+        
     try:
         today_name = datetime.today().strftime('%A').lower()
         now = datetime.now().time()
@@ -807,8 +811,10 @@ def clock_out():
     if current_user.user_id != user_id:
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    ip_whitelist()
-
+    check = ip_whitelist()
+    if check:
+        return check
+    
     try:
         now = datetime.now()
         actual_clock_out = now.time()
