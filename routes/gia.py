@@ -74,9 +74,8 @@ WHITELIST = {
     "localhost", # Local Host
     "127.0.0.1", # Local Host
     "172.16.255.237", # GIA Station
-    # "172.16.255.235", # Office Router
     "172.16.255.236", # Printing 1
-    "172.16.254.255", # Printin 2
+    "172.16.254.255", # Printing 2
 }
 
 # Decorator to apply to specific routes

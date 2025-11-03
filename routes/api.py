@@ -609,15 +609,15 @@ def status():
     # Check if user exceeded 30-min grace period
     if strict_schedule and schedule_end:
         now = datetime.now()
-        grace_limit = datetime.combine(today, schedule_end) + timedelta(minutes=30)
+        grace_limit = datetime.combine(today, schedule_end) + timedelta(minutes=60)
         if now > grace_limit:
-            is_30_mins = True
+            is_grace = True
 
     # Response
     return jsonify({
         'clocked_in': bool(last_record.clock_in and not last_record.clock_out),
         'clocked_out': bool(last_record.clock_out),
-        'is30min': is_30_mins
+        'is_grace': is_grace
     }), 200
 
 def serialize_records(s):
@@ -682,7 +682,8 @@ def gia_data():
 # Whitelist verification
 def ip_whitelist():
     if not current_user.is_authenticated or current_user.user_id != "2024998":
-        if request.remote_addr not in WHITELIST:
+        client_ip = request.remote_addr
+        if client_ip not in WHITELIST:
             return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
 
 @api_bp.route('/clock-in', methods=['POST'])
@@ -857,12 +858,12 @@ def clock_out():
                 actual_clock_out_dt = datetime.combine(today, actual_clock_out)
                 schedule_end_dt = datetime.combine(today, schedule_end)
                 
-                grace_limit = schedule_end_dt + timedelta(minutes=30)
+                grace_limit = schedule_end_dt + timedelta(minutes=60)
                 
                 if actual_clock_out_dt > grace_limit:
                     return jsonify({
                         'success': False,
-                        'error': 'Clock-out rejected. Exceeded the 30-minute grace period after your shift.'
+                        'error': 'Exceeded the 60-minute grace period after your shift.'
                     }), 400
 
                 evening_cutoff = datetime.combine(today, time(18, 30))
