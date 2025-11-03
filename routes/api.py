@@ -578,14 +578,14 @@ def status():
     strict_schedule = bool(global_settings and global_settings.enable_strict_schedule)
 
     schedule_end = None
-    is_30_mins = False
+    is_grace = False
 
     # No record = not clocked in yet
     if not last_record or not last_record.clock_in:
         return jsonify({
             'clocked_in': False,
             'clocked_out': False,
-            'is30min': False
+            'is_grace': False
         }), 200
 
     clock_in_time = last_record.clock_in
