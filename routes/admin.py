@@ -11,39 +11,6 @@ from flask_apscheduler import APScheduler
 # Create a Blueprint for admin routes
 admin_bp = Blueprint('admin', __name__)
 
-@admin_bp.context_processor
-def inject_current_year():
-    return {'current_year': datetime.now().year}
-
-# Funtion of udate user schedule
-def parse_time(time_str):
-    """Convert string to time object, return None if empty or invalid."""
-    if not time_str or time_str.strip() == "":  # Ensure empty strings return None
-        return None
-    try:
-        return datetime.strptime(time_str, "%H:%M").time()
-    except ValueError:
-        return None  # Handle incorrect formats safely
-
-def systemLogEntry(userId, action, details=None):
-    entry = Logs(
-        userId = userId,
-        action = action,
-        details = details,
-        timestamp = datetime.now()
-    )
-
-    db.session.add(entry)
-    db.session.commit()
-
-""" 
-FUNTION FOR LOG LOGGING (example)
-systemLogEntry(
-    admin_id=current_user.user_id,
-    action=f"Force Clocked Out {user_id}",
-    details=f"Clock-out set to {attendance.clock_out.strftime('%Y-%m-%d %H:%M:%S')}"
-)
- """
 class Config:
     SCHEDULER_API_ENABLED = True
 
@@ -335,7 +302,7 @@ def account_settings():
 
     return render_template('admin/account_settings.html')
 
-# Global Settings
+# SETTINGS PAGE
 @admin_bp.route('/settings')
 @login_required
 def settings():
@@ -343,50 +310,25 @@ def settings():
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
 
-    settings = GlobalSettings.query.first()
-
-    if not settings:
-        settings = GlobalSettings()
-        db.session.add(settings)
-        db.session.commit()  # Save new settings immediately
-
-    if request.method == "POST":
-        try:
-            # Update boolean settings
-            settings.enable_strict_schedule = request.form.get("enable_strict_schedule") == "on"
-            settings.early_out_allowed = request.form.get("early_out_allowed") == "on"
-            settings.overtime_allowed = request.form.get("overtime_allowed") == "on"
-
-            # Update time-based settings
-            default_start_time = request.form.get("default_schedule_start")
-            default_end_time = request.form.get("default_schedule_end")
-            settings.default_schedule_start = datetime.strptime(default_start_time, "%H:%M").time() if default_start_time else None
-            settings.default_schedule_end = datetime.strptime(default_end_time, "%H:%M").time() if default_end_time else None
-
-            # Update early-in allowance (ensure it's an integer)
-            allowed_early_in = request.form.get("allowed_early_in")
-            settings.allowed_early_in = int(allowed_early_in) if allowed_early_in else 0
-
-            db.session.commit()
-
-            # Log the update
-            log_entry = Logs(
-                admin_id=current_user.user_id,
-                action="Updated Global Settings",
-                details=f"Strict Schedule: {settings.enable_strict_schedule}, Early Out: {settings.early_out_allowed}, Overtime: {settings.overtime_allowed}"
-            )
-            db.session.add(log_entry)
-            db.session.commit()
-
-            flash("Settings updated successfully!", "success")
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f"Error saving settings: {e}", "danger")
-
-        return redirect(url_for("admin.settings"))
-
     return render_template("admin/settings.html")
+
+# auto-disable strict mode if expired
+def update_strict_mode():
+    settings = GlobalSettings.query.first()
+    if not settings or not settings.enable_strict_schedule or not settings.strict_duration:
+        return
+
+    if datetime.now().date() >= settings.strict_duration:
+        settings.enable_strict_schedule = True
+        settings.strict_duration = None # open mode duration
+
+        entry = Logs(
+            action="Update",
+            details=f"SYSTEM: Open mode expired on {datetime.now().date()}, and was disabled automatically.",
+            timestamp=datetime.now(),
+        )
+        db.session.add(entry)
+        db.session.commit()
 
 # AUDIT LOG PAGE
 @admin_bp.route('/audit-logs')

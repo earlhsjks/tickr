@@ -95,10 +95,11 @@ class GlobalSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True, default=1)
     unit_head = db.Column(db.String(100), default="Unit Head Name")
     enable_strict_schedule = db.Column(db.Boolean, default=False)
+    strict_duration = db.Column(db.Date) # supposed to be open_mode duration
     allow_early_out = db.Column(db.Boolean, default=True)
     allow_overtime = db.Column(db.Boolean, default=False)
     default_start = db.Column(db.Time, default=time(8, 0))
-    default_end = db.Column(db.Time, default=time(17, 0))
+    default_end = db.Column(db.Time, default=time(17, 0))   
     allowed_early_in_mins = db.Column(db.Integer, default=5)
 
     @staticmethod

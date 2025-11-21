@@ -146,7 +146,7 @@ clockBtn.addEventListener("click", async () => {
         const errorMessage = document.getElementById("errorMessage");
         
         errorTitle.textContent = "Network Error";
-        errorMessage.textContent = "Unable to reach the server. Reloading in 5 seconds...";
+        errorMessage.textContent = "Unable to reach the server. Reloading in seconds...";
 
         errorModal.show();
 

@@ -1,0 +1,233 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% set breadcrumb1 = "Profile" %}
+{% set breadcrumb2 = "" %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+    <div class="main-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="page-title">
+                        <h1 class="mb-1">Profile Settings</h1>
+                        <p class="mb-0 text-muted">Update your personal information and account settings</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="page-actions d-flex justify-content-md-end">
+                        <button class="btn btn-success" id="saveProfile">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="content-card mb-4">
+            <div class="card-header">
+                <h2 class="mb-0">Personal Information</h2>
+            </div>
+            <div class="card-body">
+                <form id="profileForm">
+                    <div class="row g-4">
+                        <!-- Profile Picture Section -->
+                        <div class="col-12">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="profile-avatar me-4">
+                                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px;">JS</div>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">John Smith</h5>
+                                    <p class="text-muted mb-2">Engineering Manager</p>
+                                    <button type="button" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-camera me-1"></i>Change Photo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Basic Information -->
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 text-primary">
+                                <i class="fas fa-user me-2"></i>Basic Information
+                            </h6>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" value="johnsmith" required>
+                            <small class="text-muted">Used for login and system identification</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="employeeId" class="form-label">Employee ID</label>
+                            <input type="text" class="form-control" id="employeeId" value="EMP-001" readonly>
+                            <small class="text-muted">Cannot be changed</small>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="firstName" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="firstName" value="John" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="lastName" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="lastName" value="Smith" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="middleName" class="form-label">Middle Name</label>
+                            <input type="text" class="form-control" id="middleName" value="Michael" placeholder="Optional">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" value="john.smith@company.com" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" value="+1 (555) 123-4567" placeholder="Optional">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password Change Section -->
+        <div class="content-card mb-4">
+            <div class="card-header">
+                <h2 class="mb-0">Change Password</h2>
+            </div>
+            <div class="card-body">
+                <form id="passwordForm">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3 text-primary">
+                                <i class="fas fa-lock me-2"></i>Security Settings
+                            </h6>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="currentPassword" class="form-label">Current Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="currentPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleCurrentPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Empty column for spacing -->
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="newPassword" class="form-label">New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="newPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleNewPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Must be at least 8 characters long</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmPassword" required>
+                                <button class="btn btn-outline-secondary" type="button" id="toggleConfirmPassword">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Must match the new password</small>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="password-strength" id="passwordStrength" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <small class="text-muted">Password Strength:</small>
+                                    <small class="fw-medium" id="strengthText">Weak</small>
+                                </div>
+                                <div class="progress" style="height: 4px;">
+                                    <div class="progress-bar" id="strengthBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="button" class="btn btn-warning" id="changePassword">
+                                <i class="fas fa-key me-2"></i>Change Password
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Information -->
+        <div class="content-card">
+            <div class="card-header">
+                <h2 class="mb-0">Account Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <div class="summary-label">Department</div>
+                            <div class="summary-value">Engineering</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <div class="summary-label">Position</div>
+                            <div class="summary-value">Manager</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <div class="summary-label">Role</div>
+                            <div class="summary-value">
+                                <span class="status-badge active">Admin</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <div class="summary-label">Account Status</div>
+                            <div class="summary-value">
+                                <span class="status-badge active">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <div class="summary-label">Member Since</div>
+                            <div class="summary-value">January 15, 2023</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="summary-item">
+                            <div class="summary-label">Last Login</div>
+                            <div class="summary-value">Today, 8:45 AM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Alert (Hidden by default) -->
+    <div class="alert alert-success alert-dismissible fade position-fixed" id="successAlert" style="top: 20px; right: 20px; z-index: 9999; display: none;">
+        <i class="fas fa-check-circle me-2"></i>
+        Profile updated successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+{% endblock %}

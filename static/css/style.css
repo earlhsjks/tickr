@@ -499,27 +499,27 @@ body {
     transition: transform 0.2s;
 }
 
-.action-badge.created {
+.action-badge.create {
     background: #d1fae5;
     color: #065f46;
 }
 
-.action-badge.edited {
+.action-badge.edit {
     background: #fef3c7;
     color: #92400e;
 }
 
-.action-badge.deleted {
+.action-badge.delete {
     background: #fee2e2;
     color: #991b1b;
 }
 
-.action-badge.updated {
+.action-badge.approve {
     background: #dbeafe;
     color: #1e40af;
 }
 
-.action-badge.rejected {
+.action-badge.reject {
     background: #fce7f3;
     color: #be185d;
 }
@@ -529,7 +529,7 @@ body {
     color: #0369a1;
 }
 
-.action-badge.clock.in {
+.action-badge.logout {
     background: #f3f4f6;
     color: #6b7280;
 }
@@ -1442,6 +1442,198 @@ body {
     
     .preview-container {
         min-height: 200px;
+    }
+}
+
+/* ==============================================
+   SETTINGS PAGE SPECIFIC STYLES
+   ============================================== */
+
+/* Settings Form Sections */
+.card-body h6.fw-bold {
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.card-body h6.fw-bold i {
+    color: #3b82f6;
+}
+
+/* Toggle Switch Styling */
+.form-check-input:checked {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+.form-check-input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 0.25rem rgba(16, 185, 129, 0.25);
+}
+
+/* Settings Summary Items */
+.summary-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 3px solid #e5e7eb;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Form Validation Styles */
+.form-control.is-valid {
+    border-color: #10b981;
+}
+
+.form-control.is-invalid {
+    border-color: #ef4444;
+}
+
+/* Settings Page Responsive */
+@media (max-width: 768px) {
+    .summary-item {
+        padding: 12px;
+    }
+    
+    .summary-value {
+        font-size: 14px;
+    }
+    
+    .card-body h6.fw-bold {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-actions {
+        margin-top: 16px;
+    }
+    
+    .form-check-input {
+        transform: scale(0.9);
+    }
+}
+
+/* ==============================================
+   PROFILE PAGE SPECIFIC STYLES
+   ============================================== */
+
+/* Profile Avatar */
+.profile-avatar .user-avatar {
+    border: 3px solid #e5e7eb;
+    transition: border-color 0.2s;
+}
+
+.profile-avatar .user-avatar:hover {
+    border-color: #3b82f6;
+}
+
+/* Form Sections */
+.card-body h6.fw-bold {
+    color: #374151;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.card-body h6.fw-bold i {
+    color: #3b82f6;
+}
+
+/* Password Strength Indicator */
+.password-strength {
+    margin-top: 12px;
+}
+
+.password-strength .progress {
+    background-color: #f3f4f6;
+    border-radius: 2px;
+}
+
+.password-strength .progress-bar {
+    transition: all 0.3s ease;
+    border-radius: 2px;
+}
+
+/* Input Group Buttons */
+.input-group .btn-outline-secondary {
+    border-color: #d1d5db;
+    color: #6b7280;
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+    color: #374151;
+}
+
+/* Form Validation Styles */
+.form-control.is-valid {
+    border-color: #10b981;
+}
+
+.form-control.is-invalid {
+    border-color: #ef4444;
+}
+
+/* Account Information Summary */
+.summary-item {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 3px solid #e5e7eb;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Responsive adjustments for profile page */
+@media (max-width: 768px) {
+    .profile-avatar .user-avatar {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 24px !important;
+    }
+    
+    .summary-item {
+        padding: 12px;
+    }
+    
+    .summary-value {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-actions {
+        margin-top: 16px;
+    }
+    
+    .input-group .btn {
+        padding: 0.375rem 0.5rem;
     }
 }
 

@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required ,current_user
 from werkzeug.security import check_password_hash
 from models.models import User
 from routes.api import systemLogEntry
+from routes.admin import update_strict_mode
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -21,6 +22,7 @@ def login():
         if not gia:
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
+        update_strict_mode()
         login_user(gia)
 
         systemLogEntry(
@@ -39,6 +41,7 @@ def login():
         if not check_password_hash(admin.password, password):
             return jsonify({'success': False, 'error': 'Incorrect password'}), 401
 
+        update_strict_mode()
         login_user(admin)
 
         systemLogEntry(

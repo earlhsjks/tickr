@@ -401,7 +401,7 @@ def serialize_logs(l):
         'time': l.timestamp.strftime("%I:%M %p"),
         'full_name': f"{l.user.first_name} {l.user.last_name}",
         'role': role,
-        'action': l.action, 
+        'action': l.action,
         'details': l.details,
         'ip': l.client_ip
     }
@@ -545,6 +545,78 @@ def add_log():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error updating log: {str(e)}"}), 500
+    
+@api_bp.route('/get-settings', methods=['GET'])
+def get_settings():
+    s = GlobalSettings.query.first()
+    
+    settings = {
+        'unit_head': s.unit_head,
+        'strict': s.enable_strict_schedule,
+        'strict_duration': s.strict_duration.strftime("%Y-%m-%d") if s.strict_duration else None,
+        'early': s.allow_early_out,
+        'overtime': s.allow_overtime,
+        'def_start': s.default_start.strftime("%H:%M"),
+        'def_end': s.default_end.strftime("%H:%M"),
+        'early_allowance': s.allowed_early_in_mins
+    }
+    
+    try:
+        return jsonify(settings)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f"Error updating log: {str(e)}"}), 500
+
+@api_bp.route('/update-settings', methods=['POST'])
+def update_settings():
+    if current_user.role not in ["superadmin", "admin"]:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
+    
+    data = request.get_json()
+    settings = GlobalSettings.query.first()
+
+    old_values = {
+        "unit_head": settings.unit_head,
+        "enable_strict_schedule": settings.enable_strict_schedule,
+        "strict_duration": settings.strict_duration,
+        "allowed_early_in_mins": settings.allowed_early_in_mins,
+        "allow_early_out": settings.allow_early_out,
+        "allow_overtime": settings.allow_overtime,
+        "default_start": settings.default_start.strftime("%H:%M") if settings.default_start else None,
+        "default_end": settings.default_end.strftime("%H:%M")
+    }
+
+    settings.unit_head = data.get('unitHeadName')
+    settings.enable_strict_schedule = data.get('enableStrictMode')
+    settings.allowed_early_in_mins = int(data.get('earlyInMinutes'))
+    settings.allow_early_out = data.get('allowEarlyOut')
+    settings.allow_overtime = data.get('allowOvertime')
+    settings.default_start = data.get('defaultStartTime')
+    settings.default_end = data.get('defaultEndTime')
+
+    if not data.get('enableStrictMode'):
+        settings.strict_duration = data.get('strictDuration') or None
+
+    # detect changed fields only
+    changes = []
+    for key, old_value in old_values.items():
+        new_value = getattr(settings, key)
+        if old_value != new_value:
+            changes.append(f"{key}: {old_value} → {new_value}")
+
+    try:
+        db.session.commit()
+
+        if changes:
+            systemLogEntry(
+                action="Updated",
+                details="; ".join(changes)
+            )
+
+        return jsonify({'success': True, 'message': 'Settings updated successfully!'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': f"Error updating settings: {str(e)}"}), 500
 
 ##### GIA API #####
 
@@ -734,6 +806,12 @@ def clock_in():
         is_split_shift = False
 
         for sched in user_schedules:
+            # Allow clock in on Sat and Sun if no schedule
+            is_weekend = today_name in ["saturday", "sunday"]
+            if is_weekend and not sched.start_time and not sched.end_time:
+                valid_schedule = global_settings.default_start
+                break
+
             if sched.start_time and sched.end_time:
                 earliest_in = (datetime.combine(datetime.today(), sched.start_time) - timedelta(minutes=special_early_in)).time()
                 if earliest_in <= now <= sched.end_time:
@@ -749,7 +827,7 @@ def clock_in():
 
         # Enforce strict schedule
         if global_settings and global_settings.enable_strict_schedule and not valid_schedule:
-            return jsonify({'success': False, 'error': 'Clock-in blocked. You\'re outside your allowed schedule window.'}), 400
+            return jsonify({'success': False, 'error': 'You\'re outside your allowed schedule window.'}), 400
 
         # Check Attendance Rules 
         today = datetime.today().date()
@@ -799,7 +877,7 @@ def clock_in():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': f'Clock-in failed: {str(e)}', 'trace': traceback.format_exc()}), 500
+        return jsonify({'success': False, 'error': f'{str(e)}', 'trace': traceback.format_exc()}), 500
     
 @api_bp.route('/clock-out', methods=['POST'])
 @login_required
@@ -819,6 +897,7 @@ def clock_out():
         now = datetime.now()
         actual_clock_out = now.time()
         today = now.date()
+        today_name = datetime.today().strftime('%A').lower()
 
         last_record = Attendance.query.filter(
             Attendance.user_id == user_id,
@@ -844,8 +923,13 @@ def clock_out():
         is_split_shift = False
 
         if strict_schedule and user_schedules:
-            # Determine applicable schedule
             for sched in user_schedules:
+                # Allow clock out on Sat and Sun if no schedule
+                is_weekend = today_name in ["saturday", "sunday"]
+                if is_weekend and not sched.start_time and not sched.end_time:
+                    schedule_end = global_settings.default_end
+                    break
+
                 if sched.start_time and sched.end_time:
                     early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
                     if early_start <= clock_in_time <= sched.end_time:
@@ -906,5 +990,5 @@ def clock_out():
         db.session.rollback()
         return jsonify({
             'success': False,
-            'error': f'Clock-out failed: {str(e)}'
+            'error': f'{str(e)}'
         }), 500

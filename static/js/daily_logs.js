@@ -12,7 +12,7 @@ function loadLogs() {
 
     fetch(`/api/get-daily-logs?today=${dateFilter}`)
         .then(res => {
-            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+            if (!res.ok) showAlert('error', res.status);
             return res.json();
         })
         .then(logs => {
@@ -84,7 +84,7 @@ tbody.addEventListener('click', e => {
 
         fetch(`/api/get-user-log/${logId}`)
             .then(res => {
-                if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+                if (!res.ok) showAlert('error', res.status);
                 return res.json();
             })
             .then(user => {
@@ -136,6 +136,7 @@ tbody.addEventListener('click', e => {
                 if (data.success) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('editLogModal'));
                     modal.hide();
+                    showAlert('success', data.message);
                     loadLogs();
                     filterLogs();
                 } else {
@@ -145,6 +146,7 @@ tbody.addEventListener('click', e => {
             .catch(err => {
                 this.innerHTML = 'Save Changes';
                 this.disabled = false;
+                showAlert('error', err);
                 console.error('Fetch error:', err);
             });
 
@@ -292,7 +294,7 @@ function filterLogs() {
         month: 'long',
         day: 'numeric'
     }) : 'today';
-    showingInfo.textContent = `Showing 1-${visibleCount} of 248 employees for ${dateStr}`;
+    // showingInfo.textContent = `Showing 1-${visibleCount} of 248 employees for ${dateStr}`;
 }
 
 // Table interactions
@@ -341,6 +343,7 @@ function setupTableInteractions() {
             setTimeout(() => {
                 this.innerHTML = '<i class="fas fa-download me-1"></i>Export';
                 this.disabled = false;
+                showAlert('success', 'Logs exported successfuly');
                 console.log('Logs exported');
             }, 2000);
         });
@@ -508,3 +511,27 @@ saveManualLogBtn.addEventListener('click', function () {
         form.reportValidity();
     }
 });
+
+// Show alert messages
+function showAlert(type, message) {
+    const alertElement = document.getElementById('successAlert');
+    
+    // Update alert content and class
+    alertElement.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    alertElement.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Show alert
+    alertElement.style.display = 'block';
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        if (alertElement.classList.contains('show')) {
+            const alert = new bootstrap.Alert(alertElement);
+            alert.close();
+        }
+    }, 5000);
+}
