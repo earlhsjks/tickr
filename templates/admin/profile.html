@@ -43,12 +43,12 @@
                         <div class="col-12">
                             <div class="d-flex align-items-center mb-4">
                                 <div class="profile-avatar me-4">
-                                    <div class="user-avatar" style="width: 80px; height: 80px; font-size: 32px;">JS</div>
+                                    <div class="user-avatar" id="initials" style="width: 80px; height: 80px; font-size: 32px;"></div>
                                 </div>
                                 <div>
-                                    <h5 class="mb-1">John Smith</h5>
-                                    <p class="text-muted mb-2">Engineering Manager</p>
-                                    <button type="button" class="btn btn-outline-primary btn-sm">
+                                    <h5 class="mb-1" id="fullName"></h5>
+                                    <p class="text-muted mb-2">Computer Center</p>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" hidden>
                                         <i class="fas fa-camera me-1"></i>Change Photo
                                     </button>
                                 </div>
@@ -62,12 +62,14 @@
                             </h6>
                         </div>
 
-                        <div class="col-md-6">
+                        <input type="hidden" id="userId" value="{{ user.user_id }}">
+
+                        <div class="col-md-6" hidden>
                             <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" value="johnsmith" required>
+                            <input type="text" class="form-control" id="username" readonly>
                             <small class="text-muted">Used for login and system identification</small>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" hidden>
                             <label for="employeeId" class="form-label">Employee ID</label>
                             <input type="text" class="form-control" id="employeeId" value="EMP-001" readonly>
                             <small class="text-muted">Cannot be changed</small>
@@ -75,24 +77,24 @@
 
                         <div class="col-md-4">
                             <label for="firstName" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="firstName" value="John" required>
+                            <input type="text" class="form-control" id="firstName"required>
                         </div>
                         <div class="col-md-4">
                             <label for="lastName" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="lastName" value="Smith" required>
+                            <input type="text" class="form-control" id="lastName"required>
                         </div>
                         <div class="col-md-4">
-                            <label for="middleName" class="form-label">Middle Name</label>
-                            <input type="text" class="form-control" id="middleName" value="Michael" placeholder="Optional">
+                            <label for="middleName" class="form-label">Middle Initial</label>
+                            <input type="text" class="form-control" id="middleName" maxlength="1">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6" hidden>
                             <label for="email" class="form-label">Email Address</label>
-                            <input type="email" class="form-control" id="email" value="john.smith@company.com" required>
+                            <input type="email" class="form-control" id="email" disabled>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6" hidden>
                             <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phone" value="+1 (555) 123-4567" placeholder="Optional">
+                            <input type="tel" class="form-control" id="phone" disabled placeholder="Optional">
                         </div>
                     </div>
                 </form>
@@ -170,7 +172,7 @@
         </div>
 
         <!-- Account Information -->
-        <div class="content-card">
+        <div class="content-card" hidden>
             <div class="card-header">
                 <h2 class="mb-0">Account Information</h2>
             </div>

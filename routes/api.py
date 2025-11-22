@@ -1,7 +1,7 @@
 from flask import (Blueprint, request, flash, 
                    send_file, request, jsonify)
 from flask_login import login_required, current_user
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 import io, traceback
 import pandas as pd
 from datetime import datetime, date, timedelta, time
@@ -618,7 +618,76 @@ def update_settings():
         db.session.rollback()
         return jsonify({'success': False, 'error': f"Error updating settings: {str(e)}"}), 500
 
+@api_bp.route('/update-profile', methods=['POST'])
+@login_required
+def update_profile():
+    data = request.get_json()
+
+    # update fields
+    current_user.first_name = data.get('firstName')
+    current_user.last_name = data.get('lastName')
+    current_user.middle_name = data.get('middleName')
+
+    try:
+        db.session.commit()
+
+        systemLogEntry(
+            action="Updated",
+            details=f"User {current_user.user_id} updated their profile"
+        )
+
+        return jsonify({
+            'success': True,
+            'updated': {
+                'firstName': current_user.first_name,
+                'lastName': current_user.last_name,
+                'middleName': current_user.middle_name
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': 'Database error occurred'}), 500
+
+@api_bp.route('/change-password', methods=['POST'])
+@login_required
+def change_password():
+    data = request.get_json()
+
+    current_password = data.get('currentPassword')
+    new_password = data.get('newPassword')
+    confirm_password = data.get('confirmPassword')
+
+    if not current_password or not new_password or not confirm_password:
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
+
+    if new_password != confirm_password:
+        return jsonify({'success': False, 'error': 'Passwords do not match'}), 400
+
+    # verify old password
+    if not check_password_hash(current_user.password, current_password):
+        return jsonify({'success': False, 'error': 'Current password is incorrect'}), 400
+
+    # update password
+    current_user.password = generate_password_hash(new_password)
+
+    try:
+        db.session.commit()
+
+        # Optional logging
+        systemLogEntry(
+            action="Password Changed",
+            details=f"User {current_user.username} updated their password"
+        )
+
+        return jsonify({'success': True}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': 'Database error occurred'}), 500
+    
+
 ##### GIA API #####
+
 
 @api_bp.route('/status', methods=['GET'])
 @login_required

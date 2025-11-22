@@ -2,29 +2,27 @@
 
 // Initialize profile functionality
 function initProfile() {
-    setupFormValidation();
     setupPasswordToggle();
     setupPasswordStrength();
     setupSaveProfile();
     setupChangePassword();
 }
 
-// Setup form validation
-function setupFormValidation() {
-    const form = document.getElementById('profileForm');
-    const inputs = form.querySelectorAll('input[required]');
-    
-    inputs.forEach(input => {
-        input.addEventListener('blur', function() {
-            validateInput(this);
-        });
-        
-        input.addEventListener('input', function() {
-            if (this.classList.contains('is-invalid')) {
-                validateInput(this);
-            }
-        });
-    });
+function loadInfo() {
+    userId = document.getElementById('userId').value;
+
+    fetch(`/api/get-user/${userId}`)
+        .then(res => {
+            if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+            return res.json();
+        })
+        .then(user => {
+            document.getElementById('firstName').value = user.first_name;
+            document.getElementById('lastName').value = user.last_name;
+            document.getElementById('middleName').value = user.middle_name || '';
+            document.getElementById('fullName').innerText = `${user.first_name} ${user.last_name}`
+            document.getElementById('initials').innerText = `${user.first_name[0]}${user.last_name[0]}`
+        })
 }
 
 // Validate individual input
@@ -197,35 +195,48 @@ function validateProfileForm() {
     return isValid;
 }
 
-// Save profile
 function saveProfile() {
-    const saveButton = document.getElementById('saveProfile');
-    
-    // Show loading state
-    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
-    saveButton.disabled = true;
-    
-    // Collect form data
+    const btn = document.getElementById('saveProfile');
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+    btn.disabled = true;
+
     const profileData = {
         username: document.getElementById('username').value,
         firstName: document.getElementById('firstName').value,
         lastName: document.getElementById('lastName').value,
-        middleName: document.getElementById('middleName').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value
+        middleName: document.getElementById('middleName').value
+        // email: document.getElementById('email').value,
+        // phone: document.getElementById('phone').value
     };
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Reset button state
-        saveButton.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
-        saveButton.disabled = false;
-        
-        // Show success message
+
+    fetch('/api/update-profile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profileData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+        btn.disabled = false;
+
+        if (!data.success) {
+            showAlert('danger', data.error || "Something went wrong");
+            return;
+        }
+
+        loadInfo();
         showAlert('success', 'Profile updated successfully!');
-        
-        console.log('Profile saved:', profileData);
-    }, 1500);
+        console.log('Profile saved:', data.updated);
+    })
+    .catch(err => {
+        btn.innerHTML = '<i class="fas fa-save me-2"></i>Save Changes';
+        btn.disabled = false;
+        showAlert('danger', 'Network error, try again.');
+        console.log(err);
+    });
 }
 
 // Setup change password functionality
@@ -266,40 +277,55 @@ function validatePasswordForm() {
     return true;
 }
 
-// Change password
 function changePassword() {
-    const changePasswordBtn = document.getElementById('changePassword');
-    
-    // Show loading state
-    changePasswordBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing...';
-    changePasswordBtn.disabled = true;
-    
-    // Simulate API call
-    setTimeout(() => {
-        // Reset button state
-        changePasswordBtn.innerHTML = '<i class="fas fa-key me-2"></i>Change Password';
-        changePasswordBtn.disabled = false;
-        
-        // Clear password fields
+    const btn = document.getElementById('changePassword');
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Changing...';
+    btn.disabled = true;
+
+    fetch('/api/change-password', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            currentPassword,
+            newPassword,
+            confirmPassword
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        btn.innerHTML = '<i class="fas fa-key me-2"></i>Change Password';
+        btn.disabled = false;
+
+        if (!data.success) {
+            showAlert('danger', data.error || "Something went wrong");
+            return;
+        }
+
+        // Clear fields
         document.getElementById('currentPassword').value = '';
         document.getElementById('newPassword').value = '';
         document.getElementById('confirmPassword').value = '';
-        
-        // Hide strength indicator
         document.getElementById('passwordStrength').style.display = 'none';
-        
-        // Remove validation classes
-        const passwordInputs = document.querySelectorAll('#passwordForm input');
-        passwordInputs.forEach(input => {
-            input.classList.remove('is-valid', 'is-invalid');
-        });
-        
-        // Show success message
+
+        const inputs = document.querySelectorAll('#passwordForm input');
+        inputs.forEach(i => i.classList.remove('is-valid', 'is-invalid'));
+
         showAlert('success', 'Password changed successfully!');
-        
-        console.log('Password changed successfully');
-    }, 1500);
+    })
+    .catch(err => {
+        btn.innerHTML = '<i class="fas fa-key me-2"></i>Change Password';
+        btn.disabled = false;
+        showAlert('danger', 'Network error, try again.');
+        console.log(err);
+    });
 }
+
 
 // Show alert messages
 function showAlert(type, message) {
@@ -328,6 +354,7 @@ function showAlert(type, message) {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initProfile();
+    loadInfo();
 });
 
 // Handle keyboard shortcuts

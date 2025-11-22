@@ -330,6 +330,15 @@ def update_strict_mode():
         db.session.add(entry)
         db.session.commit()
 
+# ADMIN PROFILE PAGE
+@admin_bp.route('/profile')
+def profile():
+    if current_user.role not in ["superadmin", "admin"]:
+        flash("Access Denied!", "danger")
+        return render_template('auth/login.html')
+
+    return render_template("admin/profile.html", user=current_user)
+
 # AUDIT LOG PAGE
 @admin_bp.route('/audit-logs')
 @login_required
