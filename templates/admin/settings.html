@@ -66,8 +66,8 @@
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <label class="form-label fw-medium">Enable Strict Mode</label>
-                                        <div class="text-muted small">Enforce strict time tracking rules</div>
+                                        <label class="form-label fw-medium">Strict Mode</label>
+                                        <div class="text-muted small">Enforce strict schedule rules</div>
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="enableStrictMode">
@@ -75,9 +75,9 @@
                                 </div>
                             </div>
                             <div class="col-md-6" id="strictModeOptions" style="display: none;">
-                                <label for="strictModeEndDate" class="form-label">Open Mode End Date (Optional)</label>
+                                <label for="strictModeEndDate" class="form-label">Disabled Until (Optional)</label>
                                 <input type="date" class="form-control" id="strictModeEndDate">
-                                <small class="text-muted">Leave empty for permanent open mode</small>
+                                <small class="text-muted">Leave empty to disable strict mode permanently</small>
                             </div>
                         </div>
 
@@ -87,7 +87,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-label fw-medium">Allow Early In</label>
-                                        <div class="text-muted small">Permit employees to clock in before start time</div>
+                                        <div class="text-muted small">Permit GIA to clock in before start time</div>
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="allowEarlyIn" checked disabled>
@@ -106,7 +106,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-label fw-medium">Allow Early Out</label>
-                                        <div class="text-muted small">Permit employees to clock out before end time</div>
+                                        <div class="text-muted small">Permit GIA to clock out before end time</div>
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="allowEarlyOut">
@@ -121,7 +121,7 @@
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
                                         <label class="form-label fw-medium">Allow Overtime</label>
-                                        <div class="text-muted small">Enable overtime tracking and requests</div>
+                                        <div class="text-muted small">Enable overtime clock out</div>
                                     </div>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" id="allowOvertime">

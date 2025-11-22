@@ -44,7 +44,7 @@ async function loadSchedules() {
             scheduleMap[s.user_id][s.day] = `${s.start_time || ''} - ${s.end_time || ''}`;
         });
 
-        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const tbody = document.getElementById('scheduleTableBody');
         tbody.innerHTML = '';
 
