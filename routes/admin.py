@@ -326,6 +326,7 @@ def update_strict_mode():
             settings.strict_duration = None
 
             entry = Logs(
+                user_id="admin",
                 action="Update",
                 details=f"SYSTEM: Open mode expired on {today}, strict mode reactivated.",
                 timestamp=datetime.now(),
