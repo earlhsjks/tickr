@@ -315,20 +315,24 @@ def settings():
 # auto-disable strict mode if expired
 def update_strict_mode():
     settings = GlobalSettings.query.first()
-    if not settings or not settings.enable_strict_schedule or not settings.strict_duration:
+    if not settings or settings.strict_duration is None:
         return
 
-    if datetime.now().date() >= settings.strict_duration:
-        settings.enable_strict_schedule = True
-        settings.strict_duration = None # open mode duration
+    today = datetime.now().date()
 
-        entry = Logs(
-            action="Update",
-            details=f"SYSTEM: Open mode expired on {datetime.now().date()}, and was disabled automatically.",
-            timestamp=datetime.now(),
-        )
-        db.session.add(entry)
-        db.session.commit()
+    if not settings.enable_strict_schedule:
+        if today >= settings.strict_duration:
+            settings.enable_strict_schedule = True
+            settings.strict_duration = None
+
+            entry = Logs(
+                action="Update",
+                details=f"SYSTEM: Open mode expired on {today}, strict mode reactivated.",
+                timestamp=datetime.now(),
+            )
+            db.session.add(entry)
+            db.session.commit()
+
 
 # ADMIN PROFILE PAGE
 @admin_bp.route('/profile')
