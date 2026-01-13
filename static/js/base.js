@@ -73,6 +73,10 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+const sidebarToggler = document.getElementById('sidebarToggler');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+const body = document.body;
 
 sidebarToggler.addEventListener('click', () => {
     if (isMobile()) {
@@ -86,11 +90,6 @@ sidebarToggler.addEventListener('click', () => {
         document.querySelector('.main').classList.toggle('sidebar-collapsed');
     }
 });
-
-const sidebarToggler = document.getElementById('sidebarToggler');
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-const body = document.body;
 
 function isMobile() {
     return window.innerWidth <= 768;
@@ -123,8 +122,6 @@ window.addEventListener('resize', () => {
         body.style.overflow = '';
     }
 });
-
-
 
 document.addEventListener("DOMContentLoaded", function () {
     const currentUrl = window.location.href;
