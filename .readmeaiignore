@@ -1,0 +1,56 @@
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.env/
+.venv/
+env/    
+ENV/
+
+# IDE / editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node / frontend dependencies
+node_modules/
+bower_components/
+dist/
+build/
+
+# Logs / temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git / version control
+.git/
+.gitignore
+.gitattributes
+
+# Docker / container files
+docker-compose.override.yml
+*.dockerfile
+
+# Other unnecessary large files
+*.sqlite
+*.db
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.exe
+*.dll
+*.so

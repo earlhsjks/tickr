@@ -49,7 +49,7 @@ document.getElementById('employeeForm').addEventListener('submit', async (e) => 
         const data = await res.json();
 
         if (!res.ok) {
-            // console.log(data.error || 'Login failed!');
+            console.log(data.error || 'Login failed!');
             giaInput.style.border = '1px solid #dc3545'
             giaError.textContent = 'No account found with that ID.'
             return;
