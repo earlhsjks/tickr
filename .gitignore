@@ -1,3 +1,6 @@
+# Git
+.gitignore
+
 # Virtual environments
 venv/
 .third-party/
@@ -26,3 +29,6 @@ migrations/
 
 # Logs
 logs/
+
+# Readmeai
+.readmeaiignore
