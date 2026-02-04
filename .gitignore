@@ -26,3 +26,7 @@ migrations/
 
 # Logs
 logs/
+
+# Local
+scripts/
+packages/
