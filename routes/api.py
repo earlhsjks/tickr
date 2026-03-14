@@ -822,7 +822,7 @@ def gia_data():
 
 # Whitelist verification
 def ip_whitelist():
-    if current_user.is_authenticated and current_user.user_id in SPECIAL_IDS:
+    if current_user.is_authenticated and current_user.user_id not in SPECIAL_IDS:
         client_ip = get_client_ip()
         if client_ip not in WHITELIST:
             return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400

@@ -101,7 +101,7 @@ SPECIAL_IDS = {
 def ip_whitelist():
     def wrapper(fn):
         def decorated(*args, **kwargs):
-            if current_user.is_authenticated and current_user.user_id in SPECIAL_IDS:
+            if current_user.is_authenticated and current_user.user_id not in SPECIAL_IDS:
                 client_ip = get_client_ip()
                 if client_ip not in WHITELIST:
                     return redirect(url_for('gia.blocked'))
