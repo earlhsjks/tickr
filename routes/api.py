@@ -20,7 +20,7 @@ def systemLogEntry(action, details):
             details=details,
             user_id=getattr(current_user, 'user_id', None),
             timestamp=datetime.now(),
-            client_ip=request.remote_addr
+            client_ip=get_client_ip()
 
         )
         db.session.add(entry)
