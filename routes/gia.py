@@ -70,18 +70,39 @@ def check_attendance_flags(attendance_entry):
 
     db.session.commit()
 
+# Client IP Resolver
+def get_client_ip():
+    # Cloudflare real client IP
+    cf_ip = request.headers.get("CF-Connecting-IP")
+    if cf_ip:
+        return cf_ip
+
+    # Generic proxy header
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+
+    # Direct connection
+    return request.remote_addr
+
 WHITELIST = {
+    "localhost",
+    "127.0.0.1",
     "172.16.255.237", # GIA Station
     "172.16.255.236", # Printing 1
     "172.16.254.255", # Printing 2
+}
+
+SPECIAL_IDS = {
+    "2024998"
 }
 
 # Decorator to apply to specific routes
 def ip_whitelist():
     def wrapper(fn):
         def decorated(*args, **kwargs):
-            if not current_user.is_authenticated or current_user.user_id != "2024998":
-                client_ip = request.remote_addr
+            if not current_user.is_authenticated or current_user.user_id in SPECIAL_IDS:
+                client_ip = get_client_ip()
                 if client_ip not in WHITELIST:
                     return redirect(url_for('gia.blocked'))
             return fn(*args, **kwargs)

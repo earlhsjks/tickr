@@ -6,7 +6,7 @@ import io, traceback
 import pandas as pd
 from datetime import datetime, date, timedelta, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
-from routes.gia import WHITELIST
+from routes.gia import WHITELIST, SPECIAL_IDS, get_client_ip
 # from flask_apscheduler import APScheduler
 
 # Create a Blueprint for admin routes
@@ -822,8 +822,8 @@ def gia_data():
 
 # Whitelist verification
 def ip_whitelist():
-    if not current_user.is_authenticated or current_user.user_id != "2024998":
-        client_ip = request.remote_addr
+    if not current_user.is_authenticated or current_user.user_id in SPECIAL_IDS:
+        client_ip = get_client_ip()
         if client_ip not in WHITELIST:
             return({'success': False, 'error': 'Access denied. Your device isn’t allowed to use this feature.'}), 400
         
