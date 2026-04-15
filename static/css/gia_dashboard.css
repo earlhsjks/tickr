@@ -115,17 +115,20 @@ body {
   background: #dbeafe;
   color: #2563eb;
 }
+
 .stat-card.green .stat-icon {
   background: #d1fae5;
   color: #059669;
 }
+
 .stat-card.yellow .stat-icon {
   background: #fef3c7;
   color: #d97706;
 }
-.stat-card.red .stat-icon {
-  background: #fee2e2;
-  color: #b91c1c;
+
+.stat-card.indigo .stat-icon {
+    background-color: #e0cffc;
+    color: #6610f2;
 }
 
 /* ---------- CLOCK SECTION ---------- */

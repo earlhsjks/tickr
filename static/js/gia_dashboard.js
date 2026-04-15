@@ -3,10 +3,16 @@ const statusText = document.getElementById("statusText");
 const successModal = new bootstrap.Modal(document.getElementById("clockSuccessModal"));
 const errorModal = new bootstrap.Modal(document.getElementById("clockErrorModal"));
 const successTime = document.getElementById("successTime");
-const currentTimeDisplay = document.getElementById("currentTime"); // Global clock display reference
+const currentTimeDisplay = document.getElementById("currentTime");
 const monthFilter = document.getElementById("monthFilter");
 
 let isClockedIn = false;
+let is_grace = false;
+
+// Variables for Live Progress Tracking
+let baseTodayHours = 0;
+let activeClockInTime = null;
+let liveProgressInterval = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
     const updateClock = () => {
@@ -19,8 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadRecords();
     await checkButton();
-    await betaPopupCheck()
-;});
+    manageLiveProgress(); // Start the live tracker on load
+    // await betaPopupCheck();
+});
 
 async function checkButton() {
     const userId = clockBtn.getAttribute('data-user-id');
@@ -36,10 +43,10 @@ async function checkButton() {
             : '<i class="fas fa-play me-2"></i>Clock In';
 
         if (isClockedIn && !is_grace) {
-            statusText.textContent = 'Clocked In'
+            statusText.textContent = 'Clocked In';
             statusText.style.color = "#059669";
         } else {
-            statusText.textContent = 'Clocked Out'
+            statusText.textContent = 'Clocked Out';
             statusText.style.color = "";
         }
     } catch (err) {
@@ -52,14 +59,14 @@ async function checkButton() {
     showPage();
 }
 
-// --- Function to Load Records ---
 async function loadRecords() {
     try {
         const userId = clockBtn.getAttribute('data-user-id');
         const month = monthFilter.value;
         const response = await fetch(
-        `/api/gia-data?user_id=${encodeURIComponent(userId)}&month=${encodeURIComponent(month)}`
+            `/api/gia-data?user_id=${encodeURIComponent(userId)}&month=${encodeURIComponent(month)}`
         );
+
         if (!response.ok) {
             throw new Error(`Failed to load records: ${response.status}`);
         }
@@ -70,14 +77,30 @@ async function loadRecords() {
         const tbody = document.getElementById('activityTableBody');
         tbody.innerHTML = '';
 
-        // Summaries
-        document.getElementById('summaryHours').innerText = summary.total_hours;
-        document.getElementById('summaryOnTime').innerText = summary.total_on_time;
-        document.getElementById('summaryLate').innerText = summary.total_late;
-        document.getElementById('summaryAbsences').innerText = summary.total_absences;
+        const totalRendered = parseFloat(summary.total_hours || 0);
+        const targetHours = parseFloat(summary.target_hours || 60);
 
-        // Simplified record rendering
+        // Save the base hours completed today (excluding the active running shift)
+        baseTodayHours = parseFloat(summary.today_hours) || 0;
+        const activeDays = parseInt(summary.active_days || 0);
+        const remainingHours = Math.max(0, targetHours - totalRendered);
+
+        document.getElementById('summaryTotalHours').innerText = totalRendered.toFixed(2);
+        const targetEl = document.getElementById('targetHours');
+        if (targetEl) targetEl.innerText = targetHours;
+        document.getElementById('summaryRemaining').innerText = remainingHours.toFixed(2);
+        document.getElementById('summaryActiveDays').innerText = activeDays;
+
+        // Reset active clock in time
+        activeClockInTime = null;
+
         if (records && records.length > 0) {
+            // Check if the most recent record is an active shift (has clock_in but no clock_out)
+            const latest = records[0];
+            if (latest.clock_in && (!latest.clock_out || latest.clock_out === '-')) {
+                activeClockInTime = latest.clock_in; // e.g., "14:30:00"
+            }
+
             records.forEach(record => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -96,8 +119,41 @@ async function loadRecords() {
         console.error('Error loading records:', err);
         document.getElementById("errorTitle").textContent = "Error Loading Records";
         document.getElementById("errorMessage").textContent = "Could not fetch data. Please try again.";
-        errorModal.show(); // Use global errorModal
+        errorModal.show();
     }
+}
+
+// --- NEW FUNCTION: Live Progress Tracker ---
+function manageLiveProgress() {
+    if (liveProgressInterval) clearInterval(liveProgressInterval);
+
+    const summaryTodayEl = document.getElementById('summaryToday');
+
+    const updateProgress = () => {
+        if (isClockedIn && activeClockInTime) {
+            // Parse the clock-in time string (assumes 24h format like "14:30:00")
+            const now = new Date();
+            const [hours, minutes, seconds] = activeClockInTime.split(':').map(Number);
+
+            const clockInDate = new Date();
+            clockInDate.setHours(hours, minutes, seconds || 0, 0);
+
+            let diffMs = now - clockInDate;
+            if (diffMs < 0) diffMs = 0; // Sanity check for edge cases
+
+            // Convert milliseconds to decimal hours
+            const liveSessionHours = diffMs / (1000 * 60 * 60);
+            const totalLive = baseTodayHours + liveSessionHours;
+
+            summaryTodayEl.innerText = totalLive.toFixed(2);
+        } else {
+            // If not clocked in, just show the static base hours from the database
+            summaryTodayEl.innerText = baseTodayHours.toFixed(2);
+        }
+    };
+
+    updateProgress(); // Run immediately
+    liveProgressInterval = setInterval(updateProgress, 10000); // Update the visual every 10 seconds
 }
 
 clockBtn.addEventListener("click", async () => {
@@ -107,13 +163,13 @@ clockBtn.addEventListener("click", async () => {
     const time = now.toLocaleTimeString();
     const userId = clockBtn.getAttribute('data-user-id');
 
-    const endpoint = isClockedIn && !is_grace 
-    ? '/api/clock-out' 
-    : '/api/clock-in';
-    
-    const actionText = isClockedIn && !is_grace 
-    ? 'Clock Out' 
-    : 'Clock In';
+    const endpoint = isClockedIn && !is_grace
+        ? '/api/clock-out'
+        : '/api/clock-in';
+
+    const actionText = isClockedIn && !is_grace
+        ? 'Clock Out'
+        : 'Clock In';
 
     try {
         const res = await fetch(endpoint, {
@@ -133,6 +189,7 @@ clockBtn.addEventListener("click", async () => {
 
             await loadRecords();
             await checkButton();
+            manageLiveProgress(); // Restart/Update the tracker based on new state
         } else {
             document.getElementById("errorTitle").textContent = `${actionText} Failed!`;
             document.getElementById("errorMessage").textContent =
@@ -141,10 +198,10 @@ clockBtn.addEventListener("click", async () => {
         }
     } catch (err) {
         console.error("Clock in/out error:", err);
-        
+
         const errorTitle = document.getElementById("errorTitle");
         const errorMessage = document.getElementById("errorMessage");
-        
+
         errorTitle.textContent = "Network Error";
         errorMessage.textContent = "Unable to reach the server. Reloading in seconds...";
 
@@ -167,7 +224,7 @@ clockBtn.addEventListener("click", async () => {
 
 monthFilter.addEventListener("change", () => {
     loadRecords();
-})
+});
 
 function showPage() {
     const main = document.querySelector('.main-container');
@@ -175,7 +232,7 @@ function showPage() {
     main.classList.add('visible');
 }
 
-betaPopupCheck = async () => {
+const betaPopupCheck = async () => {
     const isFirstVisit = localStorage.getItem('betaNoticeShown') !== 'true';
 
     if (isFirstVisit) {
@@ -184,4 +241,61 @@ betaPopupCheck = async () => {
 
         localStorage.setItem('betaNoticeShown', 'true');
     }
+};
+
+// --- NEW FUNCTION: Live Progress Tracker ---
+function manageLiveProgress() {
+    if (liveProgressInterval) clearInterval(liveProgressInterval);
+
+    const summaryTodayEl = document.getElementById('summaryToday');
+
+    // Helper to safely parse both "14:30" and "02:30 PM" formats
+    const parseTimeStr = (timeStr) => {
+        if (!timeStr) return null;
+
+        // Regex to extract hours, minutes, seconds, and AM/PM
+        const match = String(timeStr).match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+        if (!match) return null;
+
+        let hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        const seconds = match[3] ? parseInt(match[3], 10) : 0;
+        const ampm = match[4] ? match[4].toUpperCase() : null;
+
+        // Convert 12-hour to 24-hour format if AM/PM is present
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+
+        const d = new Date();
+        d.setHours(hours, minutes, seconds, 0);
+        return d;
+    };
+
+    const updateProgress = () => {
+        // Ensure baseTodayHours is a safe number
+        const safeBaseHours = parseFloat(baseTodayHours) || 0;
+
+        if (isClockedIn && activeClockInTime && activeClockInTime !== '-') {
+            const now = new Date();
+            const clockInDate = parseTimeStr(activeClockInTime);
+
+            if (clockInDate) {
+                let diffMs = now - clockInDate;
+                if (diffMs < 0) diffMs = 0; // Prevent negative time if clock is weird
+
+                // Convert milliseconds to decimal hours
+                const liveSessionHours = diffMs / (1000 * 60 * 60);
+                const totalLive = safeBaseHours + liveSessionHours;
+
+                summaryTodayEl.innerText = totalLive.toFixed(2);
+                return;
+            }
+        }
+
+        // If not clocked in (or time parsing fails), fallback to static hours
+        summaryTodayEl.innerText = safeBaseHours.toFixed(2);
+    };
+
+    updateProgress(); // Run immediately
+    liveProgressInterval = setInterval(updateProgress, 10000); // Update every 10 seconds
 }

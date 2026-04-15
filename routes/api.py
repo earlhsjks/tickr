@@ -684,9 +684,16 @@ def change_password():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': 'Database error occurred'}), 500
-    
 
-##### GIA API #####
+
+#    █████████  █████   █████████        █████████   ███████████  █████
+#   ███░░░░░███░░███   ███░░░░░███      ███░░░░░███ ░░███░░░░░███░░███ 
+#  ███     ░░░  ░███  ░███    ░███     ░███    ░███  ░███    ░███ ░███ 
+# ░███          ░███  ░███████████     ░███████████  ░██████████  ░███ 
+# ░███    █████ ░███  ░███░░░░░███     ░███░░░░░███  ░███░░░░░░   ░███ 
+# ░░███  ░░███  ░███  ░███    ░███     ░███    ░███  ░███         ░███ 
+#  ░░█████████  █████ █████   █████    █████   █████ █████        █████
+#   ░░░░░░░░░  ░░░░░ ░░░░░   ░░░░░    ░░░░░   ░░░░░ ░░░░░        ░░░░░ 
 
 
 @api_bp.route('/status', methods=['GET'])
@@ -782,7 +789,8 @@ def serialize_records(s):
 def gia_data():
     user_id = request.args.get('user_id')
 
-    if current_user.user_id != user_id:
+    # Ensure type matching for the comparison just in case user_id from args is a string
+    if str(current_user.user_id) != str(user_id):
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
     month = request.args.get('month')
@@ -793,26 +801,43 @@ def gia_data():
         db.extract('year', Attendance.date) == year,
         db.extract('month', Attendance.date) == month,
     ).order_by(Attendance.date.desc(), Attendance.id.desc()).all()
+    
     user_records = [serialize_records(r) for r in records]
 
-    t_hours = 0.0
     sum_hours = 0.0
+    today_hours = 0.0
+    active_dates = set() # Using a set to easily count unique days worked
+    
+    current_date = date.today()
+
     for record in records:
+        t_hours = 0.0
         if record.clock_in and record.clock_out:
-            clock_in_dt = datetime.combine(date.today(), record.clock_in)
-            clock_out_dt = datetime.combine(date.today(), record.clock_out)
+            # Better to use record.date rather than date.today() for historical accuracy
+            clock_in_dt = datetime.combine(record.date, record.clock_in)
+            clock_out_dt = datetime.combine(record.date, record.clock_out)
             time_difference = clock_out_dt - clock_in_dt
             t_hours = round(time_difference.total_seconds() / 3600, 2)
-        else:
-            t_hours = 0
-    
+        
         sum_hours += t_hours
+
+        # Count as an active day if they actually rendered time
+        if t_hours > 0:
+            active_dates.add(record.date)
+
+        # Calculate progress for the current day
+        if record.date == current_date:
+            today_hours += t_hours
+
+    # If you eventually add a 'target_hours' column to your User model, 
+    # you can replace the hardcoded 60 with: getattr(current_user, 'target_hours', 60)
+    target_hours = 60
 
     summary = {
         'total_hours': round(sum_hours, 2),
-        'total_on_time': 0,
-        'total_late': 0,
-        'total_absences': 0
+        'target_hours': target_hours,
+        'today_hours': round(today_hours, 2),
+        'active_days': len(active_dates)
     }
 
     return jsonify({

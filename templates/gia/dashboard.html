@@ -21,9 +21,10 @@
                 <p>View your attendance and work summary</p>
             </div>
             <div class="header-right">
-                <button class="btn btn-warning fw-semibold px-3 py-2 beta-btn me-1" data-bs-toggle="modal" data-bs-target="#betaNoticeModal">
-                <i class="fas fa-flask me-1"></i> Beta
-                </button>
+                <!-- <button class="btn btn-warning fw-semibold px-3 py-2 beta-btn me-1" data-bs-toggle="modal"
+                    data-bs-target="#betaNoticeModal">
+                    <i class="fas fa-flask me-1"></i> Beta
+                </button> -->
                 <a class="btn logout-btn" href="{{ url_for('auth.logout') }}">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </a>
@@ -35,29 +36,29 @@
             <div class="stat-card blue">
                 <div class="stat-icon"><i class="fas fa-clock"></i></div>
                 <div>
-                    <h4>Total Hours</h4>
-                    <p><span id="summaryHours">-</span> hrs</p>
-                </div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                <div>
-                    <h4>On Time</h4>
-                    <p><span id="summaryOnTime">-</span> days</p>
+                    <h4>Rendered Hours</h4>
+                    <p><span id="summaryTotalHours">-</span> hrs</p>
                 </div>
             </div>
             <div class="stat-card yellow">
                 <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
                 <div>
-                    <h4>Late</h4>
-                    <p><span id="summaryLate">-</span> days</p>
+                    <h4>Hours Remaining</h4>
+                    <p><span id="summaryRemaining">-</span> hrs</p>
                 </div>
             </div>
-            <div class="stat-card red">
-                <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="fas fa-tasks"></i></div>
                 <div>
-                    <h4>Absences</h4>
-                    <p><span id="summaryAbsences">-</span> day</p>
+                    <h4>Today's Progress</h4>
+                    <p><span id="summaryToday">-</span> hrs</p>
+                </div>
+            </div>
+            <div class="stat-card indigo">
+                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                <div>
+                    <h4>Active Days</h4>
+                    <p><span id="summaryActiveDays">-</span> days</p>
                 </div>
             </div>
         </section>
