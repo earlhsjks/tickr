@@ -831,7 +831,7 @@ def gia_data():
 
     # If you eventually add a 'target_hours' column to your User model, 
     # you can replace the hardcoded 60 with: getattr(current_user, 'target_hours', 60)
-    target_hours = 60
+    target_hours = 100
 
     summary = {
         'total_hours': round(sum_hours, 2),
