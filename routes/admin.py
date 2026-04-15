@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, date, time
 from models.models import db, User, Attendance, Schedule, GlobalSettings, Logs
 from sqlalchemy.exc import IntegrityError
 from flask_apscheduler import APScheduler
+from sqlalchemy import func
 
 # Create a Blueprint for admin routes
 admin_bp = Blueprint('admin', __name__)
@@ -23,18 +24,115 @@ def logout():
     session.clear()  # Clears session data
     return render_template('auth/login.html')  # Redirect to login page
 
-# Dashboard
+def get_time_ago(log_time):
+    now = datetime.now()
+    diff = now - log_time
+    seconds = diff.total_seconds()
+    
+    if seconds < 60:
+        return "Just now"
+    elif seconds < 3600:
+        mins = int(seconds // 60)
+        return f"{mins} minute{'s' if mins != 1 else ''} ago"
+    elif seconds < 86400:
+        hours = int(seconds // 3600)
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+    else:
+        days = int(seconds // 86400)
+        return f"{days} day{'s' if days != 1 else ''} ago"
+
+from datetime import datetime, timedelta
+from flask import render_template, redirect, url_for, flash
+from sqlalchemy import func
+# Ensure your models are imported: db, User, Attendance, Logs
+
+def get_time_ago(log_time):
+    """Converts a datetime object into a relative 'X minutes ago' string."""
+    now = datetime.now()
+    diff = now - log_time
+    seconds = diff.total_seconds()
+    
+    if seconds < 60:
+        return "Just now"
+    elif seconds < 3600:
+        mins = int(seconds // 60)
+        return f"{mins} minute{'s' if mins != 1 else ''} ago"
+    elif seconds < 86400:
+        hours = int(seconds // 3600)
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+    else:
+        days = int(seconds // 86400)
+        return f"{days} day{'s' if days != 1 else ''} ago"
+
+
 @admin_bp.route('/dashboard')
 @login_required
 def dashboard():
+    # Security Check
     if current_user.role not in ["superadmin", "admin"]:
         flash("Access Denied!", "danger")
         return redirect(url_for('auth_bp.login')) 
     
-    total_employees = User.query.filter(User.role != "superadmin").count()
-
     today = datetime.now().date()
+
+    # ==========================================
+    # 1. NEW METRICS (Employees, Present, Logs)
+    # ==========================================
     
+    total_employees = User.query.filter(User.role.notin_(["superadmin", "admin"])).count()
+    
+    on_duty_list_today = db.session.query(func.count(func.distinct(Attendance.user_id))).filter(
+        Attendance.date == today,
+        Attendance.clock_in.isnot(None)
+    ).scalar() or 0
+
+    # TODO: Update these based on your specific models
+    late_employees = 0 
+    pending_approvals = 0
+
+    # Fetch the 3 most recent activities, excluding superadmins
+    recent_logs = db.session.query(Logs, User).join(
+        User, Logs.user_id == User.user_id
+    ).filter(
+        User.role != 'superadmin'  # Exclude superadmin logs
+    ).order_by(
+        Logs.timestamp.desc()
+    ).limit(3).all() # Limit to exactly 3
+
+    recent_activities = []
+    for log, user in recent_logs:
+        # Extract initials safely
+        first_init = user.first_name[0].upper() if user.first_name else ""
+        last_init = user.last_name[0].upper() if user.last_name else ""
+        
+        # Determine status badge styling
+        status_text = "Recorded"
+        status_class = "neutral"
+        action_lower = log.action.lower() if log.action else ""
+        
+        if "clock in" in action_lower:
+            status_text = "Clock In"
+            status_class = "on-time" 
+        elif "clock out" in action_lower:
+            status_text = "Clock Out"
+            status_class = "completed"
+        elif "error" in action_lower or "failed" in action_lower:
+            status_text = "Alert"
+            status_class = "negative"
+
+        recent_activities.append({
+            'initials': f"{first_init}{last_init}",
+            'name': f"{user.first_name} {user.last_name}",
+            'action': log.details or log.action, 
+            'time': get_time_ago(log.timestamp),
+            'status': status_text,
+            'status_class': status_class
+        })
+
+    # ==========================================
+    # 2. OLD METRICS (Hours & Compliance Math)
+    # ==========================================
+
     completed_records = Attendance.query.filter(
         Attendance.date == today,
         Attendance.clock_out.isnot(None)
@@ -48,41 +146,80 @@ def dashboard():
     overtime_threshold = timedelta(hours=4)
     
     for record in completed_records:
-        dt_in = datetime.combine(record.date, record.clock_in)
-        dt_out = datetime.combine(today, record.clock_out)
-        
-        duration = dt_out - dt_in
-        total_seconds_worked += duration.total_seconds()
+        if record.clock_in and record.clock_out:
+            dt_in = datetime.combine(record.date, record.clock_in)
+            dt_out = datetime.combine(today, record.clock_out)
+            
+            duration = dt_out - dt_in
+            total_seconds_worked += duration.total_seconds()
 
-        if duration > overtime_threshold:
-            overtime_duration = duration - overtime_threshold
-            total_overtime_seconds += overtime_duration.total_seconds()
+            if duration > overtime_threshold:
+                overtime_duration = duration - overtime_threshold
+                total_overtime_seconds += overtime_duration.total_seconds()
 
-        if duration <= compliance_limit:
-            compliant_shifts_count += 1
+            if duration <= compliance_limit:
+                compliant_shifts_count += 1
 
     total_hours_worked = total_seconds_worked / 3600
-    overtime_hours = total_overtime_seconds / 3600
+    overtime_hours = round(total_overtime_seconds / 3600, 2)
 
     num_completed_shifts = len(completed_records)
     if num_completed_shifts > 0:
-        average_hours_worked = total_hours_worked / num_completed_shifts
+        average_hours_worked = round(total_hours_worked / num_completed_shifts, 2)
+        # Convert compliance to a percentage
+        compliance_rate = round((compliant_shifts_count / num_completed_shifts) * 100)
     else:
-        average_hours_worked = 0
-        
-    average_hours_worked = round(average_hours_worked, 2)
-    overtime_hours = round(overtime_hours, 2)
+        average_hours_worked = 0.0
+        compliance_rate = 0
 
-    compliance_hours = compliant_shifts_count 
+    # ==========================================
+    # 3. TREND CALCULATIONS
+    # ==========================================
+
+    # Average Hours Logic
+    avg_diff = round(average_hours_worked - 4, 2)
+    average_trend_class = "positive" if average_hours_worked >= 4 else "negative"
+    average_trend_text = f"+{avg_diff} hrs" if avg_diff > 0 else f"{avg_diff} hrs"
+
+    # Overtime Logic
+    overtime_trend_class = "negative" if overtime_hours > 0 else "positive" # usually overtime is "negative" for employers, flip if needed
+    overtime_trend_text = f"+{overtime_hours} hrs" if overtime_hours > 0 else f"{overtime_hours} hrs"
+
+    # Compliance Logic
+    comp_diff = compliance_rate - 75
+    compliance_trend_class = "positive" if compliance_rate >= 75 else "negative"
+    compliance_trend_text = f"+{comp_diff}%" if comp_diff > 0 else f"{comp_diff}%"
+
+    # ==========================================
+    # 4. RENDER TEMPLATE
+    # ==========================================
 
     return render_template(
         'admin/dashboard.html',
+        
+        # Current User & Basics
         user=current_user,
+        current_time=datetime.now().strftime("%A, %B %d, %Y"),
+        
+        # Summary Counters
         total_employees=total_employees,
-        average_hours_worked=average_hours_worked, 
-        overtime_hours=overtime_hours,             
-        compliance_hours=compliance_hours,
-        current_time = datetime.now().strftime("%A, %B %d, %Y"),
+        on_duty_list_today=on_duty_list_today,
+        late_employees=late_employees,
+        pending_approvals=pending_approvals,
+        recent_activities=recent_activities,
+        
+        # Shift Performance Metrics
+        average_hours_worked=average_hours_worked,
+        average_trend_class=average_trend_class,
+        average_trend_text=average_trend_text,
+        
+        overtime_hours=overtime_hours,
+        overtime_trend_class=overtime_trend_class,
+        overtime_trend_text=overtime_trend_text,
+        
+        compliance_rate=compliance_rate,
+        compliance_trend_class=compliance_trend_class,
+        compliance_trend_text=compliance_trend_text,
     )
 
 # VIEW USERS PAGE

@@ -676,14 +676,14 @@ def change_password():
         # Optional logging
         systemLogEntry(
             action="Password Changed",
-            details=f"User {current_user.username} updated their password"
+            details=f"User {current_user.user_id} updated their password"
         )
 
         return jsonify({'success': True}), 200
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': 'Database error occurred'}), 500
+        return jsonify({'success': False, 'error': f'Database error occurred: {str(e)}'}), 500
 
 
 #    █████████  █████   █████████        █████████   ███████████  █████

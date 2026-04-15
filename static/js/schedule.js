@@ -311,12 +311,15 @@ function setupModal() {
                 this.disabled = false;
                 console.log('Schedule updated successfully!');
                 bootstrap.Modal.getInstance(document.getElementById('scheduleEditModal')).hide();
+                showAlert('success', 'Schedule updated successfully!');
                 loadSchedules();
             } else {
                 console.error('Failed to update schedule:', data);
+                showAlert('danger', 'Failed to update schedule.');
             }
         } catch (err) {
             console.error('Error saving schedule:', err);
+            showAlert('danger', 'Failed to update schedule.');
         }
     });
 

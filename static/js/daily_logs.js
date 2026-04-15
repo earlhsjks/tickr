@@ -511,27 +511,3 @@ saveManualLogBtn.addEventListener('click', function () {
         form.reportValidity();
     }
 });
-
-// Show alert messages
-function showAlert(type, message) {
-    const alertElement = document.getElementById('successAlert');
-    
-    // Update alert content and class
-    alertElement.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
-    alertElement.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    // Show alert
-    alertElement.style.display = 'block';
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        if (alertElement.classList.contains('show')) {
-            const alert = new bootstrap.Alert(alertElement);
-            alert.close();
-        }
-    }, 5000);
-}

@@ -56,7 +56,7 @@
                             <th class="ps-4">User</th>
                             <th class="text-center">Role</th>
                             <th class="text-center">Status</th>
-                            <th class="text-center">Last Login</th>
+                            <!-- <th class="text-center">Last Login</th> -->
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -165,17 +165,16 @@
                                 <input type="text" class="form-control" id="editMiddleInitial" maxlength="1"
                                     style="text-transform: uppercase;" />
                             </div>
-                            <div class="col-md-12">
+                            <div class="col-8">
                                 <label for="editLastName" class="form-label">Last Name</label>
                                 <input type="text" class="form-control" id="editLastName" required />
                             </div>
-                            <div class="col-md-12" hidden>
+                            <div class="col-4">
                                 <label for="editStatus" class="form-label">Status</label>
                                 <select class="form-select" id="editStatus" required>
                                     <option value="">Select Status</option>
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
-                                    <option value="pending">Pending</option>
                                 </select>
                             </div>
                         </div>

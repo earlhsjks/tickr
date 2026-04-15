@@ -124,7 +124,7 @@ def dashboard():
 # Route to redirect unauthorized users
 @gia_bp.route('/blocked')
 def blocked():
-    return render_template('gia/access_denied.html')
+    return render_template('gia/access_denied.html', user=current_user)
 
 # Global error handler for 403
 @gia_bp.errorhandler(403)

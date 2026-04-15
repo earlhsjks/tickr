@@ -108,7 +108,7 @@ function loadUsers() {
                 <td class="text-center">
                     <span class="status-badge ${user.status.toLowerCase()}">${user.status}</span>
                 </td>
-                <td class="text-center">
+                <td class="text-center" hidden>
                     <div class="last-login">
                     <div>-</div>
                     <small class="text-muted"></small>
@@ -120,7 +120,7 @@ function loadUsers() {
                         <button class="btn btn-sm btn-outline-primary" data-user-id="${user.user_id}" title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" data-user-id="${user.user_id}" title="Delete">
+                        <button class="btn btn-sm btn-outline-danger" data-user-id="${user.user_id}" title="Delete" hidden>
                             <i class="fas fa-trash"></i>
                         </button>
                         </div>
@@ -186,6 +186,7 @@ tbody.addEventListener('click', e => {
             lastName: document.getElementById('editLastName').value,
             middleInitial: document.getElementById('editMiddleInitial').value,
             role: document.getElementById('editRole').value,
+            status: document.getElementById('editStatus').value
         };
 
         // Send to backend
@@ -210,6 +211,7 @@ tbody.addEventListener('click', e => {
 
                     console.log('User updated successfully!');
                     document.getElementById('addUserForm').reset();
+                    showAlert('success', 'User updated successfully!');
                 } else {
                     console.error('Error updating user:', data.error);
                 }
@@ -218,6 +220,7 @@ tbody.addEventListener('click', e => {
                 this.innerHTML = 'Save Changes';
                 this.disabled = false;
                 console.error('Fetch error:', err);
+                showAlert('danger', 'Failed to update user.');
             });
     });
 
@@ -323,10 +326,12 @@ document.getElementById('saveNewUser').addEventListener('click', function () {
                     document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
                     document.body.classList.remove('modal-open');
                     document.body.style.overflow = '';
+                    showAlert('success', 'User added successfully!');
                     loadUsers();
                 }, 300);
             } else {
                 console.error('Error adding user:', data.error);
+                showAlert('danger', 'Failed to add user.');
             }
         })
         .catch(err => console.error('Fetch failed:', err))

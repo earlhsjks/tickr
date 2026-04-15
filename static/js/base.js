@@ -72,3 +72,33 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
 });
+
+// Show alert messages
+function showAlert(type, message) {
+    // 1. Create a new alert div dynamically
+    const alertElement = document.createElement('div');
+    
+    // 2. Add Bootstrap classes and positioning styles
+    alertElement.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed shadow-sm`;
+    alertElement.style.top = '20px';
+    alertElement.style.right = '20px';
+    alertElement.style.zIndex = '1050'; // Ensures it overlays above modals
+    
+    // 3. Set the HTML content inside the alert
+    alertElement.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    // 4. Append the new alert to the page body
+    document.body.appendChild(alertElement);
+    
+    // 5. Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (document.body.contains(alertElement)) {
+            const bsAlert = new bootstrap.Alert(alertElement);
+            bsAlert.close(); // Safely removes this specific instance from the DOM
+        }
+    }, 5000);
+}
