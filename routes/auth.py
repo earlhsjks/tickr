@@ -16,7 +16,7 @@ def login():
     password = data.get('password')
 
     gia = User.query.filter_by(user_id=gia_id).first()
-    isGia = User.query.filter_by(user_id=gia_id, role='gia').first() is not None
+    isGia = User.query.filter_by(user_id=gia_id, role='gia', status='active').first() is not None
     
     if gia_id and isGia:
         if not gia:
@@ -33,7 +33,7 @@ def login():
         return jsonify({'success': True, 'message': f'Welcome {gia.first_name}!'}), 200
 
     if admin_id:
-        admin = User.query.filter_by(user_id=admin_id).first()
+        admin = User.query.filter_by(user_id=admin_id, status='active').first()
 
         if not admin:
             return jsonify({'success': False, 'error': 'User not found'}), 404
