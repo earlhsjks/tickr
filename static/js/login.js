@@ -51,7 +51,7 @@ document.getElementById('employeeForm').addEventListener('submit', async (e) => 
         if (!res.ok) {
             // console.log(data.error || 'Login failed!');
             giaInput.style.border = '1px solid #dc3545'
-            giaError.textContent = 'No account found with that ID.'
+            giaError.textContent = data.error || 'No account found with that ID.'
             return;
         }
 
@@ -60,7 +60,7 @@ document.getElementById('employeeForm').addEventListener('submit', async (e) => 
     } catch (err) {
         // console.error('Login error: ', err);
         // console.error("Something went wrong.")
-        giaError.textContent = 'No account found with that ID.'
+        giaError.textContent = data.error || 'No account found with that ID.'
     }
 })
 
@@ -89,7 +89,7 @@ document.getElementById('adminForm').addEventListener('submit', async (e) => {
             // alert(data.error || 'Invalid ID or password.');
             adminInput.style.border = '1px solid #dc3545'
             adminPass.style.border = '1px solid #dc3545'
-            adminError.textContent = 'Incorrect username or password.'
+            adminError.textContent = data.error || 'Incorrect username or password.'
             changed.user = false;
             changed.pass = false;
             return;

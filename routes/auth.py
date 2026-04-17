@@ -24,7 +24,7 @@ def login():
     
     if gia_id and isGia:
         if not gia:
-            return jsonify({'success': False, 'error': 'User not found'}), 404
+            return jsonify({'success': False, 'error': 'No account found with that ID.'}), 404
         
         
         update_strict_mode()
@@ -42,13 +42,13 @@ def login():
         isActive = User.query.filter_by(user_id=admin_id, status='active').first() is not None
 
         if not admin:
-            return jsonify({'success': False, 'error': 'User not found'}), 404
+            return jsonify({'success': False, 'error': 'Incorrect username or password.'}), 404
 
         if not isActive:
             return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
 
         if not check_password_hash(admin.password, password):
-            return jsonify({'success': False, 'error': 'Incorrect password'}), 401
+            return jsonify({'success': False, 'error': 'Incorrect username or password.'}), 401
 
         update_strict_mode()
         login_user(admin)
