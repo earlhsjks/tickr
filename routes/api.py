@@ -36,7 +36,7 @@ def get_data():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.filter(User.role != "superadmin", User.status == "active").order_by(User.role, User.first_name).all()
+    users = User.query.filter(User.role != "superadmin").order_by(User.role, User.first_name).all()
     users_list = []
     for user in users:
         data = user.__dict__.copy()
