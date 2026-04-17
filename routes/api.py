@@ -36,7 +36,7 @@ def get_data():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.filter(User.role != "superadmin").order_by(User.role, User.first_name).all()
+    users = User.query.filter(User.role != "superadmin", User.status == "active").order_by(User.role, User.first_name).all()
     users_list = []
     for user in users:
         data = user.__dict__.copy()
@@ -190,9 +190,9 @@ def export_users():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
 
-    # Fetch and sort users
+    # Fetch and sort users (active only)
     users = sorted(
-        User.query.filter(User.role == "gia").all(),
+        User.query.filter(User.role == "gia", User.status == "active").all(),
         key=lambda x: (x.last_name, x.first_name)
     )
 
@@ -236,7 +236,7 @@ def get_schedules():
         flash("Access Denied!", "danger")
         return jsonify({'success': False, 'error': 'Access Denied'}), 400
     
-    users = User.query.filter(User.role != "superadmin", User.role != "admin").order_by(User.first_name)
+    users = User.query.filter(User.role != "superadmin", User.role != "admin", User.status == "active").order_by(User.first_name)
     schedules = Schedule.query.all()
     users_list = []
     sched_list = [serialize_schedule(s) for s in schedules]
@@ -464,7 +464,10 @@ def get_daily_logs():
     
     today = request.args.get('today')
 
-    records = Attendance.query.filter(Attendance.date == today).order_by(Attendance.id.desc()).all()
+    records = Attendance.query.join(User).filter(
+        Attendance.date == today,
+        User.status == "active"
+    ).order_by(Attendance.id.desc()).all()
     records_list = [serialize_drecords(s) for s in records]
 
     return jsonify(records_list)

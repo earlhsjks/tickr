@@ -79,7 +79,7 @@ def dashboard():
     # 1. NEW METRICS (Employees, Present, Logs)
     # ==========================================
     
-    total_employees = User.query.filter(User.role.notin_(["superadmin", "admin"])).count()
+    total_employees = User.query.filter(User.role.notin_(["superadmin", "admin"]), User.status == "active").count()
     
     on_duty_list_today = db.session.query(func.count(func.distinct(Attendance.user_id))).filter(
         Attendance.date == today,
@@ -230,7 +230,7 @@ def users():
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
 
-    users = User.query.filter(User.role != "superadmin").all()
+    users = User.query.filter(User.role != "superadmin", User.status == "active").all()
 
     return render_template('admin/users.html', current_user=current_user)
 
@@ -242,7 +242,7 @@ def gia_schedule():
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
     
-    users = User.query.filter(User.role == "gia").all()
+    users = User.query.filter(User.role == "gia", User.status == "active").all()
     schedules = Schedule.query.all()
 
     return render_template('admin/schedule.html')
@@ -255,7 +255,7 @@ def daily_logs():
         flash("Access Denied!", "danger")
         return render_template('auth/login.html')
     
-    users = User.query.filter_by(role = 'gia').order_by(User.first_name).all()
+    users = User.query.filter(User.role == 'gia', User.status == "active").order_by(User.first_name).all()
     today = datetime.now().date()
 
     return render_template('admin/daily_logs.html', today=today, users=users)
@@ -304,7 +304,7 @@ def export_pdf():
     last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
     total_days = (last_day - first_day).days + 1
 
-    users = User.query.filter(User.role.notin_(["superadmin", "admin"])) \
+    users = User.query.filter(User.role.notin_(["superadmin", "admin"]), User.status == "active") \
                       .order_by(User.last_name).all()
 
     attendance_records = Attendance.query.filter(

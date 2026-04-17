@@ -16,11 +16,15 @@ def login():
     password = data.get('password')
 
     gia = User.query.filter_by(user_id=gia_id).first()
-    isGia = User.query.filter_by(user_id=gia_id, role='gia', status='active').first() is not None
-    
+    isGia = User.query.filter_by(user_id=gia_id, role='gia').first() is not None
+    isActive = User.query.filter_by(user_id=gia_id, status='active').first() is not None
+
     if gia_id and isGia:
         if not gia:
             return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+    if not isActive:
+        return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
         
         update_strict_mode()
         login_user(gia)
@@ -33,10 +37,14 @@ def login():
         return jsonify({'success': True, 'message': f'Welcome {gia.first_name}!'}), 200
 
     if admin_id:
-        admin = User.query.filter_by(user_id=admin_id, status='active').first()
+        admin = User.query.filter_by(user_id=admin_id).first()
+        isActive = User.query.filter_by(user_id=admin_id, status='active').first() is not None
 
         if not admin:
             return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        if not isActive:
+            return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
 
         if not check_password_hash(admin.password, password):
             return jsonify({'success': False, 'error': 'Incorrect password'}), 401
