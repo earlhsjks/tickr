@@ -1,5 +1,5 @@
-from flask import Blueprint, request, jsonify, render_template, url_for, redirect
-from flask_login import login_user, logout_user, login_required ,current_user
+from flask import Blueprint, request, jsonify, url_for, redirect
+from flask_login import login_user, logout_user, login_required
 from werkzeug.security import check_password_hash
 from models.models import User
 from routes.api import systemLogEntry
@@ -7,63 +7,83 @@ from routes.admin import update_strict_mode
 
 auth_bp = Blueprint('auth', __name__)
 
-@auth_bp.route('/login', methods=['GET', 'POST'])
+
+@auth_bp.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
+    data = request.get_json() or {}
 
     gia_id = data.get('giaId')
     admin_id = data.get('adminId')
     password = data.get('password')
 
-    gia = User.query.filter_by(user_id=gia_id).first()
-    isGia = User.query.filter_by(user_id=gia_id, role='gia').first() is not None
-    isActive = User.query.filter_by(user_id=gia_id, status='active').first() is not None
-    
-    if gia_id and isGia:
-        if not gia:
-            return jsonify({'success': False, 'error': 'No account found with that ID.'}), 404
+    # --- Input validation ---
+    if not gia_id and not admin_id:
+        return jsonify({'success': False, 'error': 'Missing credentials.'}), 400
 
-        if not isActive:
-            return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
-        
+    if gia_id and admin_id:
+        return jsonify({'success': False, 'error': 'Provide only one login type.'}), 400
+
+    # =========================
+    # GIA LOGIN
+    # =========================
+    if gia_id:
+        user = User.query.filter_by(user_id=gia_id).first()
+
+        if not user or user.role != 'gia':
+            return jsonify({'success': False, 'error': 'Invalid GIA ID.'}), 401
+
+        if user.status != 'active':
+            return jsonify({'success': False, 'error': 'Account is inactive.'}), 403
+
+        # NOTE: No password check (intentional based on your design)
         update_strict_mode()
-        login_user(gia)
+        login_user(user)
 
         systemLogEntry(
             action="Login",
-            details=f"User {gia.first_name} {gia.last_name} logged in to GIA portal."
+            details=f"User {user.first_name} {user.last_name} logged in to GIA portal."
         )
 
-        return jsonify({'success': True, 'message': f'Welcome {gia.first_name}!'}), 200
+        return jsonify({'success': True, 'message': f'Welcome {user.first_name}!'}), 200
 
+    # =========================
+    # ADMIN LOGIN
+    # =========================
     if admin_id:
-        admin = User.query.filter_by(user_id=admin_id).first()
-        isActive = User.query.filter_by(user_id=admin_id, status='active').first() is not None
+        if not password:
+            return jsonify({'success': False, 'error': 'Password is required.'}), 400
 
-        if not admin:
-            return jsonify({'success': False, 'error': 'Incorrect username or password.'}), 404
+        user = User.query.filter_by(user_id=admin_id).first()
 
-        if not check_password_hash(admin.password, password):
-            return jsonify({'success': False, 'error': 'Incorrect username or password.'}), 401
+        if not user:
+            return jsonify({'success': False, 'error': 'Invalid username or password.'}), 401
 
-        if not isActive:
-            return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
+        if not check_password_hash(user.password, password):
+            return jsonify({'success': False, 'error': 'Invalid username or password.'}), 401
+
+        if user.status != 'active':
+            return jsonify({'success': False, 'error': 'Account is inactive.'}), 403
 
         update_strict_mode()
-        login_user(admin)
+        login_user(user)
 
         systemLogEntry(
             action="Login",
-            details=f"Admin {admin.first_name} {admin.last_name} logged in to Admin portal."
+            details=f"Admin {user.first_name} {user.last_name} logged in to Admin portal."
         )
-        
-        return jsonify({'success': True, 'message': f'Welcome {admin.first_name}!'}), 200
-    
-    return jsonify({'success': False, 'error': 'Incorrect username or password'}), 401
 
-@auth_bp.route('/logout', methods=['GET','POST'])
+        return jsonify({'success': True, 'message': f'Welcome {user.first_name}!'}), 200
+
+    return jsonify({'success': False, 'error': 'Invalid request.'}), 400
+
+
+@auth_bp.route('/logout', methods=['GET', 'POST'])
 @login_required
 def logout():
-    logout_user()
+    systemLogEntry(
+        action="Logout",
+        details="User logged out."
+    )
 
+    logout_user()
     return redirect(url_for('index'))
