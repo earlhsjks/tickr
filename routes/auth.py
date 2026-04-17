@@ -30,10 +30,10 @@ def login():
         user = User.query.filter_by(user_id=gia_id).first()
 
         if not user or user.role != 'gia':
-            return jsonify({'success': False, 'error': 'Invalid GIA ID.'}), 401
+            return jsonify({'success': False, 'error': 'No account found with that ID.'}), 401
 
         if user.status != 'active':
-            return jsonify({'success': False, 'error': 'Account is inactive.'}), 403
+            return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
 
         # NOTE: No password check (intentional based on your design)
         update_strict_mode()
@@ -62,7 +62,7 @@ def login():
             return jsonify({'success': False, 'error': 'Invalid username or password.'}), 401
 
         if user.status != 'active':
-            return jsonify({'success': False, 'error': 'Account is inactive.'}), 403
+            return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
 
         update_strict_mode()
         login_user(user)
