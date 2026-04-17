@@ -19,12 +19,13 @@ def login():
     isGia = User.query.filter_by(user_id=gia_id, role='gia').first() is not None
     isActive = User.query.filter_by(user_id=gia_id, status='active').first() is not None
 
+    if not isActive:
+        return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
+    
     if gia_id and isGia:
         if not gia:
             return jsonify({'success': False, 'error': 'User not found'}), 404
         
-    if not isActive:
-        return jsonify({'success': False, 'error': 'The account is no longer active.'}), 403
         
         update_strict_mode()
         login_user(gia)

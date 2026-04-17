@@ -47,6 +47,11 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return str(self.user_id)
 
+    @property
+    def is_active(self):
+        """Override UserMixin is_active to check status column."""
+        return self.status == 'active'
+
     def __repr__(self):
         return f"<User {self.user_id} ({self.role})>"
 
