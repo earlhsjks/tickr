@@ -337,18 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 let listHtml = '<ul class="list-group list-group-flush border rounded-3">';
-                
-                // Updated sorting map to handle your shorthand days
-                const dayOrder = { 
-                    "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6, "sunday": 7,
-                    "mwf": 1, "tth": 2, "sat": 6, "sun": 7 // Added your shorthands
-                };
-                
-                data.schedules.sort((a, b) => {
-                    const dayA = a.day.toLowerCase();
-                    const dayB = b.day.toLowerCase();
-                    return (dayOrder[dayA] || 99) - (dayOrder[dayB] || 99);
-                });
 
                 const dayOrder = { 
                     "mwf": 1, 
