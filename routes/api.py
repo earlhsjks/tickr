@@ -911,13 +911,13 @@ def clock_in():
         global_settings = GlobalSettings.query.first()
 
         # 3. Apply default schedule if no personal one exists (and it's not Sunday)
-        if not user_schedules and target_block and global_settings and global_settings.default_start and global_settings.default_end:
-            user_schedules = [Schedule(
-                user_id=user_id,
-                day=target_block,
-                start_time=global_settings.default_start,
-                end_time=global_settings.default_end
-            )]
+        # if not user_schedules and target_block and global_settings and global_settings.default_start and global_settings.default_end:
+        #     user_schedules = [Schedule(
+        #         user_id=user_id,
+        #         day=target_block,
+        #         start_time=global_settings.default_start,
+        #         end_time=global_settings.default_end
+        #     )]
 
         # No schedule check
         if not user_schedules and day_name != "sunday":
