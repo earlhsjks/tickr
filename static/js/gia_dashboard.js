@@ -350,61 +350,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     return (dayOrder[dayA] || 99) - (dayOrder[dayB] || 99);
                 });
 
+                const dayOrder = { 
+                    "mwf": 1, 
+                    "tth": 2, 
+                    "sat": 3 
+                };
+
+                data.schedules.sort((a, b) => {
+                    return (dayOrder[a.day.toLowerCase()] || 99) - (dayOrder[b.day.toLowerCase()] || 99);
+                });
+
                 data.schedules.forEach(sched => {
                     let timeText = '';
-                    let badgeClass = 'bg-primary';
+                    let customBadgeStyle = ''; // We'll use custom colors instead of vivid Bootstrap defaults
 
-                    // Check if both times are null or empty
                     if (!sched.start_time || !sched.end_time) {
-                        timeText = 'Rest Day';
-                        badgeClass = 'bg-secondary';
+                        timeText = 'Not Set';
+                        // Subtle Gray
+                        customBadgeStyle = "background-color: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;";
                     } else if (sched.is_split_shift) {
                         timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)} <br> ${formatTime(sched.split_start_time)} - ${formatTime(sched.split_end_time)}`;
-                        badgeClass = 'bg-info text-dark';
+                        // Subtle Purple/Indigo
+                        customBadgeStyle = "background-color: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe;";
                     } else {
                         timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)}`;
+                        // Subtle Blue
+                        customBadgeStyle = "background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;";
                     }
 
-                    const dayOrder = { 
-                        "mwf": 1, 
-                        "tth": 2, 
-                        "sat": 3 
-                    };
-
-                    data.schedules.sort((a, b) => {
-                        return (dayOrder[a.day.toLowerCase()] || 99) - (dayOrder[b.day.toLowerCase()] || 99);
-                    });
-
-                    data.schedules.forEach(sched => {
-                        let timeText = '';
-                        let customBadgeStyle = ''; // We'll use custom colors instead of vivid Bootstrap defaults
-
-                        if (!sched.start_time || !sched.end_time) {
-                            timeText = 'Not Set';
-                            // Subtle Gray
-                            customBadgeStyle = "background-color: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb;";
-                        } else if (sched.is_split_shift) {
-                            timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)} <br> ${formatTime(sched.split_start_time)} - ${formatTime(sched.split_end_time)}`;
-                            // Subtle Purple/Indigo
-                            customBadgeStyle = "background-color: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe;";
-                        } else {
-                            timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)}`;
-                            // Subtle Blue
-                            customBadgeStyle = "background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;";
-                        }
-
-                        listHtml += `
-                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                                <div>
-                                    <span class="fw-bold d-block text-dark text-uppercase">${sched.day}</span>
-                                    <small class="text-muted">${sched.is_split_shift ? 'Split Shift' : (timeText === 'Not Set' ? 'No Schedule' : 'Regular Shift')}</small>
-                                </div>
-                                <span class="badge rounded-pill px-3 py-2 text-end" style="line-height: 1.4; font-weight: 500; ${customBadgeStyle}">
-                                    ${timeText}
-                                </span>
-                            </li>
-                        `;
-                    });
+                    listHtml += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <span class="fw-bold d-block text-dark text-uppercase">${sched.day}</span>
+                                <small class="text-muted">${sched.is_split_shift ? 'Split Shift' : (timeText === 'Not Set' ? 'No Schedule' : 'Regular Shift')}</small>
+                            </div>
+                            <span class="badge rounded-pill px-3 py-2 text-end" style="line-height: 1.4; font-weight: 500; ${customBadgeStyle}">
+                                ${timeText}
+                            </span>
+                        </li>
+                    `;
                 });
 
                 listHtml += '</ul>';
