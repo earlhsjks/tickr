@@ -25,6 +25,12 @@
                     data-bs-target="#betaNoticeModal">
                     <i class="fas fa-flask me-1"></i> Beta
                 </button> -->
+                <button class="btn schedule-btn fw-semibold px-3 py-2 me-2" 
+                        data-bs-toggle="modal"
+                        data-bs-target="#scheduleModal" 
+                        data-user-id="{{ user.user_id }}">
+                    <i class="fas fa-calendar-alt me-1"></i> Schedule
+                </button>
                 <a class="btn logout-btn" href="{{ url_for('auth.logout') }}">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </a>
@@ -158,6 +164,34 @@
                             <i class="fas fa-paper-plane me-2"></i>Report Issue
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Moadal -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center schedule-modal">
+                <div class="modal-body">
+                    <div class="schedule-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h5 class="fw-bold mt-3">Your Work Schedule</h5>
+                    <p class="text-muted small mb-4">
+                        Here are your assigned working hours.
+                    </p>
+                    
+                    <div class="text-start mb-4">
+                        <div class="text-start mb-4" id="scheduleListContainer">
+                            <div class="text-center text-muted my-3">
+                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                Loading schedule...
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-secondary px-5" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

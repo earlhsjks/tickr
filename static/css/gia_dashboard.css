@@ -408,3 +408,59 @@ body {
 .beta-btn i {
   font-size: 14px;
 }
+
+/* ======================================================
+   SCHEDULE BUTTON & MODAL STYLES
+   ====================================================== */
+.schedule-btn {
+  border-radius: 8px;
+  background-color: #8b5cf6; /* Indigo/purple to match stat-card indigo */
+  border: none;
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.schedule-btn:hover {
+  background-color: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+  color: white;
+}
+
+.schedule-btn i {
+  font-size: 14px;
+}
+
+.schedule-modal {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 24px 20px;
+}
+
+.schedule-modal .modal-body {
+  padding: 16px 20px; /* Slightly tighter padding for the list */
+}
+
+.schedule-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: #ede9fe;
+  color: #8b5cf6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  margin: 0 auto;
+  box-shadow: 0 0 0 4px #f5f3ff;
+}
+
+.schedule-modal h5 {
+  color: #111827;
+}
+
+.schedule-modal .btn {
+  border-radius: 8px;
+  font-weight: 600;
+}

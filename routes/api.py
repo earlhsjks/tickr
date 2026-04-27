@@ -262,9 +262,8 @@ def get_schedules():
 @api_bp.route('/get-schedule/<string:user_id>', methods=['GET'])
 @login_required
 def get_user_schedule(user_id):
-    if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+    if current_user.role not in ["superadmin", "admin"] and current_user.user_id != user_id:
+            return jsonify({'success': False, 'error': 'Access Denied'}), 403
 
     user = User.query.filter_by(user_id=user_id).first()
     if not user:

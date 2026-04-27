@@ -299,3 +299,100 @@ function manageLiveProgress() {
     updateProgress(); // Run immediately
     liveProgressInterval = setInterval(updateProgress, 10000); // Update every 10 seconds
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const scheduleModal = document.getElementById('scheduleModal');
+    
+    if (scheduleModal) {
+        scheduleModal.addEventListener('show.bs.modal', async function(event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const container = document.getElementById('scheduleListContainer');
+            
+            // Show loading state
+            container.innerHTML = `
+                <div class="text-center text-muted my-3">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    Loading schedule...
+                </div>
+            `;
+
+            try {
+                // Fetch the schedule
+                const response = await fetch(`/api/get-schedule/${userId}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to fetch schedule');
+                }
+
+                if (!data.schedules || data.schedules.length === 0) {
+                    container.innerHTML = `
+                        <div class="alert alert-light text-center border">
+                            No schedule assigned yet.
+                        </div>`;
+                    return;
+                }
+
+                // Build the HTML list
+                let listHtml = '<ul class="list-group list-group-flush border rounded-3">';
+                
+                // Optional: Map to sort days correctly if they don't come back sorted
+                const dayOrder = { "Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6, "Sunday":7 };
+                data.schedules.sort((a, b) => dayOrder[a.day] - dayOrder[b.day]);
+
+                data.schedules.forEach(sched => {
+                    let timeText = '';
+                    let badgeClass = 'bg-primary';
+
+                    if (!sched.start_time || !sched.end_time) {
+                        timeText = 'Rest Day';
+                        badgeClass = 'bg-secondary';
+                    } else if (sched.is_split_shift) {
+                        // Handle Split Shifts
+                        timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)} <br> ${formatTime(sched.split_start_time)} - ${formatTime(sched.split_end_time)}`;
+                        badgeClass = 'bg-info text-dark';
+                    } else {
+                        // Regular Shift
+                        timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)}`;
+                    }
+
+                    listHtml += `
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <span class="fw-semibold d-block text-dark">${sched.day}</span>
+                                <span class="text-muted small">${sched.is_split_shift ? 'Split Shift' : (timeText === 'Rest Day' ? 'Rest Day' : 'Regular Shift')}</span>
+                            </div>
+                            <span class="badge ${badgeClass} rounded-pill px-3 py-2 text-wrap text-end" style="max-width: 150px; line-height: 1.4;">
+                                ${timeText}
+                            </span>
+                        </li>
+                    `;
+                });
+
+                listHtml += '</ul>';
+                container.innerHTML = listHtml;
+
+            } catch (error) {
+                console.error("Error loading schedule:", error);
+                container.innerHTML = `
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Could not load schedule. Please try again.
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // Helper function to convert 24hr time (HH:MM) to 12hr AM/PM format
+    function formatTime(timeStr) {
+        if (!timeStr) return '';
+        const [hourString, minute] = timeStr.split(':');
+        let hour = parseInt(hourString, 10);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        hour = hour % 12 || 12; // Convert '0' to '12' for midnight
+        return `${hour}:${minute} ${ampm}`;
+    }
+});
