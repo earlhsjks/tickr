@@ -319,14 +319,15 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
 
             try {
-                // Fetch the schedule
                 const response = await fetch(`/api/get-schedule/${userId}`);
                 const data = await response.json();
 
-                if (!response.ok || !data.success) {
+                // REMOVED: !data.success check because your API returns the object directly
+                if (!response.ok) {
                     throw new Error(data.error || 'Failed to fetch schedule');
                 }
 
+                // Check if schedules exist in the returned data
                 if (!data.schedules || data.schedules.length === 0) {
                     container.innerHTML = `
                         <div class="alert alert-light text-center border">
@@ -335,36 +336,42 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                // Build the HTML list
                 let listHtml = '<ul class="list-group list-group-flush border rounded-3">';
                 
-                // Optional: Map to sort days correctly if they don't come back sorted
-                const dayOrder = { "Monday":1, "Tuesday":2, "Wednesday":3, "Thursday":4, "Friday":5, "Saturday":6, "Sunday":7 };
-                data.schedules.sort((a, b) => dayOrder[a.day] - dayOrder[b.day]);
+                // Updated sorting map to handle your shorthand days
+                const dayOrder = { 
+                    "monday": 1, "tuesday": 2, "wednesday": 3, "thursday": 4, "friday": 5, "saturday": 6, "sunday": 7,
+                    "mwf": 1, "tth": 2, "sat": 6, "sun": 7 // Added your shorthands
+                };
+                
+                data.schedules.sort((a, b) => {
+                    const dayA = a.day.toLowerCase();
+                    const dayB = b.day.toLowerCase();
+                    return (dayOrder[dayA] || 99) - (dayOrder[dayB] || 99);
+                });
 
                 data.schedules.forEach(sched => {
                     let timeText = '';
                     let badgeClass = 'bg-primary';
 
+                    // Check if both times are null or empty
                     if (!sched.start_time || !sched.end_time) {
                         timeText = 'Rest Day';
                         badgeClass = 'bg-secondary';
                     } else if (sched.is_split_shift) {
-                        // Handle Split Shifts
                         timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)} <br> ${formatTime(sched.split_start_time)} - ${formatTime(sched.split_end_time)}`;
                         badgeClass = 'bg-info text-dark';
                     } else {
-                        // Regular Shift
                         timeText = `${formatTime(sched.start_time)} - ${formatTime(sched.end_time)}`;
                     }
 
                     listHtml += `
                         <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                             <div>
-                                <span class="fw-semibold d-block text-dark">${sched.day}</span>
-                                <span class="text-muted small">${sched.is_split_shift ? 'Split Shift' : (timeText === 'Rest Day' ? 'Rest Day' : 'Regular Shift')}</span>
+                                <span class="fw-bold d-block text-dark text-uppercase">${sched.day}</span>
+                                <span class="text-muted small">${sched.is_split_shift ? 'Split Shift' : (timeText === 'Rest Day' ? 'Rest Day' : 'Shift')}</span>
                             </div>
-                            <span class="badge ${badgeClass} rounded-pill px-3 py-2 text-wrap text-end" style="max-width: 150px; line-height: 1.4;">
+                            <span class="badge ${badgeClass} rounded-pill px-3 py-2 text-end" style="line-height: 1.4;">
                                 ${timeText}
                             </span>
                         </li>
@@ -379,7 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 container.innerHTML = `
                     <div class="alert alert-danger text-center">
                         <i class="fas fa-exclamation-circle me-1"></i>
-                        Could not load schedule. Please try again.
+                        Error: ${error.message}
                     </div>
                 `;
             }
