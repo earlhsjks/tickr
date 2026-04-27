@@ -228,27 +228,31 @@ def serialize_schedule(s):
         'split_end_time': s.split_end_time.strftime("%I:%M %p") if s.split_end_time else ''
     }
 
-# GET ALL SCHEDULE
 @api_bp.route('/get-schedules', methods=['GET'])
 @login_required
 def get_schedules():
     if current_user.role not in ["superadmin", "admin"]:
-        flash("Access Denied!", "danger")
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
-    users = User.query.filter(User.role != "superadmin", User.role != "admin", User.status == "active").order_by(User.first_name)
-    schedules = Schedule.query.all()
-    users_list = []
+    users = User.query.filter(
+        User.role != "superadmin", 
+        User.role != "admin", 
+        User.status == "active"
+    ).order_by(User.first_name).all()
+
+    # Only get schedules that fit the new block format
+    schedules = Schedule.query.filter(Schedule.day.in_(['mwf', 'tth', 'sat'])).all()
+    
     sched_list = [serialize_schedule(s) for s in schedules]
+    users_list = []
 
     for user in users:
-        data = user.__dict__.copy()
-        data.pop('_sa_instance_state', None)
-        data.pop('password', None)
-        data.pop('role', None)
-        data.pop('status', None)
-        data.pop('id', None)
-        users_list.append(data)
+        users_list.append({
+            'user_id': user.user_id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            # Add any other specific fields you need for the table
+        })
 
     return jsonify({
         'schedules': sched_list,
@@ -320,7 +324,8 @@ def update_schedule(user_id):
     brokenScheds = data.get('brokenSched', [])
 
     try:
-        for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+        # Updated to loop through the new schedule blocks instead of every single day
+        for day in ['mwf', 'tth', 'sat']:
             match = next((s for s in schedules if s.get('day') == day), None)
             brokenMatch = next((b for b in brokenScheds if b.get('day') == day), None)
 
@@ -704,25 +709,36 @@ def change_password():
 def status():
     user_id = request.args.get('user_id')
 
-    if current_user.user_id != user_id:
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
-    
     if not user_id:
         return jsonify({'error': 'Missing user_id'}), 400
 
-    today = date.today()
+    if current_user.user_id != user_id:
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403 # Changed to 403
 
-    # Get latest attendance for today
+    today = date.today()
+    
+    # 1. Map actual day name to your block identifiers
+    day_name = datetime.today().strftime('%A').lower()
+    day_map = {
+        'monday': 'mwf', 'wednesday': 'mwf', 'friday': 'mwf',
+        'tuesday': 'tth', 'thursday': 'tth',
+        'saturday': 'sat'
+    }
+    target_block = day_map.get(day_name) # Will be None on Sundays
+
+    # 2. Get latest attendance for today
     last_record = Attendance.query.filter(
         Attendance.user_id == user_id,
         Attendance.date == today
     ).order_by(Attendance.id.desc()).first()
 
-    # Get today's schedule(s)
-    user_schedules = Schedule.query.filter_by(
-        user_id=user_id,
-        day=datetime.today().strftime('%A').lower()
-    ).all()
+    # 3. Get today's schedule using the target_block
+    user_schedules = []
+    if target_block:
+        user_schedules = Schedule.query.filter_by(
+            user_id=user_id,
+            day=target_block
+        ).all()
 
     # Check global settings for strict schedule enforcement
     global_settings = GlobalSettings.query.first()
@@ -741,10 +757,11 @@ def status():
 
     clock_in_time = last_record.clock_in
 
-    # Determine applicable schedule
+    # Determine applicable shift end time
     for sched in user_schedules:
         # Check first shift
         if sched.start_time and sched.end_time:
+            # Lookback 1 hour before start to 1 second before end
             early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
             if early_start <= clock_in_time <= sched.end_time:
                 schedule_end = sched.end_time
@@ -757,9 +774,10 @@ def status():
                 schedule_end = sched.split_end_time
                 break
 
-    # Check if user exceeded 30-min grace period
+    # 4. Check if user exceeded the 60-min grace period (based on your logic)
     if strict_schedule and schedule_end:
         now = datetime.now()
+        # grace_limit is shift end + 60 mins
         grace_limit = datetime.combine(today, schedule_end) + timedelta(minutes=60)
         if now > grace_limit:
             is_grace = True
@@ -860,105 +878,108 @@ def ip_whitelist():
 @api_bp.route('/clock-in', methods=['POST'])
 @login_required
 def clock_in():
-    user_id = request.get_json()
+    # Safely get user_id from JSON
+    data = request.get_json()
+    user_id = data if isinstance(data, str) else data.get('user_id')
 
     if current_user.user_id != user_id:
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
     check = ip_whitelist()
     if check:
         return check
         
     try:
-        today_name = datetime.today().strftime('%A').lower()
-        now = datetime.now().time()
+        now_dt = datetime.now()
+        now_time = now_dt.time()
+        today_date = now_dt.date()
+        
+        # 1. Map actual day to our new blocks
+        day_name = now_dt.strftime('%A').lower()
+        day_map = {
+            'monday': 'mwf', 'wednesday': 'mwf', 'friday': 'mwf',
+            'tuesday': 'tth', 'thursday': 'tth',
+            'saturday': 'sat'
+        }
+        target_block = day_map.get(day_name) # Sunday returns None
 
-        # Get Schedules and Global Settings 
-        user_schedules = Schedule.query.filter_by(user_id=user_id, day=today_name).all()
+        # 2. Get Schedules and Global Settings 
+        user_schedules = []
+        if target_block:
+            user_schedules = Schedule.query.filter_by(user_id=user_id, day=target_block).all()
+        
         global_settings = GlobalSettings.query.first()
 
-        # Apply default schedule if no personal one exists
-        if not user_schedules and global_settings and global_settings.default_start and global_settings.default_end:
+        # 3. Apply default schedule if no personal one exists (and it's not Sunday)
+        if not user_schedules and target_block and global_settings and global_settings.default_start and global_settings.default_end:
             user_schedules = [Schedule(
                 user_id=user_id,
-                day=today_name,
+                day=target_block,
                 start_time=global_settings.default_start,
                 end_time=global_settings.default_end
             )]
 
-        if not user_schedules:
+        # No schedule check
+        if not user_schedules and day_name != "sunday":
             return jsonify({'success': False, 'error': 'You don’t have a schedule for today.'}), 400
 
-        # Early-in Rules 
+        # 4. Early-in Rules 
         allowed_early_in = global_settings.allowed_early_in_mins if global_settings else 0
         special_early_in = allowed_early_in
 
-        # Add special 30min early-in for 7:30 AM weekday shifts
-        if today_name in ["monday", "tuesday", "wednesday", "thursday", "friday"]:
+        # Add special 30min early-in for 7:30 AM shifts on weekday blocks (mwf/tth)
+        if target_block in ["mwf", "tth"]:
             if any(s.start_time == time(7, 30) for s in user_schedules):
                 special_early_in += 30
 
-        # Determine Valid Schedule 
-        valid_schedule = None
+        # 5. Determine Valid Schedule 
+        valid_schedule_start = None
         is_split_shift = False
 
         for sched in user_schedules:
-            # Allow clock in on Sat and Sun if no schedule
-            is_weekend = today_name in ["saturday", "sunday"]
-            if is_weekend and not sched.start_time and not sched.end_time:
-                valid_schedule = global_settings.default_start
-                break
-
+            # First Shift Check
             if sched.start_time and sched.end_time:
-                earliest_in = (datetime.combine(datetime.today(), sched.start_time) - timedelta(minutes=special_early_in)).time()
-                if earliest_in <= now <= sched.end_time:
-                    valid_schedule = sched.start_time
+                earliest_in = (datetime.combine(today_date, sched.start_time) - timedelta(minutes=special_early_in)).time()
+                if earliest_in <= now_time <= sched.end_time:
+                    valid_schedule_start = sched.start_time
                     break
 
+            # Second Shift Check (Split)
             if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
-                earliest_second_in = (datetime.combine(datetime.today(), sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
-                if earliest_second_in <= now <= sched.split_end_time:
-                    valid_schedule = sched.split_start_time
+                earliest_second_in = (datetime.combine(today_date, sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
+                if earliest_second_in <= now_time <= sched.split_end_time:
+                    valid_schedule_start = sched.split_start_time
                     is_split_shift = True
                     break
 
-        # Enforce strict schedule
-        if global_settings and global_settings.enable_strict_schedule and not valid_schedule:
+        # 6. Enforce strict schedule
+        if global_settings and global_settings.enable_strict_schedule and not valid_schedule_start:
+            # Special bypass logic for weekends if allowed in your workflow, otherwise:
             return jsonify({'success': False, 'error': 'You\'re outside your allowed schedule window.'}), 400
 
-        # Check Attendance Rules 
-        today = datetime.today().date()
-
-        active_shifts = Attendance.query.filter(
+        # 7. Check Attendance Rules 
+        active_shifts_today = Attendance.query.filter(
             Attendance.user_id == user_id,
-            Attendance.clock_in.is_not(None),
-            Attendance.date == today,
+            Attendance.date == today_date,
+            Attendance.clock_in.is_not(None)
         ).all()
 
         # Limit to 2 clock-ins per day
-        if len(active_shifts) >= 2:
+        if len(active_shifts_today) >= 2:
             return jsonify({'success': False, 'error': 'You’ve already reached the daily limit of two clock-ins.'}), 400
 
-        # Prevent duplicate clock-in for same shift (not used, js covered)
-        # for shift in active_shifts:
-        #     if valid_schedule:
-        #         if not is_split_shift and valid_schedule.start_time <= shift.clock_in <= valid_schedule.end_time:
-        #             return jsonify({'success': False, 'error': 'Already clocked in for this shift. Clock out first.'}), 400
-        #         if is_split_shift and shift.clock_in >= valid_schedule.split_start_time:
-        #             return jsonify({'success': False, 'error': 'Already clocked in for your second shift.'}), 400
-
-        #  Create and Save Attendance Entry 
+        # 8. Create and Save Attendance Entry 
         new_entry = Attendance(
             user_id=user_id,
-            date=datetime.now(),
-            clock_in=datetime.now().time()
+            date=today_date,
+            clock_in=now_time
         )
         db.session.add(new_entry)
         db.session.commit()
 
         systemLogEntry(
             action="Clock In",
-            details=f"User {current_user.first_name} {current_user.last_name} clocked in."
+            details=f"User {current_user.first_name} {current_user.last_name} clocked in for {'second' if is_split_shift else 'first'} shift."
         )
 
         return jsonify({
@@ -974,17 +995,20 @@ def clock_in():
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'error': f'{str(e)}', 'trace': traceback.format_exc()}), 500
+        print(f"Clock-in Error: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': str(e)}), 500
     
 @api_bp.route('/clock-out', methods=['POST'])
 @login_required
 def clock_out():
-    user_id = request.get_json()
+    # Safely handle JSON data
+    data = request.get_json()
+    user_id = data if isinstance(data, str) else data.get('user_id')
 
     if not user_id:
         return jsonify({'success': False, 'error': 'Missing user_id'}), 400
     if current_user.user_id != user_id:
-        return jsonify({'success': False, 'error': 'Access Denied'}), 400
+        return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
     check = ip_whitelist()
     if check:
@@ -994,45 +1018,55 @@ def clock_out():
         now = datetime.now()
         actual_clock_out = now.time()
         today = now.date()
-        today_name = datetime.today().strftime('%A').lower()
+        
+        # 1. Map current day to the schedule blocks
+        day_name = now.strftime('%A').lower()
+        day_map = {
+            'monday': 'mwf', 'wednesday': 'mwf', 'friday': 'mwf',
+            'tuesday': 'tth', 'thursday': 'tth',
+            'saturday': 'sat'
+        }
+        target_block = day_map.get(day_name)
 
+        # 2. Find the active record (Clocked in today, but not yet clocked out)
         last_record = Attendance.query.filter(
             Attendance.user_id == user_id,
             Attendance.clock_in.isnot(None),
             Attendance.clock_out.is_(None),
             Attendance.date == today,
         ).order_by(Attendance.clock_in.desc()).first()
-        print(last_record)
 
         if not last_record:
             return jsonify({'success': False, 'error': 'You can’t clock out without clocking in first today.'}), 400
         
         clock_in_time = last_record.clock_in 
 
+        # 3. Get Schedules and Enforcement Rules
         global_settings = GlobalSettings.query.first()
         strict_schedule = bool(global_settings and global_settings.enable_strict_schedule)
-        user_schedules = Schedule.query.filter_by(
-            user_id=user_id,
-            day=datetime.today().strftime('%A').lower()
-        ).all()
+        
+        user_schedules = []
+        if target_block:
+            user_schedules = Schedule.query.filter_by(user_id=user_id, day=target_block).all()
 
         schedule_end = None
         is_split_shift = False
 
-        if strict_schedule and user_schedules:
+        # 4. Determine which shift the user is currently finishing
+        if strict_schedule:
+            # If no personal schedule exists, check for weekend default bypass
+            if not user_schedules and day_name in ["saturday", "sunday"]:
+                schedule_end = global_settings.default_end if global_settings else None
+            
             for sched in user_schedules:
-                # Allow clock out on Sat and Sun if no schedule
-                is_weekend = today_name in ["saturday", "sunday"]
-                if is_weekend and not sched.start_time and not sched.end_time:
-                    schedule_end = global_settings.default_end
-                    break
-
+                # Check regular shift window
                 if sched.start_time and sched.end_time:
                     early_start = (datetime.combine(today, sched.start_time) - timedelta(hours=1)).time()
                     if early_start <= clock_in_time <= sched.end_time:
                         schedule_end = sched.end_time
-                    break
+                        break
 
+                # Check split shift window
                 if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
                     early_second_start = (datetime.combine(today, sched.split_start_time) - timedelta(hours=1)).time()
                     if early_second_start <= clock_in_time <= sched.split_end_time:
@@ -1040,29 +1074,31 @@ def clock_out():
                         is_split_shift = True
                         break
 
-            # Strict schedule enforcement
+            # 5. Handle Grace Period and Time Capping
             if schedule_end:
                 actual_clock_out_dt = datetime.combine(today, actual_clock_out)
                 schedule_end_dt = datetime.combine(today, schedule_end)
                 
+                # Exceeded 60-minute grace period check
                 grace_limit = schedule_end_dt + timedelta(minutes=60)
-                
                 if actual_clock_out_dt > grace_limit:
                     return jsonify({
                         'success': False,
                         'error': 'Exceeded the 60-minute grace period after your shift.'
                     }), 400
 
+                # Auto-cap logic: if they clock out after shift end but before 6:30 PM, 
+                # record it as exactly the shift end time (standard office rules).
                 evening_cutoff = datetime.combine(today, time(18, 30))
-
                 if schedule_end_dt < actual_clock_out_dt < evening_cutoff:
                     last_record.clock_out = schedule_end
                 else:
                     last_record.clock_out = actual_clock_out
             else:
+                # No schedule end found or not in strict mode
                 last_record.clock_out = actual_clock_out
-
         else:
+            # Strict mode disabled
             last_record.clock_out = actual_clock_out
 
         db.session.commit()
@@ -1087,5 +1123,5 @@ def clock_out():
         db.session.rollback()
         return jsonify({
             'success': False,
-            'error': f'{str(e)}'
+            'error': f'An error occurred: {str(e)}'
         }), 500
