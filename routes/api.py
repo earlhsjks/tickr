@@ -291,7 +291,8 @@ def get_user_schedule(user_id):
 
     return jsonify({
         'user': user_data,
-        'schedules': user_schedules
+        'schedules': user_schedules,
+        'success': True
     })
 
 

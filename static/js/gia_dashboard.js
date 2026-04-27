@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
 
                 // REMOVED: !data.success check because your API returns the object directly
-                if (!response.ok) {
+                if (!response.success) {
                     throw new Error(data.error || 'Failed to fetch schedule');
                 }
 
