@@ -44,7 +44,7 @@ async function loadSchedules() {
         });
 
         // New block identifiers
-        const blocks = ['mwf', 'tth', 'fri', 'sat'];
+        const blocks = ['mw', 'tth', 'fri', 'sat'];
         const tbody = document.getElementById('scheduleTableBody');
         tbody.innerHTML = '';
 
@@ -134,7 +134,7 @@ document.getElementById('scheduleTableBody').addEventListener('click', e => {
         });
 });
 
-function addBrokenScheduleRow(day = 'mwf', start = '', end = '') {
+function addBrokenScheduleRow(day = 'mw', start = '', end = '') {
     const container = document.getElementById('brokenScheduleContainer');
     const template = document.getElementById('brokenScheduleTemplate');
     const clone = template.firstElementChild.cloneNode(true);
@@ -180,7 +180,7 @@ function setupModal() {
         const userId = document.getElementById('userId').value;
         
         // Collect Main Blocks
-        const schedules = ['mwf', 'tth', 'fri', 'sat'].map(block => ({
+        const schedules = ['mw', 'tth', 'fri', 'sat'].map(block => ({
             day: block,
             start_time: document.getElementById(`${block}In`).value || null,
             end_time: document.getElementById(`${block}Out`).value || null

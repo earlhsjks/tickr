@@ -339,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let listHtml = '<ul class="list-group list-group-flush border rounded-3">';
 
                 const dayOrder = { 
-                    "mwf": 1, 
+                    "mw": 1, 
                     "tth": 2, 
                     "fri": 3,
                     "sat": 4 

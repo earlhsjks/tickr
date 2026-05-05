@@ -241,7 +241,7 @@ def get_schedules():
     ).order_by(User.first_name).all()
 
     # Only get schedules that fit the new block format
-    schedules = Schedule.query.filter(Schedule.day.in_(['mwf', 'tth', 'fri', 'sat'])).all()
+    schedules = Schedule.query.filter(Schedule.day.in_(['mw', 'tth', 'fri', 'sat'])).all()
     
     sched_list = [serialize_schedule(s) for s in schedules]
     users_list = []
@@ -325,7 +325,7 @@ def update_schedule(user_id):
 
     try:
         # Updated to loop through the new schedule blocks instead of every single day
-        for day in ['mwf', 'tth', 'fri', 'sat']:
+        for day in ['mw', 'tth', 'fri', 'sat']:
             match = next((s for s in schedules if s.get('day') == day), None)
             brokenMatch = next((b for b in brokenScheds if b.get('day') == day), None)
 
@@ -927,8 +927,8 @@ def clock_in():
         allowed_early_in = global_settings.allowed_early_in_mins if global_settings else 0
         special_early_in = allowed_early_in
 
-        # Add special 30min early-in for 7:30 AM shifts on weekday blocks (mwf/tth)
-        if target_block in ["mwf", "tth", "fri"]:
+        # Add special 30min early-in for 7:30 AM shifts on weekday blocks (mw/tth/fri)
+        if target_block in ["mw", "tth", "fri"]:
             if any(s.start_time == time(7, 30) for s in user_schedules):
                 special_early_in += 30
 
