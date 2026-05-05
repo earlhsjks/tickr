@@ -341,7 +341,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const dayOrder = { 
                     "mwf": 1, 
                     "tth": 2, 
-                    "sat": 3 
+                    "fri": 3,
+                    "sat": 4 
                 };
 
                 data.schedules.sort((a, b) => {
