@@ -719,7 +719,7 @@ def status():
     
     # 1. Map actual day name to your block identifiers
     day_name = datetime.today().strftime('%A').lower()
-        day_map = {
+    day_map = {
             'monday': 'mw', 'wednesday': 'mw', 
             'tuesday': 'tth', 'thursday': 'tth',
             'friday': 'fri', 'saturday': 'sat'
