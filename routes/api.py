@@ -381,7 +381,13 @@ def purge_schedules():
         return jsonify({'success': False, 'error': 'Access Denied'}), 403
     
     try:
-        db.session.query(Schedule).delete()
+        db.session.query(Schedule).update({
+            Schedule.start_time: None,
+            Schedule.end_time: None,
+            Schedule.is_split_shift: None
+            Schedule.split_start_time: None
+            Schedule.split_end_time: None
+        })
         db.session.commit()
 
         systemLogEntry(
