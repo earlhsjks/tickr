@@ -241,7 +241,7 @@ def get_schedules():
     ).order_by(User.first_name).all()
 
     # Only get schedules that fit the new block format
-    schedules = Schedule.query.filter(Schedule.day.in_(['mwf', 'tth', 'sat'])).all()
+    schedules = Schedule.query.filter(Schedule.day.in_(['mwf', 'tth', 'fri', 'sat'])).all()
     
     sched_list = [serialize_schedule(s) for s in schedules]
     users_list = []
@@ -325,7 +325,7 @@ def update_schedule(user_id):
 
     try:
         # Updated to loop through the new schedule blocks instead of every single day
-        for day in ['mwf', 'tth', 'sat']:
+        for day in ['mwf', 'tth', 'fri', 'sat']:
             match = next((s for s in schedules if s.get('day') == day), None)
             brokenMatch = next((b for b in brokenScheds if b.get('day') == day), None)
 
@@ -719,11 +719,11 @@ def status():
     
     # 1. Map actual day name to your block identifiers
     day_name = datetime.today().strftime('%A').lower()
-    day_map = {
-        'monday': 'mwf', 'wednesday': 'mwf', 'friday': 'mwf',
-        'tuesday': 'tth', 'thursday': 'tth',
-        'saturday': 'sat'
-    }
+        day_map = {
+            'monday': 'mw', 'wednesday': 'mw', 
+            'tuesday': 'tth', 'thursday': 'tth',
+            'friday': 'fri', 'saturday': 'sat'
+        }
     target_block = day_map.get(day_name) # Will be None on Sundays
 
     # 2. Get latest attendance for today
@@ -897,9 +897,9 @@ def clock_in():
         # 1. Map actual day to our new blocks
         day_name = now_dt.strftime('%A').lower()
         day_map = {
-            'monday': 'mwf', 'wednesday': 'mwf', 'friday': 'mwf',
+            'monday': 'mw', 'wednesday': 'mw', 
             'tuesday': 'tth', 'thursday': 'tth',
-            'saturday': 'sat'
+            'friday': 'fri', 'saturday': 'sat'
         }
         target_block = day_map.get(day_name) # Sunday returns None
 
@@ -928,7 +928,7 @@ def clock_in():
         special_early_in = allowed_early_in
 
         # Add special 30min early-in for 7:30 AM shifts on weekday blocks (mwf/tth)
-        if target_block in ["mwf", "tth"]:
+        if target_block in ["mwf", "tth", "fri"]:
             if any(s.start_time == time(7, 30) for s in user_schedules):
                 special_early_in += 30
 
@@ -1022,9 +1022,9 @@ def clock_out():
         # 1. Map current day to the schedule blocks
         day_name = now.strftime('%A').lower()
         day_map = {
-            'monday': 'mwf', 'wednesday': 'mwf', 'friday': 'mwf',
+            'monday': 'mw', 'wednesday': 'mw', 
             'tuesday': 'tth', 'thursday': 'tth',
-            'saturday': 'sat'
+            'friday': 'fri', 'saturday': 'sat'
         }
         target_block = day_map.get(day_name)
 

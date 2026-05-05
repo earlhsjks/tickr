@@ -43,6 +43,7 @@
                                 <th class="ps-4">GIA Name</th>
                                 <th class="text-center">MWF</th>
                                 <th class="text-center">TTh</th>
+                                <th class="text-center">Fri</th>
                                 <th class="text-center">Sat</th>
                                 <th class="text-center">Actions</th>
                             </tr>
@@ -99,6 +100,18 @@
                                     </div>
 
                                     <div class="col-md-6 mb-2">
+                                        <label class="form-label fw-semibold">Fri</label>
+                                        <div class="d-flex gap-2">
+                                            <div class="input-group">
+                                                <input type="time" class="form-control" id="friIn">
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="time" class="form-control" id="friOut">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
                                         <label class="form-label fw-semibold">Saturday</label>
                                         <div class="d-flex gap-2">
                                             <div class="input-group">
@@ -146,6 +159,7 @@
                         <select class="form-select broken-day">
                             <option value="mwf">MWF</option>
                             <option value="tth">TTh</option>
+                            <option value="fri">Fri</option>
                             <option value="sat">Saturday</option>
                         </select>
                     </div>

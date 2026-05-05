@@ -44,7 +44,7 @@ async function loadSchedules() {
         });
 
         // New block identifiers
-        const blocks = ['mwf', 'tth', 'sat'];
+        const blocks = ['mwf', 'tth', 'fri', 'sat'];
         const tbody = document.getElementById('scheduleTableBody');
         tbody.innerHTML = '';
 
@@ -106,14 +106,14 @@ document.getElementById('scheduleTableBody').addEventListener('click', e => {
             document.getElementById('userId').value = user.user_id;
 
             // Reset all inputs first
-            ['mwf', 'tth', 'sat'].forEach(block => {
+            ['mw', 'tth', 'fri', 'sat'].forEach(block => {
                 document.getElementById(`${block}In`).value = '';
                 document.getElementById(`${block}Out`).value = '';
             });
 
             // Populate Main Inputs
             scheds.forEach(s => {
-                const block = s.day; // 'mwf', 'tth', 'sat'
+                const block = s.day; // 'mw', 'tth', 'fri', 'sat'
                 if (document.getElementById(`${block}In`)) {
                     document.getElementById(`${block}In`).value = s.start_time || '';
                     document.getElementById(`${block}Out`).value = s.end_time || '';
@@ -180,7 +180,7 @@ function setupModal() {
         const userId = document.getElementById('userId').value;
         
         // Collect Main Blocks
-        const schedules = ['mwf', 'tth', 'sat'].map(block => ({
+        const schedules = ['mwf', 'tth', 'fri', 'sat'].map(block => ({
             day: block,
             start_time: document.getElementById(`${block}In`).value || null,
             end_time: document.getElementById(`${block}Out`).value || null
