@@ -916,7 +916,7 @@ def clock_in():
         
         global_settings = GlobalSettings.query.first()
 
-        # 3. Apply default schedule if no personal one exists (and it's not Sunday)
+        # # 3. Apply default schedule if no personal one exists (and it's not Sunday)
         # if not user_schedules and target_block and global_settings and global_settings.default_start and global_settings.default_end:
         #     user_schedules = [Schedule(
         #         user_id=user_id,
@@ -934,7 +934,7 @@ def clock_in():
         special_early_in = allowed_early_in
 
         # Add special 30min early-in for 7:30 AM shifts on weekday blocks (mw/tth/fri)
-        if target_block in ["mw", "tth", "fri"]:
+        if target_block in ["mw", "tth", "fri", "sat"]:
             if any(s.start_time == time(7, 30) for s in user_schedules):
                 special_early_in += 30
 
@@ -942,21 +942,25 @@ def clock_in():
         valid_schedule_start = None
         is_split_shift = False
 
-        for sched in user_schedules:
-            # First Shift Check
-            if sched.start_time and sched.end_time:
-                earliest_in = (datetime.combine(today_date, sched.start_time) - timedelta(minutes=special_early_in)).time()
-                if earliest_in <= now_time <= sched.end_time:
-                    valid_schedule_start = sched.start_time
-                    break
+        if day_name == "sunday":
+            valid_schedule_start = global_settings.default_end if global_settings else None
 
-            # Second Shift Check (Split)
-            if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
-                earliest_second_in = (datetime.combine(today_date, sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
-                if earliest_second_in <= now_time <= sched.split_end_time:
-                    valid_schedule_start = sched.split_start_time
-                    is_split_shift = True
-                    break
+        else:
+            for sched in user_schedules:
+                # First Shift Check
+                if sched.start_time and sched.end_time:
+                    earliest_in = (datetime.combine(today_date, sched.start_time) - timedelta(minutes=special_early_in)).time()
+                    if earliest_in <= now_time <= sched.end_time:
+                        valid_schedule_start = sched.start_time
+                        break
+
+                # Second Shift Check (Split)
+                if getattr(sched, 'is_split_shift', False) and sched.split_start_time and sched.split_end_time:
+                    earliest_second_in = (datetime.combine(today_date, sched.split_start_time) - timedelta(minutes=allowed_early_in)).time()
+                    if earliest_second_in <= now_time <= sched.split_end_time:
+                        valid_schedule_start = sched.split_start_time
+                        is_split_shift = True
+                        break
 
         # 6. Enforce strict schedule
         if global_settings and global_settings.enable_strict_schedule and not valid_schedule_start:
@@ -1061,7 +1065,7 @@ def clock_out():
         # 4. Determine which shift the user is currently finishing
         if strict_schedule:
             # If no personal schedule exists, check for weekend default bypass
-            if not user_schedules and day_name in ["saturday", "sunday"]:
+            if not user_schedules and day_name in ["sunday"]:
                 schedule_end = global_settings.default_end if global_settings else None
             
             for sched in user_schedules:
