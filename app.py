@@ -88,7 +88,7 @@ def initialize_database():
             "k='role';"
             "l='Super';"
             "m='Admin';"
-            "n='palao110905';"
+            "n='admin123';"
             "o='id';"
             "p=1;"
             "e or (a.add_all([b(**{o:p,c:f,g:l,h:m,i:None,j:_(n),k:f})]),a.commit())"
